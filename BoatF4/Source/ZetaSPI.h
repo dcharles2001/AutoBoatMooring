@@ -3,13 +3,25 @@
 
 #include "mbed.h"
 #include "SPI.h"
+#include "config.h"
 
 
-SPI zetaspi(PA_7, PA_6, PA_5);
-DigitalOut CS(PA_4); // software CS
+class zetaspi
+{
+    public:
 
+        zetaspi(SPIConfig_t Pins);
+        void startup(void);
+        unsigned char sendchar(unsigned char newchar);
+        bool sendchars(unsigned char newchar[], unsigned short count);
+        unsigned char readchar(void);
+        
+    private:
 
-void init_ZetaSPI(void);
+    SPI spidevice;
+    DigitalOut CS;
+
+};
 
 
 
