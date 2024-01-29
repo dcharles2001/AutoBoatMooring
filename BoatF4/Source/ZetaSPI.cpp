@@ -37,7 +37,7 @@ bool zetaspi::sendchars(unsigned char newchar[], unsigned short count)
     {
         spidevice.write(newchar[i]);
     }
-
+    CS = 1;
     return 0; //success
     
     
@@ -45,8 +45,10 @@ bool zetaspi::sendchars(unsigned char newchar[], unsigned short count)
 
 unsigned char zetaspi::readchar(void)
 {
+    CS = 0;
     spidevice.write(0x32); //switch to RX mode
     unsigned char receivechar = spidevice.write(0x66);
+    CS = 1;
     return receivechar;
 
 }
