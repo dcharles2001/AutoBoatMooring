@@ -56,7 +56,7 @@ void write_SPI(uint8_t data)
     SPI_PORT->ODR &= ~(1u << SPI_NSS); //Bring CS low
     SPI_MODULE->DR = data; //Write to SPI data register
     while (!(SPI_MODULE->SR & (1 << 1))); //Wait until TX buffer is free
-    GPIOB->ODR |= (1u << SPI_NSS); //Bring CS high again
+    SPI_PORT->ODR |= (1u << SPI_NSS); //Bring CS high again
 } 
 
 
