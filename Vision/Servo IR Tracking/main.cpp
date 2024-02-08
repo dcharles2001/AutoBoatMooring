@@ -3,6 +3,10 @@
 #include <cstdio>
 I2C i2c(PB_9, PB_8);  // Set I2C pins
 
+
+BufferedSerial pc(USBTX, USBRX); // Define serial object with USBTX and USBRX
+BufferedSerial lidarSerial(D1, D0); // Define serial object with the appropriate pins
+
 const int IRsensorAddress = 0xB0; //>> 1;
 const int ledPin = D13;
 bool ledState = false;
@@ -12,10 +16,20 @@ int Iy[4];
 int s;
 int direct = 1;
 int X = 1;
-float step = 0.01;
+int sampleSize = 100;
+int readingsReq = 10;
 
-float pos = 0.5;
-Servo myservo(D9);
+
+float step = 0.01;
+float trackSpeedX = 0.0025;
+float trackSpeedY = 0.0025;
+
+float posX = 0.5;
+float posY = 0.5;
+
+Servo servoX(D9);
+Servo servoY(D6);
+
 void sweep();
 
 void Write_2bytes(char d1, char d2)
@@ -24,39 +38,80 @@ void Write_2bytes(char d1, char d2)
     i2c.write(IRsensorAddress, data, 2);
 }
 
-void Track(int X,int Y,int tolerance){                     //Ix[i],Iy[i], how close can the coordinate be to central
-    if (X != 1023 && Y != 1023){
-        if(X<((1024/2) - tolerance)){
-            myservo = pos;
-            pos+=0.005;
-        }else if(X>((1024/2) + tolerance)){
-            myservo = pos;
-            pos-=0.005;
+void Track(int X,int Y,int tolerance){                                          //Ix[i],Iy[i], how close can the coordinate be to central
+    if (X != 1023 && Y != 1023){                                                //Determines if IR source Located
+        if((X<((1024/2) - (2*tolerance)) || (X>((1024/2) + 2*tolerance)))){     //If far away, move faster
+            trackSpeedX = 0.004;
+        }else{
+            trackSpeedX = 0.002;
         }
+
+        if((Y<((1024/2) - (2*tolerance)) || (Y>((1024/2) + 2*tolerance)))){     //If far away, move faster
+            trackSpeedY = 0.004;
+        }else{
+            trackSpeedY = 0.002;
+        }
+
+        servoX = posX;           
+        servoY = posY;
+
+        if(X<((1024/2) - tolerance)){                                           //Adjust servo position
+            posX+=trackSpeedX;
+        }else if(X>((1024/2) + tolerance)){
+            posX-=trackSpeedX;
+        }
+
+        if(Y<((1024/2) - tolerance)){                                           //Adjust servo position
+            posY+=trackSpeedY;
+        }else if(Y>((1024/2) + tolerance)){
+            posY-=trackSpeedY;
+        }
+
    }else{
-       sweep();
+       sweep();                                                                 //If nothing found, sweep
    }
 }
 
 void sweep(void){
+
     if (X == 1){
-        pos = pos + step;
+        posY = 0.66;
+        posX = posX + step;
     } else{
-        pos = pos - step;
+        posX = posX - step;
+        posY = 0.33;
     }
 
-    if (pos<=0.0){
+    if (posX<=0.0){
         X=1;
-    }else if(pos>=1){
+    }else if(posX>=1){
         X=-1;
     }
 
-    myservo = pos;
+    servoX = posX;
+    servoY = posY;
 }
 
+void IR(){
+    uint8_t buf[9] = {0}; // An array that holds data
+        if (lidarSerial.readable()) {
+            lidarSerial.read(buf, 9); // Read 9 bytes of data
+            if (buf[0] == 0x59 && buf[1] == 0x59) {
+                uint16_t distance = buf[2] + buf[3] * 256;
+                if(distance != 0){
+                    printf("Distance: %d cm\n", distance);
+                }
+                
+            }
+        }
+        memset(buf,0,sizeof(buf));
+        wait_us(1000);
+}
 
 int main()
 {
+    pc.set_baud(115200); // Set baud rate for PC serial communication
+    lidarSerial.set_baud(115200); // Set baud rate for Lidar serial communication
     // IR sensor initialize
     Write_2bytes(0x30, 0x01); ThisThread::sleep_for(10ms);
     Write_2bytes(0x30, 0x08); ThisThread::sleep_for(10ms);
@@ -65,6 +120,17 @@ int main()
     Write_2bytes(0x1A, 0x40); ThisThread::sleep_for(10ms);
     Write_2bytes(0x33, 0x33); ThisThread::sleep_for(10ms);
     ThisThread::sleep_for(100ms);
+
+
+
+
+
+
+
+
+
+
+
 
     while (1) {
         // IR sensor read
@@ -118,7 +184,38 @@ int main()
         }
         printf("\n");
         //ThisThread::sleep_for(30ms);
-        Track(Ix[0],Iy[0],40);
+        Track(Ix[0],Iy[0],60);
+        IR();
         ThisThread::sleep_for(5ms);
     }
 }
+
+
+
+/*
+
+#include "mbed.h"
+
+BufferedSerial pc(USBTX, USBRX); // Define serial object with USBTX and USBRX
+BufferedSerial lidarSerial(D1, D0); // Define serial object with the appropriate pins
+int main(){
+    
+    pc.set_baud(115200); // Set baud rate for PC serial communication
+    lidarSerial.set_baud(115200); // Set baud rate for Lidar serial communication
+    
+    while(true){
+        uint8_t buf[9] = {0}; // An array that holds data
+        if (lidarSerial.readable()) {
+            lidarSerial.read(buf, 9); // Read 9 bytes of data
+            if (buf[0] == 0x59 && buf[1] == 0x59) {
+                uint16_t distance = buf[2] + buf[3] * 256;
+                if(distance != 0){
+                    printf("Distance: %d cm\n", distance);
+                }
+                
+            }
+        }
+        memset(buf,0,sizeof(buf));
+        wait_us(1000); 
+    }
+}*/
