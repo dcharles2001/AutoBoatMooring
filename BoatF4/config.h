@@ -9,10 +9,13 @@ typedef struct  //template struct for SPI devices
     PinName MISO;
     PinName SCLK;
     PinName CS;
-    PinName OE;
 
-} SPIConfig_t ;
+} SPIConfig_t;
 
+const SPIConfig_t f429spi1
+{
+    PB_5, PB_4, PB_3, PA_4
+};
 
 
 #endif
