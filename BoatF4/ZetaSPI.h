@@ -3,7 +3,7 @@
 
 //#include "mbed.h"
 #include "SPI.h"
-#include "config.h"
+#include "L4config.h"
 
 
 class zetaspi

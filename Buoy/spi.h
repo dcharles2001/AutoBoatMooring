@@ -9,9 +9,13 @@
 #define SPI_MISO 6
 #define SPI_SCK 5
 #define SPI_NSS 4
+#define SDN 3 //also GPIOA
+#define ZetaGPIO1 1 //also GPIOA
 
 void init_SPI(void);
-void write_SPI(uint8_t data);
+void write_SPI(unsigned char newchar);
+unsigned char readandwrite_SPI(unsigned char newchar);
+
 
 #endif
 

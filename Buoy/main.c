@@ -2,16 +2,73 @@
 #include "usart.h"
 #include "spi.h"
 
+
+void altstartzeta(void);
+void startzeta(void);
+
+
 int main(void)
 {
 	SystemCoreClockUpdate(); //should be 16MHz default
 	RCC->AHB2ENR  |= (RCC_AHB2ENR_GPIOAEN); //enable GPIO A clock for USART and SPI
 	
 	init_USART();
+	init_SPI();
 	
-	while(1)
+	send_USART('G');
+	
+	startzeta();
+	
+}
+
+
+void startzeta(void)
+{
+	GPIOA->ODR |= (1u << SDN); //bring SDN high briefly
+	for(int i = 0; i<500; i++)
 	{
-		send_USART('a');
+			__NOP();
+	}
+	GPIOA->ODR &=~ (1u << SDN); //bring SDN low again
+	/*
+	for(int i = 0; i<50000; i++) //wait a bunch
+	{
+			__NOP();
+	}
+	*/
+	write_SPI(0x02);
+	unsigned char responsebyte = readandwrite_SPI(0x44); //CTS check
+	if(responsebyte == 0xff)
+	{
+		send_USART('Y');
+	}else
+	{
+		send_USART('N');
+	}	
+}
+
+void altstartzeta(void)
+{
+	GPIOA->ODR |= (1u << SDN); //bring SDN high briefly
+	for(int i = 0; i<500; i++)
+	{
+			__NOP();
 	}
 	
+	GPIOA->ODR &=~ (1u << SDN); //bring SDN low again
+	uint32_t IDR_read = GPIOA->IDR;
+	while(!(IDR_read & 0x01)); //wait for GPIO1 to go high
+	write_SPI(0x02); //write startup command
+	
+	while(GPIOA->IDR & 0x01); //wait for GPIO1 to go low 
+	
+	
+	unsigned char responsebyte = readandwrite_SPI(0x44); //CTS check
+	if(responsebyte == 0xff)
+	{
+		send_USART('Y');
+	}else
+	{
+		send_USART('N');
+	}	
 }

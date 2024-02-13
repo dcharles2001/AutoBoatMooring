@@ -3,6 +3,7 @@
 
 #include "mbed.h"
 
+
 typedef struct  //template struct for SPI devices
 {
     PinName MOSI;
