@@ -17,7 +17,7 @@ int main(void)
 	
 	send_USART('G');
 	
-	startzeta();
+	altstartzeta();
 	
 }
 
@@ -25,19 +25,19 @@ int main(void)
 void startzeta(void)
 {
 	GPIOA->ODR |= (1u << SDN); //bring SDN high briefly
-	for(int i = 0; i<500; i++)
+	for(int i = 0; i<250; i++)
 	{
 			__NOP();
 	}
 	GPIOA->ODR &=~ (1u << SDN); //bring SDN low again
-	/*
+	
 	for(int i = 0; i<50000; i++) //wait a bunch
 	{
 			__NOP();
 	}
-	*/
+	
 	write_SPI(0x02);
-	unsigned char responsebyte = readandwrite_SPI(0x44); //CTS check
+	uint8_t responsebyte = readandwrite_SPI(0x44); //CTS check
 	if(responsebyte == 0xff)
 	{
 		send_USART('Y');
@@ -50,18 +50,29 @@ void startzeta(void)
 void altstartzeta(void)
 {
 	GPIOA->ODR |= (1u << SDN); //bring SDN high briefly
-	for(int i = 0; i<500; i++)
+	for(int i = 0; i<2; i++)
 	{
 			__NOP();
 	}
 	
 	GPIOA->ODR &=~ (1u << SDN); //bring SDN low again
-	uint32_t IDR_read = GPIOA->IDR;
-	while(!(IDR_read & 0x01)); //wait for GPIO1 to go high
+	uint32_t IDR_read = GPIOA->IDR; //read input data register
+	while(!(IDR_read & (1u << 1))) //wait for GPIO1 to go high
+	{
+		IDR_read = GPIOA->IDR; //read IDR again
+	}
 	write_SPI(0x02); //write startup command
 	
-	while(GPIOA->IDR & 0x01); //wait for GPIO1 to go low 
-	
+	/*
+	while(GPIOA->IDR & (1u << 1)) //wait for GPIO1 to go low 
+	{
+		IDR_read = GPIOA->IDR; //read IDR again
+	}
+	*/
+	for(int i = 0; i<3000; i++)
+	{
+			__NOP();
+	}
 	
 	unsigned char responsebyte = readandwrite_SPI(0x44); //CTS check
 	if(responsebyte == 0xff)

@@ -26,12 +26,14 @@ void init_SPI(void)
 												 ( 3u << ( SPI_MISO * 2 ) ) | //v high speed pin 6
 												 ( 3u << ( SPI_SCK * 2 ) ) | //v high speed pin 5
 												 ( 3u << ( SPI_NSS * 2 ) ) ); //v high speed pin 4
-												 
+
+	SPI_PORT->ODR |= (1u << SPI_NSS); //CS sits high initially
+
 	GPIOA->MODER &=~ ( ( 3u << ( SDN * 2 ) ) | //clear pin 3
 										 ( 3u << ( ZetaGPIO1 * 2 ) ) ); //clear pin 1
 										 
-	GPIOA->PUPDR &=~ ( 3u << (ZetaGPIO1 * 2 ) ); //clear pin 1 pupdr
-	GPIOA->PUPDR |=  ( 2u << (ZetaGPIO1 * 2 ) ); //pull down on pin 1
+	//GPIOA->PUPDR &=~ ( 3u << (ZetaGPIO1 * 2 ) ); //clear pin 1 pupdr
+	//GPIOA->PUPDR |=  ( 2u << (ZetaGPIO1 * 2 ) ); //pull down on pin 1
 										 
 	GPIOA->MODER |= ( ( 1u << ( SDN * 2 ) ) | //output mode pin 3
 										( 0u << ( ZetaGPIO1 * 2 ) ) ); //input mode pin 1
@@ -50,9 +52,9 @@ void init_SPI(void)
 												 ( 5u << ( SPI_SCK * 4 ) ) ); //AF5 on pin 5
 	
 	SPI_MODULE->CR1 |=( ( 0u << ( 0 ) ) | //CPHA 0
-										  ( 0u << ( 1 ) ) | //CPOL 1
+										  ( 0u << ( 1 ) ) | //CPOL 0
 										  ( 1u << ( 2 ) ) | //Master config
-										  ( 7u << ( 3 ) ) | //baud rate fpclk/256
+										  ( 6u << ( 3 ) ) | //baud rate fpclk/128
 										  ( 1u << ( 6 ) ) | //SPI peripheral enabled
 										  ( 0u << ( 7 ) ) | //MSB first
 										  ( 1u << ( 8 ) ) | //SSI
@@ -60,37 +62,38 @@ void init_SPI(void)
 										  ( 0u << ( 10 ) ) | //full duplex
 										  ( 0u << ( 11 ) ) ); //8 bit CRC length
 										 
-	SPI_MODULE->CR2 |=( ( 0u << ( 0 ) ) | //RX buffer DMA disable
-											( 0u << ( 1 ) ) | //TX buffer DMA disable
+	SPI_MODULE->CR2 |=( ( 0u << ( 0 ) ) | //RX buffer DMA 
+											( 0u << ( 1 ) ) | //TX buffer DMA 
 											( 0u << ( 2 ) ) | //SS output disable
 											( 0u << ( 3 ) ) | //NSS pulse disable
 											( 0u << ( 4 ) ) | //Frame format motorola mode
-											( 0u << ( 5 ) ) | //Error interrupt disable
-											( 0u << ( 6 ) ) | //RX buffer not empty interrupt disable
-											( 0u << ( 7 ) ) | //TX buffer empty interrupt enable
+											( 0u << ( 5 ) ) | //Error interrupt 
+											( 0u << ( 6 ) ) | //RX buffer not empty interrupt 
+											( 0u << ( 7 ) ) | //TX buffer empty interrupt 
 											( 7u << ( 8 ) ) | //8 bit data size
-											( 1u << ( 12 ) ) ); //8 bit FIFO threshold
+											( 1u << ( 12 ) ) ); //FRXTH 8 bit FIFO threshold
 
 }
 
-void write_SPI(unsigned char newchar)
+void write_SPI(uint8_t newchar)
 {
     SPI_PORT->ODR &= ~(1u << SPI_NSS); //Bring CS low
-    SPI_MODULE->DR = newchar; //Write to SPI data register
-    while (!(SPI_MODULE->SR & (1 << 1))); //Wait until TX buffer is free
+    *(__IO uint8_t*)(&SPI_MODULE->DR) = newchar; //Write to SPI data register (only 8 bits)
+    while (!(SPI_MODULE->SR & (1u << 1))); //Wait until TX buffer is free
     SPI_PORT->ODR |= (1u << SPI_NSS); //Bring CS high again
 } 
 
-unsigned char readandwrite_SPI(unsigned char newchar)
+uint8_t readandwrite_SPI(uint8_t newchar)
 {
 	SPI_PORT->ODR &=~ (1u << SPI_NSS); //Bring CS low
-	SPI_MODULE->DR = newchar; //Write to SPI data register
+	*(__IO uint8_t*)(&SPI_MODULE->DR) = newchar; //Write to SPI data register
+	*(__IO uint8_t*)(&SPI_MODULE->DR) = 0x00; //Dummy bits to keep clock on
 	while (!(SPI_MODULE->SR & (1u << 1))); //Wait until TX buffer is free
 	
 	//now read RX
-	while (!(SPI_MODULE->SR & ( 0u << 1))); //Wait until RX buffer is filled, this will get stuck if no response is received
+	while (!(SPI_MODULE->SR & ( 1u << 0))); //Wait until RX buffer is filled, this will get stuck if no response is received
 	SPI_PORT->ODR |= (1u << SPI_NSS); //bring CS high again 
-	unsigned char response = SPI_MODULE->DR; //unsure of this
+	uint8_t response = *(__IO uint8_t*)(&SPI_MODULE->DR); //unsure of this
 	return response;
 }
 

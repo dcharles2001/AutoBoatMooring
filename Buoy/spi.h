@@ -13,8 +13,8 @@
 #define ZetaGPIO1 1 //also GPIOA
 
 void init_SPI(void);
-void write_SPI(unsigned char newchar);
-unsigned char readandwrite_SPI(unsigned char newchar);
+void write_SPI(uint8_t newchar);
+uint8_t readandwrite_SPI(uint8_t newchar);
 
 
 #endif
