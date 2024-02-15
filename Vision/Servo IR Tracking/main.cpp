@@ -17,9 +17,10 @@ int s;
 int direct = 1;
 int X = 1;
 int j = 0;
-int sampleSize = 100;
+int sampleSize = 75;
 int averageDistance = 0;
 int fail = 0;
+int ignoreReads = 0;
 int centerDist = 0;
 float step = 0.002;
 float trackSpeedX = 0.001;
@@ -47,28 +48,41 @@ void IR(){
             if (buf[0] == 0x59 && buf[1] == 0x59) {
                 uint16_t distance = buf[2] + buf[3] * 256;
                 if(distance != 0){
-                    printf("Distance: %d cm\n", distance);
+                    averageDistance += distance;
+	                j++;
                 }
-                
-            }
+            if(j == sampleSize){
+		        averageDistance /= sampleSize;
+                if(ignoreReads<1){
+                    ignoreReads++;
+                }else{
+		            printf("Distance = %d cm \n",averageDistance);
+                }
+                j = 0;
+		        averageDistance = 0;
+	        }
         }
-        memset(buf,0,sizeof(buf));
-        wait_us(1000);
+    }
+    memset(buf,0,sizeof(buf));
+    wait_us(1000);
 }
 
 void sweep(void){
+    averageDistance = 0;
+    ignoreReads = 0;
     if (X == 1){
         posY = 0.80;
         posX = posX + step;
     } else{
         posX = posX - step;
-        posY = 0.40;
+        posY = 0.50;
     }
 
     if (posX<=0.0){
         X=1;
     }else if(posX>=1){
         X=-1;
+        printf("No Bouy Found\n");
     }
 
     servoX = posX;
@@ -112,11 +126,14 @@ void Track(int X,int Y,int tolerance){                                          
         posY-=trackSpeedY;
         servoX = posX;           
         servoY = posY;
+        if(abs(trackSpeedX)<0.001 && abs(trackSpeedY) < 0.001){
+            IR();
+        }
    }else{
        if (fail<=10){
-       fail++;
+            fail++;
        } else{
-       sweep();
+            sweep();
        }                                                                 //If nothing found, sweep
    }
 }
@@ -181,7 +198,7 @@ int main()
         Iy[3] += (s & 0xC0) <<2;
     
            for (int i = 0; i <4; i++){
-        /*
+        
             if (Ix[i] < 1000)
                 printf("");
             if (Ix[i] < 100)
@@ -293,9 +310,6 @@ int main()
         //printf("\n");
         //printf("%f",trackSpeedX);
         Track(Iy[0],Ix[0],10);
-        if(abs(trackSpeedX)<0.001 && abs(trackSpeedY) < 0.001){
-            IR();
-        }
         ThisThread::sleep_for(2ms);
     }
 }
