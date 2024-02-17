@@ -79,3 +79,10 @@ unsigned char zetaspi::readandwrite(unsigned char newchar)
     CS = 1;
     return responsebyte;
 }
+
+void zetaspi::readandwritemultiple(char *tx_buffer, int tx_length, char *rx_buffer, int rx_length)
+{
+    CS = 0;
+    spidevice.write(tx_buffer, tx_length, rx_buffer, rx_length); 
+    CS = 1;
+}

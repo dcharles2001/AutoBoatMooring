@@ -17,6 +17,8 @@ class zetaspi
         //bool sendcharsTX(unsigned char newchar[], unsigned short count);
         unsigned char readcharRX(void);
         unsigned char readandwrite(unsigned char newchar);
+        void getpartinfo(unsigned char responsebuff[]);
+        void readandwritemultiple(char *tx_buffer, int tx_length, char *rx_buffer, int rx_length);
         
     private:
 
