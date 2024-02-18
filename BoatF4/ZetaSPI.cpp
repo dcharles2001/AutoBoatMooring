@@ -21,19 +21,41 @@ void zetaspi::startup(void)
 void zetaspi::altstartup(void)
 {
     SDN = 1;
-    for(int i=0; i<900; i++)
+    for(int i=0; i<450; i++) //approx 10us delay
     {
         __NOP();
     }
     SDN = 0; //bring sdn low
     while(GPIO1 == 0); //wait until GPIO1 goes high
-    printf("GPIO1 high\n\r");
+    //printf("GPIO1 high\n\r");
+
+    //ThisThread::sleep_for(14ms); //must wait for POR + max SPI timeout
+
+    //spidevice.write(RF_POWER_UP, 7, &dummyrx, 1); //send powerup command
     CS = 0;
-    spidevice.write(0x02); //send powerup command
+    for(int i = 0; i<7; i++)
+    {
+        spidevice.write(RF_POWER_UP[i]);
+    }
     CS = 1;
-    while(GPIO1 == 1); //wait until GPIO1 goes low
-    printf("GPIO1 low\n\r");
-    
+
+    while(GPIO1 == 0); //wait until GPIO1 goes high
+    printf("GPIO1 high\n\r");
+
+    CS = 0;
+    for(int i = 0; i<5; i++)
+    {
+        spidevice.write(RF_EZCONFIG_XO_TUNE_1[i]);
+    }
+    CS = 1;
+
+    CS = 0;
+    for(int i = 0; i<8; i++)
+    {
+        spidevice.write(RF_GPIO_PIN_CFG[i]);
+    }
+    CS = 1;
+
 }
 
 unsigned char zetaspi::sendcharTX(unsigned char newchar)
