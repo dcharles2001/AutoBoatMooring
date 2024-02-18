@@ -10,7 +10,7 @@ class zetaspi
 {
     public:
 
-        zetaspi(SPIConfig_t Pins, DigitalOut sdn, DigitalIn gpio1);
+        zetaspi(SPIConfig_t Pins, DigitalOut sdn, DigitalIn gpio1, DigitalIn nirq);
         void startup(void);
         void altstartup(void);
         unsigned char sendcharTX(unsigned char newchar);
@@ -26,6 +26,7 @@ class zetaspi
         DigitalOut CS;
         DigitalOut SDN;
         DigitalIn GPIO1;
+        DigitalIn nIRQ; 
 
 
 };

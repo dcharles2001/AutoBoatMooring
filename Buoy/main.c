@@ -21,7 +21,6 @@ int main(void)
 	
 }
 
-
 void startzeta(void)
 {
 	GPIOA->ODR |= (1u << SDN); //bring SDN high briefly

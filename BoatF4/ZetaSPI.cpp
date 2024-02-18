@@ -1,10 +1,10 @@
 #include "ZetaSPI.h"
 #include <cstdio>
 
-zetaspi::zetaspi(SPIConfig_t Pins, DigitalOut sdn, DigitalIn gpio1): spidevice(Pins.MOSI, Pins.MISO, Pins.SCLK), CS(Pins.CS), SDN(sdn), GPIO1(gpio1)
+zetaspi::zetaspi(SPIConfig_t Pins, DigitalOut sdn, DigitalIn gpio1, DigitalIn nirq): spidevice(Pins.MOSI, Pins.MISO, Pins.SCLK), CS(Pins.CS), SDN(sdn), GPIO1(gpio1), nIRQ(nirq)
 {
     spidevice.format(8, 0); //8 bits, cpol, cpha 0
-    spidevice.frequency(1000000);
+    spidevice.frequency(100000);
 
 }
 
@@ -21,6 +21,10 @@ void zetaspi::startup(void)
 void zetaspi::altstartup(void)
 {
     SDN = 1;
+    for(int i=0; i<900; i++)
+    {
+        __NOP();
+    }
     SDN = 0; //bring sdn low
     while(GPIO1 == 0); //wait until GPIO1 goes high
     printf("GPIO1 high\n\r");
@@ -35,9 +39,9 @@ void zetaspi::altstartup(void)
 unsigned char zetaspi::sendcharTX(unsigned char newchar)
 {
     CS = 0;
-    spidevice.write(0x31); //start TX command
     spidevice.write(0x66); //begin to write to tx buffer
     spidevice.write(newchar); //send char
+    spidevice.write(0x31); //start TX command
     CS = 1;
     return newchar;
 }
