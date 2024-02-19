@@ -5,16 +5,11 @@ zetaspi Zeta433(f429spi1, PC_7, PA_15, PB_15);
 
 int main()
 {
-    printf("Starting\n\r");
-    ThisThread::sleep_for(25ms); //allow zeta to power on
+    //printf("Starting\n\r");
+    //ThisThread::sleep_for(25ms); //allow zeta to power on
     Zeta433.altstartup();
     unsigned char response = Zeta433.readandwrite(0x44); //check CTS byte
     printf("Zeta response: %x\n\r", response);
-
-    printf("Attempting interrupt clear\n\r");
-    response = Zeta433.readandwrite(0x20); //get interrupt status and clear
-    printf("Zeta response: %x\n\r", response);
-
 
     printf("Checking part info\n\r");
     char cmd = 0x01; //part info command
