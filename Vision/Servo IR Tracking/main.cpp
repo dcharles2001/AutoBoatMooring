@@ -19,10 +19,11 @@ int X = 1;
 int j = 0;
 int sampleSize = 75;
 int averageDistance = 0;
-int fail = 0;
+int lastDistance = 0;
+int fail = 201;
 int ignoreReads = 0;
 int centerDist = 0;
-float step = 0.002;
+float step = 0.008;
 float trackSpeedX = 0.001;
 float trackSpeedY = 0.001;
 
@@ -50,6 +51,7 @@ void IR(){
                 }
             if(j == sampleSize){
 		        averageDistance /= sampleSize;
+                lastDistance = averageDistance;
                 if(ignoreReads<1){
                     ignoreReads++;
                 }else{
@@ -77,9 +79,9 @@ void sweep(void){
 
     if (posX<=0.0){
         X=1;
+        printf("No Buoy Found\n");
     }else if(posX>=1){
         X=-1;
-        printf("No Buoy Found\n");
     }
 
     servoX = posX;
@@ -89,31 +91,39 @@ void sweep(void){
 void Track(int X,int Y,int tolerance){                                          //Ix[i],Iy[i], how close can the coordinate be to central
     if (X != 1023 && Y != 1023){        
         fail = 0;                                        //Determines if IR source Located
-        
-        trackSpeedX = (((512.000000-X))/175000);
-        trackSpeedY = (((512.000000-Y))/175000);
 
-        if(trackSpeedX > 0.0015){
-            trackSpeedX = 0.003;
-        }else if (trackSpeedX < -0.0015){
-            trackSpeedX = -0.003;
+        trackSpeedX = (((512.000000-X))/150000);
+        trackSpeedY = (((512.000000-Y))/150000);
+
+        if(trackSpeedX > 0.003){
+            trackSpeedX = 0.005;
+        }else if (trackSpeedX < -0.003){
+            trackSpeedX = -0.005;
         }
-        if(trackSpeedY > 0.0015){
+        if(trackSpeedY > 0.003){
             trackSpeedY = 0.005;
-        }else if (trackSpeedY < -0.0015){
-            trackSpeedY = -0.003;
+        }else if (trackSpeedY < -0.003){
+            trackSpeedY = -0.005;
         }
         posX-=trackSpeedX; 
         posY-=trackSpeedY;
-        servoX = posX;           
+
+        if(abs(512-X)>tolerance){
+        servoX = posX; 
+        }
+        if(abs(512-Y)> tolerance){          
         servoY = posY;
-        if(abs(trackSpeedX)<0.001 && abs(trackSpeedY) < 0.001){
+        }
+        if(abs(trackSpeedX)<0.001 && abs(trackSpeedY) < 0.001 && fail<1){
             IR();
         }
    }else{
-       if (fail<=200){
-            fail++;
-       } else{
+       if (fail==198){
+            printf("Last Known Distance: %d cm\n", lastDistance);
+           fail++;
+       } else if (fail<200){
+           fail++;
+       }else{
             sweep();
        }                                                                 //If nothing found, sweep
    }
@@ -131,7 +141,6 @@ int main()
     Write_2bytes(0x1A, 0x40); ThisThread::sleep_for(10ms);
     Write_2bytes(0x33, 0x33); ThisThread::sleep_for(10ms);
     ThisThread::sleep_for(100ms);
-
     while (1) {
         // IR sensor read
         i2c.write(IRsensorAddress, "\x36", 1);  // Send the register address to read
@@ -160,8 +169,14 @@ int main()
         s   = data_buf[12];
         Ix[3] += (s & 0x30) <<4;
         Iy[3] += (s & 0xC0) <<2;
-    
-        Track(Iy[0],Ix[0],10);
+
+        if(Ix[0] == 0 && Iy[0] == 0){
+            printf("Error: No IR Sensor Detected \n");
+            ThisThread::sleep_for(200ms);
+        }else{
+        //printf("%d , %d\n",Iy[0],Ix[0]);
+        Track(Iy[0],Ix[0],5);
         ThisThread::sleep_for(2ms);
+        }
     }
 }
