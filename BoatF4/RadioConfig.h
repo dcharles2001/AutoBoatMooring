@@ -1,3 +1,6 @@
+#ifndef RADIOCONFIG_H
+#define RADIOCONFIG_H
+
 // USER DEFINED PARAMETERS
 // Define your own parameters here
 
@@ -169,4 +172,4 @@
                             RADIO_CONFIGURATION_DATA_RADIO_DELAY_CNT_AFTER_RESET       \
                             }
 
-#endif /* RADIO_CONFIG_H_ */
+#endif //RADIOCONFIG_H

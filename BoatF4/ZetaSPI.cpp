@@ -33,67 +33,28 @@ void zetaspi::altstartup(void)
     ThisThread::sleep_for(14ms); //must wait for POR + max SPI timeout
 
     //spidevice.write(RF_POWER_UP, 7, &dummyrx, 1); //send powerup command
-    CS = 0;
-    for(int i = 0; i<7; i++)
-    {
-        spidevice.write(RF_POWER_UP[i]);
-    }
-    CS = 1;
+    radioconfig(RadioConfig.ConfigArray);
 
-    //while(GPIO1 == 0); //wait until GPIO1 goes high
-    //printf("GPIO1 high\n\r");
 
     
-    CS = 0;
-    for(int i = 0; i<4; i++)
-    {
-        spidevice.write(RF_INT_CTL_ENABLE_1[i]);
-    }
-    CS = 1;
-
-    CS = 0;
-    for(int i = 0; i<4; i++)
-    {
-        spidevice.write(RF_FRR_CTL_A_MODE_4[i]);
-    }
-    CS = 1;
-
-    CS = 0;
-    for(int i = 0; i<5; i++)
-    {
-        spidevice.write(RF_EZCONFIG_XO_TUNE_1[i]);
-    }
-    CS = 1;
-
-    CS = 0;
-    for(int i = 0; i<114; i++)
-    {
-        spidevice.write(RF_WRITE_TX_FIFO[i]);
-    }
-    CS = 1;
-
-    CS = 0;
-    for(int i = 0; i<112; i++)
-    {
-        spidevice.write(RF_WRITE_TX_FIFO_1[i]);
-    }
-    CS = 1;
-
-    CS = 0;
-    for(int i = 0; i<3; i++)
-    {
-        spidevice.write(RF_EZCONFIG_CHECK[i]);
-    }
-    CS = 1;
     
-    CS = 0;
-    for(int i = 0; i<8; i++)
-    {
-        spidevice.write(RF_GPIO_PIN_CFG[i]);
-    }
-    CS = 1;
     
 }
+
+void zetaspi::radioconfig(const unsigned char *cmdPTR)
+{
+    while(*cmdPTR != 0x00) //repeat until final entry 0x00 of array is reached
+    {
+        unsigned int parambytescount = *cmdPTR; //number of command bytes for current command
+        *cmdPTR++;
+
+        if(parambytescount > 8) //is it a tx fifo write?
+        {
+            
+        }
+    }
+}
+
 
 unsigned char zetaspi::sendcharTX(unsigned char newchar)
 {
