@@ -6,7 +6,7 @@ zetaspi Zeta433(f429spi1, PC_7, PA_15, PB_15);
 int main()
 {
     //printf("Starting\n\r");
-    //ThisThread::sleep_for(25ms); //allow zeta to power on
+    ThisThread::sleep_for(10ms); //allow zeta to power on
     Zeta433.altstartup();
     
     printf("Checking part info\n\r");
@@ -24,7 +24,10 @@ int main()
     {
         
         Zeta433.readandwritemultiple(&cmd, tx_length, rx, rx_length); //fetch part info
-        printf("Part info response: %s\n\r", rx); //display response
+       for(int i = 0; i<rx_length; i++)
+        {
+            printf("Part info response: %x\n\r", rx[i]); //display response
+        }
         
         /*
         printf("Sending test char X\n\r");
