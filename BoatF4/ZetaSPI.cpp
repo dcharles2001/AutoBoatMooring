@@ -4,7 +4,7 @@
 zetaspi::zetaspi(SPIConfig_t Pins, DigitalOut sdn, DigitalIn gpio1, DigitalIn nirq): spidevice(Pins.MOSI, Pins.MISO, Pins.SCLK), CS(Pins.CS), SDN(sdn), GPIO1(gpio1), nIRQ(nirq)
 {
     spidevice.format(8, 0); //8 bits, cpol, cpha 0
-    spidevice.frequency(100000);
+    spidevice.frequency(10000);
     CS = 1;
 
 }
@@ -27,10 +27,13 @@ void zetaspi::altstartup(void)
         __NOP();
     }
     SDN = 0; //bring sdn low
-    //while(GPIO1 == 0); //wait until GPIO1 goes high
+    while(GPIO1 == 0); //wait until GPIO1 goes high
     //printf("GPIO1 high\n\r");
+    CS = 0;
+    spidevice.write(0x00); // NOP
+    CS = 1;
 
-    ThisThread::sleep_for(14ms); //must wait for POR + max SPI timeout
+    //ThisThread::sleep_for(14ms); //must wait for POR + max SPI timeout
 
     //spidevice.write(RF_POWER_UP, 7, &dummyrx, 1); //send powerup command
     radioconfig(RadioConfig.ConfigArray);
@@ -46,21 +49,22 @@ void zetaspi::radioconfig(volatile const unsigned char *cmdPTR)
     while(*cmdPTR != 0x00) //repeat until final entry 0x00 of array is reached
     {
         unsigned int parambytescount = *cmdPTR; //number of command bytes for current command
-        cmdPTR++; //increment pointer to command byte
+        *cmdPTR++; //increment pointer to command byte
 
         if(*cmdPTR == 0x66) //TX fifo write?
         {
-        
+            /*
             unsigned char CTS = 0x00; //CTS byte
             while(CTS != 0xff) //repeat until CTS acknowledgement (requires error detection)
             {
                 CS = 0;
                 CTS = spidevice.write(0x44); //check CTS
                 CS = 1;
+                
             }
-
+            */
             writemultiple(cmdPTR, parambytescount); //write cmd and param bytes
-            cmdPTR += parambytescount - 1; //increment pointer to next cmd byte count
+            cmdPTR += parambytescount; //increment pointer to next cmd byte count
             
             CS = 0;
             spidevice.write(0x00); //NOP
@@ -70,10 +74,12 @@ void zetaspi::radioconfig(volatile const unsigned char *cmdPTR)
         }else {
             
             writemultiple(cmdPTR, parambytescount);
+            cmdPTR += parambytescount; //increment pointer to next cmd byte count
             CS = 0;
             spidevice.write(0x00); //NOP
             CS = 1;
-
+            
+            /*
             unsigned char CTS = 0x00; //CTS byte
             while(CTS != 0xff) //repeat until CTS acknowledgement (requires error detection)
             {
@@ -81,6 +87,7 @@ void zetaspi::radioconfig(volatile const unsigned char *cmdPTR)
                 CTS = spidevice.write(0x44); //check CTS
              CS = 1;
             }
+            */
 
         }
 
@@ -137,6 +144,10 @@ void zetaspi::writemultiple(volatile const unsigned char *arrayPTR, unsigned int
         arrayPTR++; //increment pointer to next param byte
     }
     CS = 1;
+    for(int i=0; i<10; i++) //small delay to satisfy Tsw
+    {
+        __NOP();
+    }
 }
 
 unsigned char zetaspi::readandwrite(unsigned char newchar)
