@@ -21,7 +21,7 @@ const SPIConfig_t f429spi1
 
 typedef struct 
 {
-    const unsigned char *ConfigArray;
+    volatile const unsigned char *ConfigArray;
     unsigned char ChannelNumber;
     unsigned char PacketLength;
     unsigned char StateAfterPowerUp;

@@ -3,7 +3,7 @@
 
 zetaspi::zetaspi(SPIConfig_t Pins, DigitalOut sdn, DigitalIn gpio1, DigitalIn nirq): spidevice(Pins.MOSI, Pins.MISO, Pins.SCLK), CS(Pins.CS), SDN(sdn), GPIO1(gpio1), nIRQ(nirq)
 {
-    spidevice.format(8, 1); //8 bits, cpol, cpha 1
+    spidevice.format(8, 0); //8 bits, cpol, cpha 0
     spidevice.frequency(100000);
     CS = 1;
 
@@ -41,17 +41,49 @@ void zetaspi::altstartup(void)
     
 }
 
-void zetaspi::radioconfig(const unsigned char *cmdPTR)
+void zetaspi::radioconfig(volatile const unsigned char *cmdPTR)
 {
     while(*cmdPTR != 0x00) //repeat until final entry 0x00 of array is reached
     {
         unsigned int parambytescount = *cmdPTR; //number of command bytes for current command
-        *cmdPTR++;
+        cmdPTR++; //increment pointer to command byte
 
-        if(parambytescount > 8) //is it a tx fifo write?
+        if(*cmdPTR == 0x66) //TX fifo write?
         {
+        
+            unsigned char CTS = 0x00; //CTS byte
+            while(CTS != 0xff) //repeat until CTS acknowledgement (requires error detection)
+            {
+                CS = 0;
+                CTS = spidevice.write(0x44); //check CTS
+                CS = 1;
+            }
+
+            writemultiple(cmdPTR, parambytescount); //write cmd and param bytes
+            cmdPTR += parambytescount - 1; //increment pointer to next cmd byte count
             
+            CS = 0;
+            spidevice.write(0x00); //NOP
+            CS = 1;
+
+
+        }else {
+            
+            writemultiple(cmdPTR, parambytescount);
+            CS = 0;
+            spidevice.write(0x00); //NOP
+            CS = 1;
+
+            unsigned char CTS = 0x00; //CTS byte
+            while(CTS != 0xff) //repeat until CTS acknowledgement (requires error detection)
+            {
+                CS = 0;
+                CTS = spidevice.write(0x44); //check CTS
+             CS = 1;
+            }
+
         }
+
     }
 }
 
@@ -94,6 +126,17 @@ unsigned char zetaspi::readcharRX(void)
     CS = 1;
     return receivechar;
 
+}
+
+void zetaspi::writemultiple(volatile const unsigned char *arrayPTR, unsigned int arraySize)
+{
+    CS = 0;
+    for(int i = 0; i<arraySize; i++)
+    {
+        spidevice.write(*arrayPTR);
+        arrayPTR++; //increment pointer to next param byte
+    }
+    CS = 1;
 }
 
 unsigned char zetaspi::readandwrite(unsigned char newchar)

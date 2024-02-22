@@ -23,7 +23,8 @@ class zetaspi
         
     private:
 
-        void radioconfig(const unsigned char *cmdPTR);
+        void radioconfig(volatile const unsigned char *cmdPTR);
+        void writemultiple(volatile const unsigned char *arrayPTR, unsigned int arraySize);
 
         const RadioConfig_t RadioConfig = RADIO_CONFIGURATION_DATA; //get radio config data from header
 
