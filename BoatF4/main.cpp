@@ -5,38 +5,24 @@ zetaspi Zeta433(f429spi1, PC_7, PA_15, PB_15);
 
 int main()
 {
-    //printf("Starting\n\r");
-    ThisThread::sleep_for(10ms); //allow zeta to power on
-    Zeta433.altstartup();
+    printf("Starting\n\r");
+
+    Zeta433.SPI_Init();
+    Zeta433.SPI_SI4455_Init();
+
+    unsigned char parambytescnt = 0x01; //1 param byte
+    unsigned char cmd = 0x01; //part info command
+    unsigned char respByteCount = 0x0C;
+    unsigned char response[16];
     
-    printf("Checking part info\n\r");
-    char cmd = 0x01; //part info command
-    int tx_length = 1;
-    char rx[10]; //10 byte receive buffer
-    int rx_length = 8;
-    Zeta433.readandwritemultiple(&cmd, tx_length, rx, rx_length); //fetch part info
-    for(int i = 0; i<rx_length; i++)
+    
+    Zeta433.SendCmdGetResp(parambytescnt, &cmd, respByteCount, response);
+
+    for(int i=0; i<respByteCount; i++)
     {
-        printf("Part info response: %x\n\r", rx[i]); //display response
+        printf("Zeta response: %X\n\r", response[i]);
     }
-    
-    while(1)
-    {
-        
-        Zeta433.readandwritemultiple(&cmd, tx_length, rx, rx_length); //fetch part info
-       for(int i = 0; i<rx_length; i++)
-        {
-            printf("Part info response: %x\n\r", rx[i]); //display response
-        }
-        
-        /*
-        printf("Sending test char X\n\r");
-        Zeta433.sendcharTX('X'); //send test char
-        unsigned char response = Zeta433.readandwrite(0x44); //check CTS byte
-        printf("Zeta response: %x\n\r", response);
-        */
-        ThisThread::sleep_for(1000);
-    }
-    
+
+
 }
 
