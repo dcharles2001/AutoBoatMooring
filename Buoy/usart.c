@@ -38,16 +38,28 @@ void init_USART(void)
 			USART_CR1_TE												//transmit enable
 			|USART_CR1_RE												//receive enable
 			|USART_CR1_UE												//usart main enable bit
-			|USART_CR1_RXNEIE										//RXNE interrupt enable
+										//RXNE interrupt enable
 				);
 	
 }
 
-char send_USART(unsigned char newchar)
+char send_USART(char newchar)
 {
-	while(!(USART_MODULE->ISR & USART_ISR_TC)); //wait until TX buffer is empty
+	while(!(USART_MODULE->ISR & USART_ISR_TXE)); //wait until TX buffer is empty
 	USART_MODULE->TDR = newchar;
 	return USART_MODULE->TDR;
+}
+
+void send_array_USART(char *newarray) //send char arrays
+{
+	unsigned int i = 0;
+	while(newarray[i] != '\0') //until end of array
+	{
+		while(!(USART_MODULE->ISR & USART_ISR_TC)); //wait until TX buffer is empty
+		USART_MODULE->TDR = newarray[i];
+		i++; //increment counter
+	}
+	
 }
 
 

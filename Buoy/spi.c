@@ -29,16 +29,16 @@ void init_SPI(void)
 
 	SPI_PORT->ODR |= (1u << SPI_NSS); //CS sits high initially
 
-	GPIOA->MODER &=~ ( ( 3u << ( SDN * 2 ) ) | //clear pin 3
+	GPIOB->MODER &=~ ( ( 3u << ( SDN * 2 ) ) | //clear pin 3
 										 ( 3u << ( ZetaGPIO1 * 2 ) ) ); //clear pin 1
 										 
 	//GPIOA->PUPDR &=~ ( 3u << (ZetaGPIO1 * 2 ) ); //clear pin 1 pupdr
 	//GPIOA->PUPDR |=  ( 2u << (ZetaGPIO1 * 2 ) ); //pull down on pin 1
 										 
-	GPIOA->MODER |= ( ( 1u << ( SDN * 2 ) ) | //output mode pin 3
+	GPIOB->MODER |= ( ( 1u << ( SDN * 2 ) ) | //output mode pin 3
 										( 0u << ( ZetaGPIO1 * 2 ) ) ); //input mode pin 1
 										 
-	
+	GPIOB->ODR &=~ (1u << SDN); //default low
 	
 	//configure AFR register for SPI pins
 	
@@ -54,7 +54,7 @@ void init_SPI(void)
 	SPI_MODULE->CR1 |=( ( 0u << ( 0 ) ) | //CPHA 0
 										  ( 0u << ( 1 ) ) | //CPOL 0
 										  ( 1u << ( 2 ) ) | //Master config
-										  ( 6u << ( 3 ) ) | //baud rate fpclk/128
+										  ( 2u << ( 3 ) ) | //baud rate fpclk/8
 										  ( 1u << ( 6 ) ) | //SPI peripheral enabled
 										  ( 0u << ( 7 ) ) | //MSB first
 										  ( 1u << ( 8 ) ) | //SSI
@@ -75,7 +75,7 @@ void init_SPI(void)
 
 }
 
-void write_SPI(uint8_t newchar)
+void write_SPI(uint8_t newchar) //write a single byte over SPI and manage CS with software
 {
     SPI_PORT->ODR &= ~(1u << SPI_NSS); //Bring CS low
     *(__IO uint8_t*)(&SPI_MODULE->DR) = newchar; //Write to SPI data register (only 8 bits)
@@ -83,11 +83,32 @@ void write_SPI(uint8_t newchar)
     SPI_PORT->ODR |= (1u << SPI_NSS); //Bring CS high again
 } 
 
+void write_SPI_noCS(uint8_t newchar) //write a single byte over SPI but don't manipulate CS
+{
+	  *(__IO uint8_t*)(&SPI_MODULE->DR) = newchar; //Write to SPI data register (only 8 bits)
+    while (!(SPI_MODULE->SR & (1u << 1))); //Wait until TX buffer 
+}
+
+uint8_t read_SPI_noCS(void) //write dummy bytes to keep clock on for SDO data, no CS control
+{
+	//the assumption here is that CS has already been handled and the appropriate data has already been written
+	//write dummy bits
+	*(__IO uint8_t*)(&SPI_MODULE->DR) = 0xff; //Dummy bits to keep clock on
+	while (!(SPI_MODULE->SR & (1u << 1))); //Wait until TX buffer is free
+	
+	//now read result
+	while (!(SPI_MODULE->SR & ( SPI_SR_RXNE ))); //Wait until RX buffer is filled, this will get stuck if no response is received
+	uint8_t response = *(__IO uint8_t*)(&SPI_MODULE->DR); //read SPI data register
+	return response; 
+	
+}
+
+
 uint8_t readandwrite_SPI(uint8_t newchar)
 {
 	SPI_PORT->ODR &=~ (1u << SPI_NSS); //Bring CS low
 	*(__IO uint8_t*)(&SPI_MODULE->DR) = newchar; //Write to SPI data register
-	*(__IO uint8_t*)(&SPI_MODULE->DR) = 0x00; //Dummy bits to keep clock on
+	*(__IO uint8_t*)(&SPI_MODULE->DR) = 0xff; //Dummy bits to keep clock on
 	while (!(SPI_MODULE->SR & (1u << 1))); //Wait until TX buffer is free
 	
 	//now read RX

@@ -115,7 +115,7 @@ void zetaspi::SpiReadBytes(unsigned char byteCount, unsigned char* pData)
 					2. pData	- Points to the array/var to be 
 							  filled 
                     ********************************************************
-                    (GUY's NOTE): line 128 second write has me uneasy, check 
+                    (GUY's NOTE): second SPI write has me uneasy, check 
                     again later if this isn't working 
  * *******************************************************************************************/
 unsigned char zetaspi::GetResponse_CTS(unsigned char byteCount, unsigned char* pData)
@@ -128,7 +128,7 @@ unsigned char zetaspi::GetResponse_CTS(unsigned char byteCount, unsigned char* p
 	{
 		CS = 0; //bring CS low
 		spidevice.write(0x44); //write CTS command                                                                                                   
-		ctsVal = spidevice.write(0xFF); //dummy bits to maintain clock for the read?
+		ctsVal = spidevice.write(0xFF); //dummy bits to maintain clock for the read (did we not just write the above function for this?)
 
 		if (ctsVal == 0xFF)
 		{
