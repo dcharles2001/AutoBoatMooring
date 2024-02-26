@@ -4,6 +4,7 @@
 #include <stm32l4xx.h>
 
 #include "Config.h"
+#include "usart.h"
 
 void init_SPI(void);
 void write_SPI(uint8_t newchar);

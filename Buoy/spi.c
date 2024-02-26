@@ -55,7 +55,7 @@ void init_SPI(void)
 										  ( 0u << ( 1 ) ) | //CPOL 0
 										  ( 1u << ( 2 ) ) | //Master config
 										  ( 2u << ( 3 ) ) | //baud rate fpclk/8
-										  ( 1u << ( 6 ) ) | //SPI peripheral enabled
+										  //( 1u << ( 6 ) ) | //SPI peripheral enabled
 										  ( 0u << ( 7 ) ) | //MSB first
 										  ( 1u << ( 8 ) ) | //SSI
 										  ( 1u << ( 9 ) ) | //force SSM
@@ -72,6 +72,8 @@ void init_SPI(void)
 											( 0u << ( 7 ) ) | //TX buffer empty interrupt 
 											( 7u << ( 8 ) ) | //8 bit data size
 											( 1u << ( 12 ) ) ); //FRXTH 8 bit FIFO threshold
+											
+	SPI_MODULE->CR1 |=( 1u << (6) ); //SPI peripheral enable
 
 }
 
@@ -110,6 +112,7 @@ uint8_t read_SPI_noCS(void) //write dummy bytes to keep clock on for SDO data, n
 	
 	//now read result
 	while (!(SPI_MODULE->SR & (1u << 0))); //Wait until RXNE is set
+	
 	uint8_t response = *(__IO uint8_t*)(&SPI_MODULE->DR); //unsure of this
 	return response; 
 }
@@ -118,6 +121,7 @@ uint8_t readandwrite_SPI(uint8_t newchar)
 {
 	SPI_PORT->ODR &=~ (1u << SPI_NSS); //Bring CS low
 	*(__IO uint8_t*)(&SPI_MODULE->DR) = newchar; //Write to SPI data register
+	while (!(SPI_MODULE->SR & (1u << 1))); //Wait until TX buffer is free
 	*(__IO uint8_t*)(&SPI_MODULE->DR) = 0xff; //Dummy bits to keep clock on
 	while (!(SPI_MODULE->SR & (1u << 1))); //Wait until TX buffer is free
 	
@@ -137,6 +141,7 @@ uint8_t readandwrite_SPI_noCS(uint8_t newchar)
 	
 	//now read RX
 	while (!(SPI_MODULE->SR & ( 1u << 0))); //Wait until RX buffer is filled
+
 	uint8_t response = *(__IO uint8_t*)(&SPI_MODULE->DR); //unsure of this
 }
 
