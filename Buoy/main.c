@@ -3,10 +3,8 @@
 #include "spi.h"
 #include "zeta.h"
 
-
 void altstartzeta(void);
 void startzeta(void);
-
 
 int main(void)
 {

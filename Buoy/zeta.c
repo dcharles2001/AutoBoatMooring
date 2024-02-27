@@ -40,7 +40,7 @@ void Wait_POR(void)
 
 	/* Pull the SDN pin high for 10 us */
 	GPIOB->ODR |= (1u << SDN); //SDN high
-	for(int i=0; i<2; i++) //approx 10us delay
+	for(int i=0; i<8; i++) //approx 10us delay
   {
       __NOP(); //do nothing
   }
@@ -48,10 +48,10 @@ void Wait_POR(void)
 	/* Pull the SDN pin low */
     GPIOB->ODR &=~ (1u << SDN);//SDN LOW
    
-	for(int i=0; i<225; i++) //approx 10ms delay
-		{
+	for(int i=0; i<1500; i++) //approx ?ms delay
+	{
 				__NOP(); //do nothing
-		}
+	}
 
 }
 
@@ -110,13 +110,11 @@ unsigned char GetResponse_CTS(unsigned char byteCount, unsigned char* pData)
 
 	while (errCnt != 0) //attempt based error detection                                                                                              
 	{
-		/*
+		
 		SPI_PORT->ODR &=~ (1u << SPI_NSS);//bring CS low
 		write_SPI_noCS(0x44); //write CTS command                                                                                                   
 		ctsVal = read_SPI_noCS(); 
-		*/
-		SPI_PORT->ODR &=~ (1u << SPI_NSS); //bring CS low
-		ctsVal = readandwrite_SPI_noCS(0x44);
+		
 
 		if (ctsVal == 0xFF)
 		{

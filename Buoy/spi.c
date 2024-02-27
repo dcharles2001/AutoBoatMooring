@@ -60,7 +60,8 @@ void init_SPI(void)
 										  ( 1u << ( 8 ) ) | //SSI
 										  ( 1u << ( 9 ) ) | //force SSM
 										  ( 0u << ( 10 ) ) | //full duplex
-										  ( 0u << ( 11 ) ) ); //8 bit CRC length
+										  ( 0u << ( 11 ) )  | //8 bit CRC length
+											( 0u << ( 15 ) ) ); //Bidirectional mode									
 										 
 	SPI_MODULE->CR2 |=( ( 0u << ( 0 ) ) | //RX buffer DMA 
 											( 0u << ( 1 ) ) | //TX buffer DMA 
@@ -88,7 +89,8 @@ void write_SPI(uint8_t newchar) //write a single byte over SPI and manage CS wit
 void write_SPI_noCS(uint8_t newchar) //write a single byte over SPI but don't manipulate CS
 {
 	  *(__IO uint8_t*)(&SPI_MODULE->DR) = newchar; //Write to SPI data register (only 8 bits)
-    while (!(SPI_MODULE->SR & (1u << 1))); //Wait on TXE
+    while (!(SPI_MODULE->SR & (SPI_SR_TXE))); //Wait on TXE
+	
 }
 
 void write_SPIBytes_noCS(uint8_t *newchars, unsigned int bytes)
@@ -105,30 +107,37 @@ uint8_t read_SPI_noCS(void) //write dummy bytes to keep clock on for SDO data, n
 {
 	//the assumption here is that CS has already been handled and the appropriate data has already been written
 	//write dummy bits
+	while(!(SPI_MODULE->SR & (1u << 7))); //wait on busy bit
+	uint8_t temp = *(__IO uint8_t*)(&SPI_MODULE->DR); //initiate read
 	*(__IO uint8_t*)(&SPI_MODULE->DR) = 0xff; //Dummy bits to keep clock on
-	while (!(SPI_MODULE->SR & (1u << 1))); //Wait on TXE
-
+	while (!(SPI_MODULE->SR & (1u << 1))); //Wait on TXE 
 	//now get to waiting for the RX buffer to be filled
 	
 	//now read result
-	while (!(SPI_MODULE->SR & (1u << 0))); //Wait until RXNE is set
-	
+	while (!(SPI_MODULE->SR & (SPI_SR_RXNE))); //Wait until RXNE is set
 	uint8_t response = *(__IO uint8_t*)(&SPI_MODULE->DR); //unsure of this
+	while(!(SPI_MODULE->SR & (1u << 7))); //wait for transmission end
+	for(int i=0; i<1; i++)
+	{
+		__NOP();
+	}
 	return response; 
 }
 
+
+/*
 uint8_t readandwrite_SPI(uint8_t newchar)
 {
 	SPI_PORT->ODR &=~ (1u << SPI_NSS); //Bring CS low
 	*(__IO uint8_t*)(&SPI_MODULE->DR) = newchar; //Write to SPI data register
 	while (!(SPI_MODULE->SR & (1u << 1))); //Wait until TX buffer is free
-	*(__IO uint8_t*)(&SPI_MODULE->DR) = 0xff; //Dummy bits to keep clock on
-	while (!(SPI_MODULE->SR & (1u << 1))); //Wait until TX buffer is free
 	
 	//now read RX
+	unsigned char temp = SPI_MODULE->DR; //initiate read action
+	*(__IO uint8_t*)(&SPI_MODULE->DR) = 0xff; //Dummy bits to keep clock on
 	while (!(SPI_MODULE->SR & ( 1u << 0))); //Wait until RX buffer is filled
 	SPI_PORT->ODR |= (1u << SPI_NSS); //bring CS high again 
-	uint8_t response = *(__IO uint8_t*)(&SPI_MODULE->DR); //unsure of this
+	uint8_t response = *(__IO uint8_t*)(&SPI_MODULE->DR); //read new data
 	return response;
 }
 
@@ -136,15 +145,15 @@ uint8_t readandwrite_SPI_noCS(uint8_t newchar)
 {
 	*(__IO uint8_t*)(&SPI_MODULE->DR) = newchar; //Write to SPI data register
 	while (!(SPI_MODULE->SR & (1u << 1))); //Wait until TX buffer is free
-	*(__IO uint8_t*)(&SPI_MODULE->DR) = 0xff; //Dummy bits to keep clock on
-	//while (!(SPI_MODULE->SR & (1u << 1))); //Wait until TX buffer is free
 	
 	//now read RX
+	unsigned char temp = SPI_MODULE->DR; //initiate read action
+	*(__IO uint8_t*)(&SPI_MODULE->DR) = 0xff; //Dummy bits to keep clock on
 	while (!(SPI_MODULE->SR & ( 1u << 0))); //Wait until RX buffer is filled
-
-	uint8_t response = *(__IO uint8_t*)(&SPI_MODULE->DR); //unsure of this
+	uint8_t response = *(__IO uint8_t*)(&SPI_MODULE->DR); //read new data
+	return response;
 }
-
+*/
 
 
 
