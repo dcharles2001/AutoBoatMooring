@@ -1,13 +1,17 @@
 #include "mbed.h"
 #include "Servo.h"
+#include "stdio.h"
 #include <cstdio>
 #include <string>
 #include <cmath>
 #include <memory>
-
+#include <iostream>
 
 float STEP = 0.005;
 int sampleSize = 75;
+using namespace std;
+
+//int Cord1X1,Cord1X2,Cord1X3
 
 
 I2C i2c1(PB_9, PB_8);
@@ -46,18 +50,12 @@ public:
     // Constructor
     Turret(int turretID) : turretID(turretID){
         if(turretID == 1){
-        Write_2bytes(0x30, 0x01, 0xB0);
-        ThisThread::sleep_for(10ms);
-        Write_2bytes(0x30, 0x01, 0xB0);
-        ThisThread::sleep_for(10ms);
-        Write_2bytes(0x30, 0x01, 0xB0);
-        ThisThread::sleep_for(10ms);
-        Write_2bytes(0x30, 0x01, 0xB0);
-        ThisThread::sleep_for(10ms);
-        Write_2bytes(0x30, 0x01, 0xB0);
-        ThisThread::sleep_for(10ms);
-        Write_2bytes(0x30, 0x01, 0xB0);
-        ThisThread::sleep_for(10ms);
+            Write_2bytes(0x30, 0x01, 0xB0); ThisThread::sleep_for(10ms);
+            Write_2bytes(0x30, 0x08, 0xB0); ThisThread::sleep_for(10ms);
+            Write_2bytes(0x06, 0x90, 0xB0); ThisThread::sleep_for(10ms);
+            Write_2bytes(0x08, 0xC0, 0xB0); ThisThread::sleep_for(10ms);
+            Write_2bytes(0x1A, 0x40, 0xB0); ThisThread::sleep_for(10ms);
+            Write_2bytes(0x33, 0x33, 0xB0); ThisThread::sleep_for(10ms);
         ThisThread::sleep_for(100ms);
         }
     }
@@ -66,23 +64,23 @@ public:
     }  
 
     // Copy constructor (deleted)
-    Turret(const Turret&) = delete;
+    //Turret(const Turret&) = delete;
 
     // Copy assignment operator (deleted)
-    Turret& operator=(const Turret&) = delete;
+    //Turret& operator=(const Turret&) = delete;
 
     void sweep(void) {
         if (flip == 1) {
-            posY = 0.80;
+            posY = 0.6;
             posX = posX + STEP;
         } else {
             posX = posX - STEP;
-            posY = 0.50;
+            posY = 0.4;
         }
 
         if (posX <= 0.0) {
             flip = 1;
-            printf("No Buoy Found\n");
+            cout<<"No Buoy Found"<<endl;
         } else if (posX >= 1) {
             flip = -1;
         }
@@ -124,20 +122,26 @@ public:
         }
     }
 
-    int Distance() {
-        uint8_t buf[9] = {0}; // An array that holds data
+    uint16_t Distance() {
+        uint8_t buf[9]; // An array that holds data
+        uint16_t lastdistance;
         if (turretID == 1) {
             if (lidarSerial1.readable()) {
                 for (int j = 0; j < sampleSize; j++) {
                     lidarSerial1.read(buf, 9); // Read 9 bytes of data
+                    
+                    //check = buf[0] + buf[1] + buf[2] + buf[3] + buf[4] + buf[5] + buf[6] + buf[7];
+                
                     if (buf[0] == 0x59 && buf[1] == 0x59) {
                         uint16_t distance = buf[2] + buf[3] * 256;
+                        cout << "Reading TF-Luna" << endl;
+                        lastdistance = distance;
                         if (distance != 0) {
                             averageDistance += distance;
                         } else {
                             return 0;
                         }
-                        j++;
+                    
                         if (j == sampleSize) {
                             if (ignoreReads < 1) {
                                 ignoreReads++;
@@ -148,34 +152,32 @@ public:
                             j = 0;
                             averageDistance = 0;
                         }
+                        
                     }
                 }
             } else {
-                lastDistance = 0;
+                lastDistance = 10000;
             }
         }
         memset(buf, 0, sizeof(buf));
-        wait_us(1000);
-        return (averageDistance);
+        ThisThread::sleep_for(1ms);
+        return lastdistance;
     }
 
-    int combineNumbers(int num1, int num2) {
-        int num2Digits = log10(num2) + 1;
 
-        if (num2Digits != 4) {
-            return -1; // Error code
-        }
+    int* combineNumbers(int num1, int num2) {
+        static int Temp[2];
+        Temp[1] = num1;
+        Temp[0] = num2;
 
-        int combinedNumber = num1 * pow(10, num2Digits) + num2;
-
-        return combinedNumber;
+        return Temp;
     }
 
-    int IR_Sensor(int IRAddress) {
-        if (turretID == 1) {
+    int* IR_Sensor(int IRAddress) {
+        //if (turretID == 1) {
             i2c1.write(IRAddress, "\x36", 1);  // Send the register address to read
             i2c1.read(IRAddress, data_buf, 16);  // Read 16 bytes
-        }
+        //}
         Ix[0] = data_buf[1];
         Iy[0] = data_buf[2];
         s     = data_buf[3];
@@ -200,7 +202,7 @@ public:
         Ix[3] += (s & 0x30) << 4;
         Iy[3] += (s & 0xC0) << 2;
 
-        int coordinates = combineNumbers(Ix[0], Iy[0]);
+        int* coordinates = combineNumbers(Ix[0], Iy[0]);
         return coordinates;
     }
 };
@@ -210,39 +212,37 @@ class Turret;
 Turret Turret1(1);
 
 void Turret1_Function() {
-    int Coordinates = Turret1.IR_Sensor(0xB0);
-    int X = 0;
-    int Y = 0;
+
+    int* Coordinates = Turret1.IR_Sensor(0xB0);
+
+    int X = Coordinates[0];
+    int Y = Coordinates[1];
     static int fail;
 
-    for (int i = 7; i >= 4; --i) {
-        if (i >= 4) {
-            X += Coordinates % 10;
-            Coordinates /= 10;
-        } else {
-            Y = Coordinates;
-            Coordinates /= 10;
-        }
-    }
-
     if (X == 0 && Y == 0) {
-        printf("Error: No IR Sensor Detected \n");
-    } else if (X == 1024 && Y == 1024) {
+        cout<<"Error: No IR Sensor Detected"<<endl;
+    } else if (X == 1023 && Y == 1023) {
         if (fail <= 199) {
             fail++;
-        } else if (fail > 200) {
-            printf("No Buoy Found");
-            Turret1.sweep();
+        } else if (fail == 200) {
+            cout<<"No Buoy Found"<<endl;
+            fail++;
         } else {
-            printf("%d , %d \n", X, Y);
-            Turret1.Track(X, Y, 5);
-            int distance = Turret1.Distance();
-            if (distance == 0) {
-                printf("IR Unreadable \n");
-            }
-            printf("Distance = %d \n", distance);
+            Turret1.sweep();
         }
-    }
+    }else{
+            fail = 0;
+            Turret1.Track(X, Y, 5);
+            uint16_t distance = Turret1.Distance();
+            if (distance == 10000) {
+                cout<<"TOF Unreadable"<<endl;
+            }else if (distance == 0){
+                cout<<"ERROR: TOF reading 0"<<endl;
+            }else{
+            cout<<"Distance is " << distance << " cm"<<endl;
+            }
+        }
+        ThisThread::sleep_for(1ms);
 }
 
 
@@ -250,16 +250,56 @@ void Turret1_Function() {
 
 int main() {
     pc.set_baud(115200);
-    i2c1.frequency(100000);
+    //i2c1.frequency(100000);
     tick.start();
-
+    //
+    lidarSerial1.set_baud(115200); // Set baud rate for Lidar serial communication
     i2c1.frequency(115200);
 
-    Queue_Turret1.call_every(2ms, Turret1_Function);
+    Queue_Turret1.call_every(49ms, Turret1_Function);
 
     Thread_Turret1.start(callback(&Queue_Turret1, &EventQueue::dispatch_forever));
 
+
+    // IR sensor initialize
+
+}
+/*
     while (1) {
+        int Ix[4];
+        int Iy[4];
+        int IRAddress = 0xB0;
+        int s;
+        char data_buf[16];
+
+        i2c1.write(IRAddress, "\x36", 1);  // Send the register address to read
+        i2c1.read(IRAddress, data_buf, 16);  // Read 16 bytes
+        //}
+        Ix[0] = data_buf[1];
+        Iy[0] = data_buf[2];
+        s     = data_buf[3];
+        Ix[0] += (s & 0x30) << 4;
+        Iy[0] += (s & 0xC0) << 2;
+    
+        Ix[1] = data_buf[4];
+        Iy[1] = data_buf[5];
+        s     = data_buf[6];
+        Ix[1] += (s & 0x30) << 4;
+        Iy[1] += (s & 0xC0) << 2;
+
+        Ix[2] = data_buf[7];
+        Iy[2] = data_buf[8];
+        s     = data_buf[9];
+        Ix[2] += (s & 0x30) << 4;
+        Iy[2] += (s & 0xC0) << 2;
+
+        Ix[3] = data_buf[10];
+        Iy[3] = data_buf[11];
+        s     = data_buf[12];
+        Ix[3] += (s & 0x30) << 4;
+        Iy[3] += (s & 0xC0) << 2;
+
+        cout<<Ix[0]<<"    "<<Iy[]<<endl;
         ThisThread::sleep_for(1000ms);  // Add a sleep to avoid busy-waiting
     }
 
@@ -267,3 +307,4 @@ int main() {
 
     return 0;
 }
+*/
