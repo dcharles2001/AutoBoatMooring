@@ -3,12 +3,8 @@
 void init_SPI(void)
 {
 	RCC->APB2ENR|=RCC_APB2ENR_SPI1EN; //enable SPI1 clock
+	//RCC->APB1ENR1|=RCC_APB1ENR1_SPI3EN; //enable SPI3 clock
 
-	//configure GPIO for SPI
-	//MOSI: 7
-	//MISO: 6
-	//SCK: 5
-	//NSS: 4
 	
 	//clear and set alternate function mode for GPIO SPI pins
 	
@@ -21,12 +17,19 @@ void init_SPI(void)
                          ( 2u << ( SPI_MISO * 2 ) ) |  //alt func mode pin 6
 											   ( 2u << ( SPI_SCK * 2 ) ) |  //alt func mode pin 5
 											   ( 1u << ( SPI_NSS * 2 ) ) );	//output mode pin 4
+								 
+	//SPI_PORT->OTYPER  |=(  ( 1u << ( SPI_MISO ) ) );  //open drain pin 7
+                         
 	
-	SPI_PORT->OSPEEDR |=(  ( 3u << ( SPI_MOSI * 2 ) ) | //v high speed pin 7
-												 ( 3u << ( SPI_MISO * 2 ) ) | //v high speed pin 6
-												 ( 3u << ( SPI_SCK * 2 ) ) | //v high speed pin 5
-												 ( 3u << ( SPI_NSS * 2 ) ) ); //v high speed pin 4
-
+	//SPI_PORT->PUPDR   &=~ ( 3u << ( SPI_MISO * 2 ) );  //clear pin 6
+	//SPI_PORT->PUPDR   |= ( (3u << ( SPI_MISO * 2 ) ) ); //Pull-down on pin 6
+	
+	/*
+	SPI_PORT->OSPEEDR |=(  ( 2u << ( SPI_MOSI * 2 ) ) | //high speed pin 7
+												 ( 2u << ( SPI_MISO * 2 ) ) | //high speed pin 6
+												 ( 2u << ( SPI_SCK * 2 ) ) | //high speed pin 5
+												 ( 2u << ( SPI_NSS * 2 ) ) ); //high speed pin 4
+	*/
 	SPI_PORT->ODR |= (1u << SPI_NSS); //CS sits high initially
 
 	GPIOB->MODER &=~ ( ( 3u << ( SDN * 2 ) ) | //clear pin 3
@@ -44,13 +47,27 @@ void init_SPI(void)
 	
 	SPI_PORT->AFR[0]  &=~( ( 15u << ( SPI_MOSI * 4) ) |  //clear pin (7) function
 												 ( 15u << ( SPI_MISO * 4) ) |	//clear pin (6) function
-												 ( 15u << ( SPI_SCK * 4) ) ); //clear pin (5) function
+												 ( 15u << ( SPI_SCK * 4) )  | //clear pin (5) function
+												 ( 15u << ( SPI_NSS * 4) ) );
 												 
 	
 	SPI_PORT->AFR[0]  |=(  ( 5u << ( SPI_MOSI * 4 ) ) | //AF5 on pin 7
 												 ( 5u << ( SPI_MISO * 4 ) ) | //AF5 on pin 6
-												 ( 5u << ( SPI_SCK * 4 ) ) ); //AF5 on pin 5
+												 ( 5u << ( SPI_SCK * 4 ) ) | //AF5 on pin 5
+												 ( 5u << ( SPI_NSS * 4) ) );
 	
+	/*
+	SPI_PORT->AFR[0]  &=~( ( 15u << ( SPI_MOSI * 4) ) |  //clear pin function
+												 ( 15u << ( SPI_MISO * 4) ) |	//clear pin function
+												 ( 15u << ( SPI_SCK * 4) )  ); //clear pin function
+												
+												 
+	
+	SPI_PORT->AFR[0]  |=(  ( 6u << ( SPI_MOSI * 4 ) ) | //AF6 on pin 
+												 ( 6u << ( SPI_MISO * 4 ) ) | //AF6 on pin 
+												 ( 6u << ( SPI_SCK * 4 ) ) ); //AF6 on pin 
+	*/									 
+												 
 	SPI_MODULE->CR1 |=( ( 0u << ( 0 ) ) | //CPHA 0
 										  ( 0u << ( 1 ) ) | //CPOL 0
 										  ( 1u << ( 2 ) ) | //Master config
@@ -107,15 +124,15 @@ uint8_t read_SPI_noCS(void) //write dummy bytes to keep clock on for SDO data, n
 {
 	//the assumption here is that CS has already been handled and the appropriate data has already been written
 	//write dummy bits
-	while(!(SPI_MODULE->SR & (1u << 7))); //wait on busy bit
-	uint8_t temp = *(__IO uint8_t*)(&SPI_MODULE->DR); //initiate read
+	//while(!(SPI_MODULE->SR & (1u << 7))); //wait on busy bit
+	//uint8_t temp = *(__IO uint8_t*)(&SPI_MODULE->DR); //initiate read
 	*(__IO uint8_t*)(&SPI_MODULE->DR) = 0xff; //Dummy bits to keep clock on
-	while (!(SPI_MODULE->SR & (1u << 1))); //Wait on TXE 
+	//while (!(SPI_MODULE->SR & (1u << 1))); //Wait on TXE 
 	//now get to waiting for the RX buffer to be filled
 	
 	//now read result
 	while (!(SPI_MODULE->SR & (SPI_SR_RXNE))); //Wait until RXNE is set
-	uint8_t response = *(__IO uint8_t*)(&SPI_MODULE->DR); //unsure of this
+	uint8_t response = SPI_MODULE->DR; //unsure of this
 	while(!(SPI_MODULE->SR & (1u << 7))); //wait for transmission end
 	for(int i=0; i<1; i++)
 	{

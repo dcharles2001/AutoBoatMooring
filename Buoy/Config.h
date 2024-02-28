@@ -1,6 +1,8 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#include "stdio.h"
+
 #include "Radio_Config.h"
 #include "si4455_defs.h"
 
@@ -18,6 +20,8 @@
 #define SPI_MISO 6
 #define SPI_SCK 5
 #define SPI_NSS 4
+
+
 //GPIOB
 #define ZetaGPIO1 7
 #define SDN 6 

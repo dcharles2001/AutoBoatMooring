@@ -115,7 +115,12 @@ unsigned char GetResponse_CTS(unsigned char byteCount, unsigned char* pData)
 		write_SPI_noCS(0x44); //write CTS command                                                                                                   
 		ctsVal = read_SPI_noCS(); 
 		
-
+		/*
+		char ctsstring[15];
+		sprintf(ctsstring, "CTS: %x \n\r", ctsVal);
+		send_array_USART(ctsstring);
+		*/
+		
 		if (ctsVal == 0xFF)
 		{
 			if (byteCount)
