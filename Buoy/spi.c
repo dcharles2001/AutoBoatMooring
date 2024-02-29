@@ -125,19 +125,20 @@ uint8_t read_SPI_noCS(void) //write dummy bytes to keep clock on for SDO data, n
 	//the assumption here is that CS has already been handled and the appropriate data has already been written
 	//write dummy bits
 	//while(!(SPI_MODULE->SR & (1u << 7))); //wait on busy bit
-	//uint8_t temp = *(__IO uint8_t*)(&SPI_MODULE->DR); //initiate read
+	uint8_t temp = *(__IO uint8_t*)(&SPI_MODULE->DR); //initiate read
+	while (!(SPI_MODULE->SR & (1u << 1))); //Wait on TXE 
 	*(__IO uint8_t*)(&SPI_MODULE->DR) = 0xff; //Dummy bits to keep clock on
-	//while (!(SPI_MODULE->SR & (1u << 1))); //Wait on TXE 
-	//now get to waiting for the RX buffer to be filled
 	
 	//now read result
 	while (!(SPI_MODULE->SR & (SPI_SR_RXNE))); //Wait until RXNE is set
-	uint8_t response = SPI_MODULE->DR; //unsure of this
-	while(!(SPI_MODULE->SR & (1u << 7))); //wait for transmission end
+	uint8_t response = *(__IO uint8_t*)(&SPI_MODULE->DR); //read new data
+	/*
+	while(!(SPI_MODULE->SR & (1u << 7))); //wait for transmission to end
 	for(int i=0; i<1; i++)
 	{
 		__NOP();
 	}
+	*/
 	return response; 
 }
 
