@@ -4,18 +4,20 @@
 		STM32L432kc used
 		Ported from arduino version: https://github.com/deeplyembeddedWP/EZRadio_SI4455-Library.git
 */
-
+#include <stdbool.h>
 
 #include "zeta.h"
 
+/*
 #define false 0
 #define true 1
+*/
 
 #define RADIO_CTS_TIMEOUT			10000
 #define RESP_BYTES_SIZE				16
 
 /* Static & Global Variables */
-static unsigned char cts_flag;
+static bool cts_flag;
 static unsigned char radioCmd[RESP_BYTES_SIZE];
 union si4455_cmd_reply_union Si4455Cmd;
 const unsigned char Radio_Configuration_Data_Array[] = RADIO_CONFIGURATION_DATA_ARRAY;
@@ -46,7 +48,7 @@ void Wait_POR(void)
   }
     
 	/* Pull the SDN pin low */
-    GPIOB->ODR &=~ (1u << SDN);//SDN LOW
+  GPIOB->ODR &=~ (1u << SDN);//SDN LOW
    
 	for(int i=0; i<1500; i++) //approx ?ms delay
 	{
@@ -65,10 +67,16 @@ void Wait_POR(void)
 void SpiWriteBytes(unsigned char byteCount, const unsigned char* pData)
 {
 	const unsigned char* ptr = pData;
-
+	while(!(SPI_MODULE->SR & (1u << 1))); //wait on TXE 
 	for (int i = 0; i < byteCount; i++)
 	{
 		write_SPI_noCS(*ptr++);
+	}
+	while(!(SPI_MODULE->SR & (1u << 1))); //wait on TXE 
+	while(!(SPI_MODULE->SR & (1u << 7))); //wait on busy bit to indicate end of transmission, lest we bring CS high too early
+	for(int i = 0; i<6; i++) //hacky delay to stop CS from rising early
+	{
+		__NOP();
 	}
 }
 
@@ -83,11 +91,14 @@ void SpiWriteBytes(unsigned char byteCount, const unsigned char* pData)
 void SpiReadBytes(unsigned char byteCount, unsigned char* pData)
 {
 	unsigned char* ptr = pData;
-
+	uint8_t temp = *(__IO uint8_t*)(&SPI_MODULE->DR); //initiate read/clear buffer
 	for (int i = 0; i < byteCount; i++)
 	{
 		*ptr++ = read_SPI_noCS(); //keep clock on and read
+		while(!(SPI_MODULE->SR & (1u << 1))); //wait on TXE
+		while(!(SPI_MODULE->SR & (1u << 7))); //wait on busy bit to indicate end of transmission, lest we bring CS high too early
 	}
+
 }
 
 /*********************************************************************************************
@@ -114,6 +125,9 @@ unsigned char GetResponse_CTS(unsigned char byteCount, unsigned char* pData)
 		SPI_PORT->ODR &=~ (1u << SPI_NSS);//bring CS low
 		write_SPI_noCS(0x44); //write CTS command                                                                                                   
 		ctsVal = read_SPI_noCS(); 
+		while(!(SPI_MODULE->SR & (1u << 1))); //wait on TXE
+		while(!(SPI_MODULE->SR & (1u << 7))); //wait on busy bit to indicate end of transmission, lest we bring CS high too early
+
 		
 		/*
 		char ctsstring[15];
@@ -133,7 +147,8 @@ unsigned char GetResponse_CTS(unsigned char byteCount, unsigned char* pData)
 		SPI_PORT->ODR |= (1u << SPI_NSS); //bring CS high
 		errCnt--;
 	}
-
+	
+	
 	if (errCnt == 0)
 	{
 		/* ERROR!!!!  CTS should never take this long. */
@@ -144,7 +159,11 @@ unsigned char GetResponse_CTS(unsigned char byteCount, unsigned char* pData)
 	{
 		cts_flag = true;
 	}
-
+	/*
+	char ctsresp[12];
+	sprintf(ctsresp, "CTS: %x\n\r", ctsVal);
+	send_array_USART(ctsresp);
+	*/
 	return ctsVal;
 }
 

@@ -24,14 +24,14 @@ int main(void)
   unsigned char respByteCount = 0x0C;
   unsigned char response[16];
     
-    
+	char respstring[25];
+ 
   SendCmdGetResp(parambytescnt, &cmd, respByteCount, response);
-
+	
   for(int i=0; i<respByteCount; i++)
   {
-		send_array_USART("Zeta response:");
-		send_USART(response[i]);
-	  send_array_USART("\n\r");
+		sprintf(respstring, "Zeta response: %x \n\r", response[i]);
+		send_array_USART(respstring);
   }
 	
 	

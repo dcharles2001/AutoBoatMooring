@@ -88,7 +88,7 @@ void init_SPI(void)
 											( 0u << ( 5 ) ) | //Error interrupt 
 											( 0u << ( 6 ) ) | //RX buffer not empty interrupt 
 											( 0u << ( 7 ) ) | //TX buffer empty interrupt 
-											( 7u << ( 8 ) ) | //8 bit data size
+											( 1u << ( 8 ) ) | //8 bit data size
 											( 1u << ( 12 ) ) ); //FRXTH 8 bit FIFO threshold
 											
 	SPI_MODULE->CR1 |=( 1u << (6) ); //SPI peripheral enable
@@ -125,9 +125,10 @@ uint8_t read_SPI_noCS(void) //write dummy bytes to keep clock on for SDO data, n
 	//the assumption here is that CS has already been handled and the appropriate data has already been written
 	//write dummy bits
 	//while(!(SPI_MODULE->SR & (1u << 7))); //wait on busy bit
-	uint8_t temp = *(__IO uint8_t*)(&SPI_MODULE->DR); //initiate read
+	//uint8_t temp = *(__IO uint8_t*)(&SPI_MODULE->DR); //initiate read
 	while (!(SPI_MODULE->SR & (1u << 1))); //Wait on TXE 
 	*(__IO uint8_t*)(&SPI_MODULE->DR) = 0xff; //Dummy bits to keep clock on
+	//uint8_t temp = *(__IO uint8_t*)(&SPI_MODULE->DR); //initiate read / clear buffer
 	
 	//now read result
 	while (!(SPI_MODULE->SR & (SPI_SR_RXNE))); //Wait until RXNE is set
