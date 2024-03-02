@@ -74,10 +74,12 @@ void SpiWriteBytes(unsigned char byteCount, const unsigned char* pData)
 	}
 	while(!(SPI_MODULE->SR & (1u << 1))); //wait on TXE 
 	while(!(SPI_MODULE->SR & (1u << 7))); //wait on busy bit to indicate end of transmission, lest we bring CS high too early
+	
 	for(int i = 0; i<6; i++) //hacky delay to stop CS from rising early
 	{
 		__NOP();
 	}
+	
 }
 
 /********************************************************************************************
@@ -95,10 +97,10 @@ void SpiReadBytes(unsigned char byteCount, unsigned char* pData)
 	for (int i = 0; i < byteCount; i++)
 	{
 		*ptr++ = read_SPI_noCS(); //keep clock on and read
-		while(!(SPI_MODULE->SR & (1u << 1))); //wait on TXE
-		while(!(SPI_MODULE->SR & (1u << 7))); //wait on busy bit to indicate end of transmission, lest we bring CS high too early
+		//while(!(SPI_MODULE->SR & (1u << 1))); //wait on TXE
+		//while(!(SPI_MODULE->SR & (1u << 7))); //wait on busy bit to indicate end of transmission, lest we bring CS high too early
 	}
-
+ 
 }
 
 /*********************************************************************************************
@@ -123,12 +125,15 @@ unsigned char GetResponse_CTS(unsigned char byteCount, unsigned char* pData)
 	{
 		
 		SPI_PORT->ODR &=~ (1u << SPI_NSS);//bring CS low
-		write_SPI_noCS(0x44); //write CTS command                                                                                                   
+		write_SPI_noCS(0x44); //write CTS command
+		for(int i=0; i<3; i++) //approx 10us delay
+		{
+      __NOP(); //do nothing
+		}		
 		ctsVal = read_SPI_noCS(); 
 		while(!(SPI_MODULE->SR & (1u << 1))); //wait on TXE
-		while(!(SPI_MODULE->SR & (1u << 7))); //wait on busy bit to indicate end of transmission, lest we bring CS high too early
+		//while(!(SPI_MODULE->SR & (1u << 7))); //wait on busy bit to indicate end of transmission, lest we bring CS high too early
 
-		
 		/*
 		char ctsstring[15];
 		sprintf(ctsstring, "CTS: %x \n\r", ctsVal);

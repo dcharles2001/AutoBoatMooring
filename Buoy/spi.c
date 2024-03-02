@@ -47,14 +47,14 @@ void init_SPI(void)
 	
 	SPI_PORT->AFR[0]  &=~( ( 15u << ( SPI_MOSI * 4) ) |  //clear pin (7) function
 												 ( 15u << ( SPI_MISO * 4) ) |	//clear pin (6) function
-												 ( 15u << ( SPI_SCK * 4) )  | //clear pin (5) function
-												 ( 15u << ( SPI_NSS * 4) ) );
+												 ( 15u << ( SPI_SCK * 4) ) ); //clear pin (5) function
+												 
 												 
 	
 	SPI_PORT->AFR[0]  |=(  ( 5u << ( SPI_MOSI * 4 ) ) | //AF5 on pin 7
 												 ( 5u << ( SPI_MISO * 4 ) ) | //AF5 on pin 6
-												 ( 5u << ( SPI_SCK * 4 ) ) | //AF5 on pin 5
-												 ( 5u << ( SPI_NSS * 4) ) );
+												 ( 5u << ( SPI_SCK * 4 ) ) ); //AF5 on pin 5
+												
 	
 	/*
 	SPI_PORT->AFR[0]  &=~( ( 15u << ( SPI_MOSI * 4) ) |  //clear pin function
@@ -126,7 +126,8 @@ uint8_t read_SPI_noCS(void) //write dummy bytes to keep clock on for SDO data, n
 	//write dummy bits
 	//while(!(SPI_MODULE->SR & (1u << 7))); //wait on busy bit
 	//uint8_t temp = *(__IO uint8_t*)(&SPI_MODULE->DR); //initiate read
-	while (!(SPI_MODULE->SR & (1u << 1))); //Wait on TXE 
+	while (!(SPI_MODULE->SR & (1u << 1))); //Wait on TXE  
+	uint8_t temp = *(__IO uint8_t*)(&SPI_MODULE->DR); //clear buffer
 	*(__IO uint8_t*)(&SPI_MODULE->DR) = 0xff; //Dummy bits to keep clock on
 	//uint8_t temp = *(__IO uint8_t*)(&SPI_MODULE->DR); //initiate read / clear buffer
 	
