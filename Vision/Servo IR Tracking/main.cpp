@@ -2,21 +2,21 @@
 #include "Servo.h"
 #include "stdio.h"
 #include <cstdio>
-#include <string>
-#include <cmath>
-#include <memory>
+//#include <string>
+//#include <cmath>
+//#include <memory>
 #include <iostream>
 
 float STEP = 0.005;
-int sampleSize = 75;
 using namespace std;
 
 //int Cord1X1,Cord1X2,Cord1X3
-
+int sampleSize = 5;
 
 I2C i2c1(PB_9, PB_8);
 BufferedSerial pc(USBTX, USBRX);
-BufferedSerial lidarSerial1(D1, D0);
+BufferedSerial lidarSerial(D1, D0);
+
 
 Servo servoX1(D9);
 Servo servoY1(D6);
@@ -24,6 +24,11 @@ Servo servoY1(D6);
 Timer tick;
 Thread Thread_Turret1;
 EventQueue Queue_Turret1(1 * EVENTS_EVENT_SIZE);
+
+
+Thread Thread_ToF;
+EventQueue Queue_ToF(1 * EVENTS_EVENT_SIZE);
+
 
 void Write_2bytes(char d1, char d2, int IRsensorAddress) {
     char data[2] = {d1, d2};
@@ -123,12 +128,12 @@ public:
     }
 
     uint16_t Distance() {
-        uint8_t buf[9]; // An array that holds data
-        uint16_t lastdistance;
+        uint8_t buf[9] = {0}; // An array that holds data
+        int lastdistance;
         if (turretID == 1) {
-            if (lidarSerial1.readable()) {
+            if (lidarSerial.readable()) {
                 for (int j = 0; j < sampleSize; j++) {
-                    lidarSerial1.read(buf, 9); // Read 9 bytes of data
+                    lidarSerial.read(buf, 9); // Read 9 bytes of data
                     
                     //check = buf[0] + buf[1] + buf[2] + buf[3] + buf[4] + buf[5] + buf[6] + buf[7];
                 
@@ -147,16 +152,15 @@ public:
                                 ignoreReads++;
                             } else {
                                 averageDistance /= sampleSize;
-                                lastDistance = averageDistance;
+                                lastdistance = averageDistance;
                             }
-                            j = 0;
                             averageDistance = 0;
                         }
                         
                     }
                 }
             } else {
-                lastDistance = 10000;
+                return -1;
             }
         }
         memset(buf, 0, sizeof(buf));
@@ -246,20 +250,92 @@ void Turret1_Function() {
 }
 
 
-//void Turret1_Function();
+int lastDistance = 0;
+int averageDistance = 0;
+int ignoreReads = 0;
+int j = 0;
+
+void Dist_Function(int turretID){
+    uint8_t buf[9] = {0}; // An array that holds data
+        if (lidarSerial.readable()) {
+            lidarSerial.read(buf, 9); // Read 9 bytes of data
+            if (buf[0] == 0x59 && buf[1] == 0x59) {
+                uint16_t distance = buf[2] + buf[3] * 256;
+                if(distance != 0){
+                    averageDistance += distance;
+	                j++;
+                }
+            if(j == sampleSize){
+		        averageDistance /= sampleSize;
+                if(ignoreReads<1){
+                    ignoreReads++;
+                }else{
+		            cout<<averageDistance<<endl;
+                }
+                j = 0;
+		        averageDistance = 0;
+	        }
+        }
+    }
+    memset(buf,0,sizeof(buf));
+    ThisThread::sleep_for(1ms);
+}
+
+void ToF_Function(){
+    Dist_Function(1);
+    //ThisThread::sleep_for(5ms);
+}
 
 int main() {
     pc.set_baud(115200);
     //i2c1.frequency(100000);
-    tick.start();
     //
-    lidarSerial1.set_baud(115200); // Set baud rate for Lidar serial communication
+    lidarSerial.set_baud(115200); // Set baud rate for Lidar serial communication
     i2c1.frequency(115200);
 
-    Queue_Turret1.call_every(49ms, Turret1_Function);
+    Write_2bytes(0x30, 0x01, 0xB0); ThisThread::sleep_for(10ms);
+    Write_2bytes(0x30, 0x08, 0xB0); ThisThread::sleep_for(10ms);
+    Write_2bytes(0x06, 0x90, 0xB0); ThisThread::sleep_for(10ms);
+    Write_2bytes(0x08, 0xC0, 0xB0); ThisThread::sleep_for(10ms);
+    Write_2bytes(0x1A, 0x40, 0xB0); ThisThread::sleep_for(10ms);
+    Write_2bytes(0x33, 0x33, 0xB0); ThisThread::sleep_for(10ms);
+        
+    ThisThread::sleep_for(100ms);
+    //tick.start();
+    //Queue_ToF.call_every(60ms, ToF_Function);
 
-    Thread_Turret1.start(callback(&Queue_Turret1, &EventQueue::dispatch_forever));
+    //Thread_ToF.start(callback(&Queue_ToF, &EventQueue::dispatch_forever));
+    while(true){
+    uint8_t buf[9] = {0}; // An array that holds data
+        if (lidarSerial.readable()) {
+            lidarSerial.read(buf, 9); // Read 9 bytes of data
+            cout<<"HERE"<<endl;
+            if (buf[0] == 0x59 && buf[1] == 0x59) {
+                cout<<"NEVER ACTUALLY HERE"<<endl;
+                uint16_t distance = buf[2] + buf[3] * 256;
+                if(distance != 0){
+                    averageDistance += distance;
+	                j++;
+                }
+            if(j == sampleSize){
+		        averageDistance /= sampleSize;
+                if(ignoreReads<1){
+                    ignoreReads++;
+                }else{
+		            cout<<averageDistance<<endl;
+                }
+                j = 0;
+		        averageDistance = 0;
+	        }
+        }
+    }
+    memset(buf,0,sizeof(buf));
+    wait_us(10000);
+    }
+    //Queue_Turret1.call_every(49ms, Turret1_Function);
 
+    //Thread_Turret1.start(callback(&Queue_Turret1, &EventQueue::dispatch_forever));
+    
 
     // IR sensor initialize
 
