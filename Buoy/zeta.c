@@ -1,5 +1,5 @@
 /*
-    Ported by Guy Ringshaw 2024
+    Ported and modified by Guy Ringshaw 2024
     STM32 'bare metal' C code for interfacing with an Si4455 RF transceiver chip (zeta 433 config)
 		STM32L432kc used
 		Ported from arduino version: https://github.com/deeplyembeddedWP/EZRadio_SI4455-Library.git
@@ -126,7 +126,7 @@ unsigned char GetResponse_CTS(unsigned char byteCount, unsigned char* pData)
 		
 		SPI_PORT->ODR &=~ (1u << SPI_NSS);//bring CS low
 		write_SPI_noCS(0x44); //write CTS command
-		for(int i=0; i<3; i++) //approx 10us delay
+		for(int i=0; i<3; i++) //approx 10us delay, this prevents CTS fail
 		{
       __NOP(); //do nothing
 		}		
@@ -144,7 +144,7 @@ unsigned char GetResponse_CTS(unsigned char byteCount, unsigned char* pData)
 		{
 			if (byteCount)
 			{
-				SpiReadBytes(byteCount, pData);
+				SpiReadBytes(byteCount, pData); //also used for getting responses back
 			}
 			SPI_PORT->ODR |= (1u << SPI_NSS); //bring CS high
 			break;

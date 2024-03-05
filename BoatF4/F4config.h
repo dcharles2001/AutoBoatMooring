@@ -3,6 +3,7 @@
 
 #include "mbed.h"
 #include "RadioConfig.h"
+#include "stdio.h"
 
 
 typedef struct  //template struct for SPI devices

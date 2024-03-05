@@ -23,6 +23,17 @@ int main()
         printf("Zeta response: %X\n\r", response[i]);
     }
 
+    //Zeta433.Start_Tx(NULL); //start TX
 
+    cmd = 0x66; //write to fifo
+    unsigned char msg[13] = "Test message";
+
+    while(1)    
+    {
+        Zeta433.SendCmdArgs(cmd, 0x01, 0x0c, msg);
+        Zeta433.Start_Tx(NULL); //start TX
+        printf("Sending msg\n\r");
+        ThisThread::sleep_for(100ms);
+    }
 }
 
