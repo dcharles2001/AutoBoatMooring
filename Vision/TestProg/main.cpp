@@ -82,11 +82,17 @@ int main()
 //#include <memory>
 #include <iostream>
 
-Thread Thread_ToF;
-EventQueue Queue_ToF(1 * EVENTS_EVENT_SIZE);
+Thread Thread_ToF1;
+EventQueue Queue_ToF1(1 * EVENTS_EVENT_SIZE);
 
-Thread Thread_Dist;
-EventQueue Queue_Dist(1 * EVENTS_EVENT_SIZE);
+Thread Thread_Dist1;
+EventQueue Queue_Dist1(1 * EVENTS_EVENT_SIZE);
+
+Thread Thread_ToF2;
+EventQueue Queue_ToF2(1 * EVENTS_EVENT_SIZE);
+
+Thread Thread_Dist2;
+EventQueue Queue_Dist2(1 * EVENTS_EVENT_SIZE);
 
 
 float STEP = 0.002;
@@ -96,23 +102,40 @@ using namespace std;
 int sampleSize = 5;
 
 I2C i2c1(PB_9, PB_8);
+I2C i2c2(PB_11, PB_10);
 BufferedSerial pc(USBTX, USBRX);
-BufferedSerial lidarSerial(D1, D0);
+BufferedSerial lidarSerial1(D1, D0);
+BufferedSerial lidarSerial2(PE_8, PE_7);
 
 
 Servo servoX1(D9);
 Servo servoY1(D6);
 
+//Servo servoX2(D9);
+//Servo servoY2(D6);
+
 Timer tick;
 Thread Thread_Turret1;
 EventQueue Queue_Turret1(1 * EVENTS_EVENT_SIZE);
 
-int avgDist = 0;
+Thread Thread_Turret2;
+EventQueue Queue_Turret2(1 * EVENTS_EVENT_SIZE);
+
+
+
+int dist1 = 0;
+int avgDist1 = 0;
+int lastDist1;
+int dist2 = 0;
+int avgDist2 = 0;
+int lastDist2 = 0;
 
 void Write_2bytes(char d1, char d2, int IRsensorAddress) {
     char data[2] = {d1, d2};
     if (IRsensorAddress == 0xB0) {
         i2c1.write(IRsensorAddress, data, 2);
+    }else{
+        i2c2.write(IRsensorAddress, data, 2);
     }
 }
 
@@ -120,10 +143,7 @@ class Turret {
 private:
     int turretID;
     int flip = 1;
-    int ignoreReads = 0;
     int fail = 0;
-    int averageDistance = 0;
-    int lastDistance = 0;
     float posX = 0.5; 
     float posY = 0.5;
     char data_buf[16];
@@ -131,7 +151,6 @@ private:
     int Iy[4];
     int s;
     int dist = 0;
-    int lastDist;
 
 public:
     // Constructor
@@ -143,7 +162,15 @@ public:
             Write_2bytes(0x08, 0xC0, 0xB0); ThisThread::sleep_for(10ms);
             Write_2bytes(0x1A, 0x40, 0xB0); ThisThread::sleep_for(10ms);
             Write_2bytes(0x33, 0x33, 0xB0); ThisThread::sleep_for(10ms);
-        ThisThread::sleep_for(100ms);
+            ThisThread::sleep_for(100ms);
+        }else{
+            Write_2bytes(0x30, 0x01, 0xB0); ThisThread::sleep_for(10ms);
+            Write_2bytes(0x30, 0x08, 0xB0); ThisThread::sleep_for(10ms);
+            Write_2bytes(0x06, 0x90, 0xB0); ThisThread::sleep_for(10ms);
+            Write_2bytes(0x08, 0xC0, 0xB0); ThisThread::sleep_for(10ms);
+            Write_2bytes(0x1A, 0x40, 0xB0); ThisThread::sleep_for(10ms);
+            Write_2bytes(0x33, 0x33, 0xB0); ThisThread::sleep_for(10ms);
+            ThisThread::sleep_for(100ms);
         }
     }
     // The I2C object is automatically deleted when i2c is deleted
@@ -161,16 +188,21 @@ void sweep(void) {
 
         if (posX <= 0.0) {
             flip = 1;
-            cout<<"No Buoy Found"<<endl;
+            cout<<"Buoy 1 Not Found"<<endl;
         } else if (posX >= 1) {
             flip = -1;
-        }
 
-        if (turretID == 1) {
-            servoX1 = posX;
-            servoY1 = posY;
-        }
+        //if (turretID == 1) {
+        //}else{
+            //servoX2 = posX;
+            //servoY2 = posY;
+            //cout<<"Buoy 2 Not Found"<<endl;
+        //}
     }
+        servoX1 = posX;
+        servoY1 = posY;
+}
+
 
     // Method to move the turret to a specific X-Y position
     void Track(int X, int Y, int tolerance) {
@@ -211,10 +243,13 @@ void sweep(void) {
     }
 
     int* IR_Sensor(int IRAddress) {
-        //if (turretID == 1) {
+        if (turretID == 1) {
             i2c1.write(IRAddress, "\x36", 1);  // Send the register address to read
             i2c1.read(IRAddress, data_buf, 16);  // Read 16 bytes
-        //}
+        }else{
+            i2c2.write(IRAddress, "\x36", 1);  // Send the register address to read
+            i2c2.read(IRAddress, data_buf, 16);  // Read 16 bytes
+        }
         Ix[0] = data_buf[1];
         Iy[0] = data_buf[2];
         s     = data_buf[3];
@@ -244,46 +279,89 @@ void sweep(void) {
     }
 
     void ToF_Function(){
-    if(avgDist !=0){
-        lastDist = avgDist;
-        printf("Distance is: %d\n", lastDist);
-    }else{
-        printf("Last Distance was: %d\n",lastDist);
+        if(turretID == 1){
+            if(avgDist1 !=0){
+                lastDist1 = avgDist1;
+                printf("Distance1 is: %d\n", lastDist1);
+            }else{
+                printf("Last Distance1 was: %d\n",lastDist1);
+            }
+        }else{
+            if(avgDist2 !=0){
+                lastDist2 = avgDist2;
+                printf("Distance2 is: %d\n", lastDist2);
+            }else{
+                printf("Last Distance2 was: %d\n",lastDist2);
+            }
+
+        }
     }
-}
 };
 
-int Distance(){
+int Distance1(){
     uint8_t buf[9] = {0}; // An array that holds data
-    int distance = 0;
-    if (lidarSerial.readable()) {
-        lidarSerial.read(buf, 9); // Read 9 bytes of data
+    int distance1 = 0;
+    if (lidarSerial1.readable()) {
+        lidarSerial1.read(buf, 9); // Read 9 bytes of data
         if (buf[0] == 0x59 && buf[1] == 0x59) {
-            distance = buf[2] + buf[3] * 256;
-            if (distance != 0) {
+            distance1 = buf[2] + buf[3] * 256;
+            if (distance1 != 0) {
                 //printf("Distance: %d\n", distance);
             }
         }
     }
     memset(buf, 0, sizeof(buf));
-    return distance;
+    //ThisThread::sleep_for(1ms);
+    return distance1;
 }
 
-int dist = 0;
+int Distance2(){
+    uint8_t buf[9] = {0}; // An array that holds data
+    int distance2 = 0;
+    if (lidarSerial2.readable()) {
+        lidarSerial2.read(buf, 9); // Read 9 bytes of data
+        if (buf[0] == 0x59 && buf[1] == 0x59) {
+            distance2 = buf[2] + buf[3] * 256;
+            if (distance2 != 0) {
+                //printf("Distance: %d\n", distance);
+            }
+        }
+    }
+    memset(buf, 0, sizeof(buf));
+    //ThisThread::sleep_for(1ms);
+    return distance2;
+          
+}
 
-void Dist_Avg() {
+
+void Dist_Avg1() {
     int missed = 0;
-    avgDist = 0;
+    avgDist1 = 0;
 
     for(int i = 0; i<sampleSize; i++){
-        dist = Distance();
-        if (dist != 0){
-            avgDist += dist;
+        dist1 = Distance1();
+        if (dist1 != 0){
+            avgDist1 += dist1;
         }else{
            missed++;
         }
     }
-    avgDist /=(sampleSize - missed);
+    avgDist1 /=(sampleSize - missed);
+}
+
+void Dist_Avg2() {
+    int missed = 0;
+    avgDist2 = 0;
+
+    for(int i = 0; i<sampleSize; i++){
+        dist2 = Distance2();
+        if (dist2 != 0){
+            avgDist2 += dist2;
+        }else{
+           missed++;
+        }
+    }
+    avgDist2 /=(sampleSize - missed);
 }
 
 
@@ -292,8 +370,12 @@ extern Turret Turret1;
 class Turret;
 Turret Turret1(1);
 
-void Turret1_Function() {
+extern Turret Turret2;
+class Turret;
+Turret Turret2(2);
 
+
+void Turret1_Function() {
     int* Coordinates = Turret1.IR_Sensor(0xB0);
 
     int X = Coordinates[0];
@@ -302,12 +384,12 @@ void Turret1_Function() {
     static int reading = 0;
 
     if (X == 0 && Y == 0) {
-        cout<<"Error: No IR Sensor Detected"<<endl;
+        cout<<"Error:IR Sensor 1 Not Detected"<<endl;
     } else if (X == 1023 && Y == 1023) {
         if (fail <= 199) {
             fail++;
         } else if (fail == 200) {
-            cout<<"No Buoy Found"<<endl;
+            cout<<"Buoy 1 Not Found"<<endl;
             fail++;
         } else {
             Turret1.sweep();
@@ -321,18 +403,59 @@ void Turret1_Function() {
             reading++;
         }
         ThisThread::sleep_for(1ms);
-    }   //Turret1.ToF_Function();
+    }   
 }
 
+
+void Turret2_Function() {
+    int* Coordinates = Turret2.IR_Sensor(0xB0);
+
+    int X = Coordinates[0];
+    int Y = Coordinates[1];
+    static int fail = 0;
+    static int reading = 0;
+
+    if (X == 0 && Y == 0) {
+        cout<<"Error: IR Sensor 2 Not Detected"<<endl;
+    } else if (X == 1023 && Y == 1023) {
+        if (fail <= 199) {
+            fail++;
+        } else if (fail == 200) {
+            cout<<"Buoy 2 Not Found"<<endl;
+            fail++;
+        } else {
+            Turret2.sweep();
+        }
+    }else{
+        Turret2.Track(X,Y,5);
+        if(reading == 200){
+        Turret2.ToF_Function();
+        reading = 0;
+        }else{
+            reading++;
+        }
+        ThisThread::sleep_for(1ms);
+    }   
+}
 
 int main(){
     
     pc.set_baud(115200); // Set baud rate for PC serial communication
-    lidarSerial.set_baud(115200); // Set baud rate for Lidar serial communication
-    tick.start();
+    lidarSerial1.set_baud(115200); // Set baud rate for Lidar serial communication
+    lidarSerial2.set_baud(115200);
+
     Queue_Turret1.call_every(2ms, Turret1_Function);
     Thread_Turret1.start(callback(&Queue_Turret1, &EventQueue::dispatch_forever));
 
-    Queue_Dist.call_every(10ms, Dist_Avg);
-    Thread_Dist.start(callback(&Queue_Dist, &EventQueue::dispatch_forever));
+    Queue_Turret2.call_every(2ms, Turret2_Function);
+    Thread_Turret2.start(callback(&Queue_Turret2, &EventQueue::dispatch_forever));
+
+    Queue_Dist1.call_every(10ms, Dist_Avg1);
+    Thread_Dist1.start(callback(&Queue_Dist1, &EventQueue::dispatch_forever));
+
+    Queue_Dist2.call_every(10ms, Dist_Avg2);
+    Thread_Dist2.start(callback(&Queue_Dist2, &EventQueue::dispatch_forever));
 }
+
+  
+
