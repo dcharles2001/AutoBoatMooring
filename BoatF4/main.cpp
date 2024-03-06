@@ -30,7 +30,7 @@ int main()
 
     while(1)    
     {
-        Zeta433.SendCmdArgs(cmd, 0x01, 0x0c, msg);
+        Zeta433.SendCmdArgs(cmd, 0x01, sizeof(msg), msg);
         Zeta433.Start_Tx(NULL); //start TX
         printf("Sending msg\n\r");
         ThisThread::sleep_for(100ms);
