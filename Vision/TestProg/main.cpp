@@ -95,7 +95,7 @@ Thread Thread_Dist2;
 EventQueue Queue_Dist2(1 * EVENTS_EVENT_SIZE);
 
 
-float STEP = 0.002;
+float STEP = 0.004;
 using namespace std;
 
 //int Cord1X1,Cord1X2,Cord1X3
@@ -108,11 +108,11 @@ BufferedSerial lidarSerial1(D1, D0);
 BufferedSerial lidarSerial2(PE_8, PE_7);
 
 
-Servo servoX1(D9);
+Servo servoX1(D5);
 Servo servoY1(D6);
 
-//Servo servoX2(D9);
-//Servo servoY2(D6);
+Servo servoX2(D9);
+Servo servoY2(D10);
 
 Timer tick;
 Thread Thread_Turret1;
@@ -130,13 +130,12 @@ int dist2 = 0;
 int avgDist2 = 0;
 int lastDist2 = 0;
 
+int IRsensorAddress = 0xB0;
+
 void Write_2bytes(char d1, char d2, int IRsensorAddress) {
     char data[2] = {d1, d2};
-    if (IRsensorAddress == 0xB0) {
         i2c1.write(IRsensorAddress, data, 2);
-    }else{
         i2c2.write(IRsensorAddress, data, 2);
-    }
 }
 
 class Turret {
@@ -155,23 +154,13 @@ private:
 public:
     // Constructor
     Turret(int turretID) : turretID(turretID){
-        if(turretID == 1){
-            Write_2bytes(0x30, 0x01, 0xB0); ThisThread::sleep_for(10ms);
-            Write_2bytes(0x30, 0x08, 0xB0); ThisThread::sleep_for(10ms);
-            Write_2bytes(0x06, 0x90, 0xB0); ThisThread::sleep_for(10ms);
-            Write_2bytes(0x08, 0xC0, 0xB0); ThisThread::sleep_for(10ms);
-            Write_2bytes(0x1A, 0x40, 0xB0); ThisThread::sleep_for(10ms);
-            Write_2bytes(0x33, 0x33, 0xB0); ThisThread::sleep_for(10ms);
+            Write_2bytes(0x30, 0x01,  IRsensorAddress); ThisThread::sleep_for(10ms);
+            Write_2bytes(0x30, 0x08,  IRsensorAddress); ThisThread::sleep_for(10ms);
+            Write_2bytes(0x06, 0x90,  IRsensorAddress); ThisThread::sleep_for(10ms);
+            Write_2bytes(0x08, 0xC0,  IRsensorAddress); ThisThread::sleep_for(10ms);
+            Write_2bytes(0x1A, 0x40,  IRsensorAddress); ThisThread::sleep_for(10ms);
+            Write_2bytes(0x33, 0x33,  IRsensorAddress); ThisThread::sleep_for(10ms);
             ThisThread::sleep_for(100ms);
-        }else{
-            Write_2bytes(0x30, 0x01, 0xB0); ThisThread::sleep_for(10ms);
-            Write_2bytes(0x30, 0x08, 0xB0); ThisThread::sleep_for(10ms);
-            Write_2bytes(0x06, 0x90, 0xB0); ThisThread::sleep_for(10ms);
-            Write_2bytes(0x08, 0xC0, 0xB0); ThisThread::sleep_for(10ms);
-            Write_2bytes(0x1A, 0x40, 0xB0); ThisThread::sleep_for(10ms);
-            Write_2bytes(0x33, 0x33, 0xB0); ThisThread::sleep_for(10ms);
-            ThisThread::sleep_for(100ms);
-        }
     }
     // The I2C object is automatically deleted when i2c is deleted
     ~Turret(){
@@ -186,21 +175,27 @@ void sweep(void) {
             posY = 0.4;
         }
 
-        if (posX <= 0.0) {
-            flip = 1;
-            cout<<"Buoy 1 Not Found"<<endl;
-        } else if (posX >= 1) {
-            flip = -1;
-
-        //if (turretID == 1) {
-        //}else{
-            //servoX2 = posX;
-            //servoY2 = posY;
-            //cout<<"Buoy 2 Not Found"<<endl;
-        //}
-    }
-        servoX1 = posX;
-        servoY1 = posY;
+        if (turretID == 1) {
+            if (posX <= 0.0) {
+                flip = 1;
+                //cout<<"Buoy 1 Not Found"<<endl;
+            } else if (posX >= 1) {
+                flip = -1;
+            }
+                servoX1 = posX;
+                servoY1 = posY;
+        }else{
+            if (posX <= 0.0) {
+                flip = 1;
+                //cout<<"Buoy 2 Not Found"<<endl;
+            } else if (posX >= 1) {
+                flip = -1;
+            }
+                servoX2 = posX;
+                servoY2 = posY;
+        }
+        //servoX1 = posX;
+        //servoY1 = posY;
 }
 
 
@@ -226,11 +221,15 @@ void sweep(void) {
         if (abs(415 - X) > tolerance) {
             if (turretID == 1) {
                 servoX1 = posX;
+            }else{
+                servoX2 = posX;
             }
         }
         if (abs(512 - Y) > tolerance) {          
             if (turretID == 1) {
                 servoY1 = posY;
+            }else{
+                servoY2 = posY;
             }     
         }
     }
@@ -282,16 +281,16 @@ void sweep(void) {
         if(turretID == 1){
             if(avgDist1 !=0){
                 lastDist1 = avgDist1;
-                printf("Distance1 is: %d\n", lastDist1);
+                printf("Buoy 1 is %d cm away\n", lastDist1);
             }else{
-                printf("Last Distance1 was: %d\n",lastDist1);
+                printf("Last Buoy 1 Distance was %d cm away\n",lastDist1);
             }
         }else{
             if(avgDist2 !=0){
                 lastDist2 = avgDist2;
-                printf("Distance2 is: %d\n", lastDist2);
+                printf("Buoy 2 is %d cm away\n", lastDist2);
             }else{
-                printf("Last Distance2 was: %d\n",lastDist2);
+                printf("Last Buoy 2 Distance was %d cm away\n",lastDist2);
             }
 
         }
@@ -376,7 +375,7 @@ Turret Turret2(2);
 
 
 void Turret1_Function() {
-    int* Coordinates = Turret1.IR_Sensor(0xB0);
+    int* Coordinates = Turret1.IR_Sensor(IRsensorAddress);
 
     int X = Coordinates[0];
     int Y = Coordinates[1];
@@ -389,13 +388,14 @@ void Turret1_Function() {
         if (fail <= 199) {
             fail++;
         } else if (fail == 200) {
-            cout<<"Buoy 1 Not Found"<<endl;
+            //cout<<"Buoy 1 Not Found"<<endl;
             fail++;
         } else {
             Turret1.sweep();
         }
     }else{
         Turret1.Track(X,Y,5);
+        fail = 0;
         if(reading == 200){
         Turret1.ToF_Function();
         reading = 0;
@@ -408,7 +408,7 @@ void Turret1_Function() {
 
 
 void Turret2_Function() {
-    int* Coordinates = Turret2.IR_Sensor(0xB0);
+    int* Coordinates = Turret2.IR_Sensor(IRsensorAddress);
 
     int X = Coordinates[0];
     int Y = Coordinates[1];
@@ -421,13 +421,14 @@ void Turret2_Function() {
         if (fail <= 199) {
             fail++;
         } else if (fail == 200) {
-            cout<<"Buoy 2 Not Found"<<endl;
+            //cout<<"Buoy 2 Not Found"<<endl;
             fail++;
         } else {
             Turret2.sweep();
         }
     }else{
         Turret2.Track(X,Y,5);
+        fail = 0;
         if(reading == 200){
         Turret2.ToF_Function();
         reading = 0;

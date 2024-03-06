@@ -286,6 +286,32 @@ void ToF_Function(){
     //ThisThread::sleep_for(5ms);
 }
 
+
+
+//BufferedSerial pc(USBTX, USBRX); // Define serial object with USBTX and USBRX
+BufferedSerial lidarSerial(D1, D0); // Define serial object with the appropriate pins
+int main(){
+    
+    pc.set_baud(115200); // Set baud rate for PC serial communication
+    lidarSerial.set_baud(115200); // Set baud rate for Lidar serial communication
+    
+    while(true){
+        uint8_t buf[9] = {0}; // An array that holds data
+        if (lidarSerial.readable()) {
+            lidarSerial.read(buf, 9); // Read 9 bytes of data
+            if (buf[0] == 0x59 && buf[1] == 0x59) {
+                uint16_t distance = buf[2] + buf[3] * 256;
+                if(distance != 0){
+                    printf("Distance: %d cm\n", distance);
+                }
+                
+            }
+        }
+        memset(buf,0,sizeof(buf));
+        wait_us(1000); 
+    }
+}
+/*
 int main() {
     pc.set_baud(115200);
     //i2c1.frequency(100000);
@@ -305,33 +331,6 @@ int main() {
     //Queue_ToF.call_every(60ms, ToF_Function);
 
     //Thread_ToF.start(callback(&Queue_ToF, &EventQueue::dispatch_forever));
-    while(true){
-    uint8_t buf[9] = {0}; // An array that holds data
-        if (lidarSerial.readable()) {
-            lidarSerial.read(buf, 9); // Read 9 bytes of data
-            cout<<"HERE"<<endl;
-            if (buf[0] == 0x59 && buf[1] == 0x59) {
-                cout<<"NEVER ACTUALLY HERE"<<endl;
-                uint16_t distance = buf[2] + buf[3] * 256;
-                if(distance != 0){
-                    averageDistance += distance;
-	                j++;
-                }
-            if(j == sampleSize){
-		        averageDistance /= sampleSize;
-                if(ignoreReads<1){
-                    ignoreReads++;
-                }else{
-		            cout<<averageDistance<<endl;
-                }
-                j = 0;
-		        averageDistance = 0;
-	        }
-        }
-    }
-    memset(buf,0,sizeof(buf));
-    wait_us(10000);
-    }
     //Queue_Turret1.call_every(49ms, Turret1_Function);
 
     //Thread_Turret1.start(callback(&Queue_Turret1, &EventQueue::dispatch_forever));
