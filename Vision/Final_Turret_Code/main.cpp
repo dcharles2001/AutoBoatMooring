@@ -1,85 +1,8 @@
-/*
-#include "mbed.h"
-
-typedef struct {
-  int distance;
-  int strength;
-  int temp;
-  bool receiveComplete;
-} TF;
-
-TF Lidar = {0, 0, 0, false};
-
-static BufferedSerial pc(D1, D0); // Define serial object with USBTX and USBRX
-
-void getLidarData(TF* lidar) 
-{
-  static char i = 0;
-  char j = 0;
-  int checksum = 0;
-  static int rx[9];
-  static int buff[9];
-  while (pc.readable()) 
-  {
-    pc.read(buff,sizeof(buff));
-    rx[i] = buff[i];
-    //printf("%d\t%d\t%d\n",rx[i],buff[0],i);
-    if (rx[0] != 0x59) 
-    {
-      i = 0;
-    } 
-    else if (i == 1 && rx[1] != 0x59) 
-    {
-      i = 0;
-    } 
-    else if (i == 8) 
-    {
-      for (j = 0; j < 8; j++) 
-      {
-        checksum += rx[j];
-      }
-      if (rx[8] == (checksum % 256)) 
-      {
-        lidar->distance = rx[2] + rx[3] * 256;
-        lidar->strength = rx[4] + rx[5] * 256;
-        lidar->temp = (rx[6] + rx[7] * 256) / 8 - 256;
-        lidar->receiveComplete = true;
-      }
-      i = 0;
-    } 
-    else 
-    {
-      i++;
-    }
-  }
-}
-
-int main() 
-{
-  pc.set_baud(9600); // Set baud rate
-  pc.set_format(8,BufferedSerial::None,1);
-  while (1) 
-  {
-    getLidarData(&Lidar); // Acquisition of radar data
-    //printf("attempt\n");
-    if (Lidar.receiveComplete) 
-    {
-      Lidar.receiveComplete = false;
-      printf("Distance: %d cm\t", Lidar.distance);
-      printf("Strength: %d\t", Lidar.strength);
-      printf("Temp: %d\n", Lidar.temp);
-    }
-  }
-}
-*/
 
 #include "mbed.h"
 #include "Servo.h"
 #include "stdio.h"
 #include <cstdio>
-//#include <string>
-//#include <cmath>
-//#include <memory>
 #include <iostream>
 
 Thread Thread_ToF1;
@@ -93,13 +16,6 @@ EventQueue Queue_ToF2(1 * EVENTS_EVENT_SIZE);
 
 Thread Thread_Dist2;
 EventQueue Queue_Dist2(1 * EVENTS_EVENT_SIZE);
-
-
-float STEP = 0.004;
-using namespace std;
-
-//int Cord1X1,Cord1X2,Cord1X3
-int sampleSize = 5;
 
 I2C i2c1(PB_9, PB_8);
 I2C i2c2(PB_11, PB_10);
@@ -121,7 +37,7 @@ EventQueue Queue_Turret1(1 * EVENTS_EVENT_SIZE);
 Thread Thread_Turret2;
 EventQueue Queue_Turret2(1 * EVENTS_EVENT_SIZE);
 
-
+using namespace std;
 
 int dist1 = 0;
 int avgDist1 = 0;
@@ -130,7 +46,9 @@ int dist2 = 0;
 int avgDist2 = 0;
 int lastDist2 = 0;
 
+int sampleSize = 5;
 int IRsensorAddress = 0xB0;
+float STEP = 0.004;
 
 void Write_2bytes(char d1, char d2, int IRsensorAddress) {
     char data[2] = {d1, d2};
@@ -178,7 +96,6 @@ void sweep(void) {
         if (turretID == 1) {
             if (posX <= 0.0) {
                 flip = 1;
-                //cout<<"Buoy 1 Not Found"<<endl;
             } else if (posX >= 1) {
                 flip = -1;
             }
@@ -187,15 +104,12 @@ void sweep(void) {
         }else{
             if (posX <= 0.0) {
                 flip = 1;
-                //cout<<"Buoy 2 Not Found"<<endl;
             } else if (posX >= 1) {
                 flip = -1;
             }
                 servoX2 = posX;
                 servoY2 = posY;
         }
-        //servoX1 = posX;
-        //servoY1 = posY;
 }
 
 
@@ -304,13 +218,9 @@ int Distance1(){
         lidarSerial1.read(buf, 9); // Read 9 bytes of data
         if (buf[0] == 0x59 && buf[1] == 0x59) {
             distance1 = buf[2] + buf[3] * 256;
-            if (distance1 != 0) {
-                //printf("Distance: %d\n", distance);
-            }
         }
     }
     memset(buf, 0, sizeof(buf));
-    //ThisThread::sleep_for(1ms);
     return distance1;
 }
 
@@ -322,14 +232,11 @@ int Distance2(){
         if (buf[0] == 0x59 && buf[1] == 0x59) {
             distance2 = buf[2] + buf[3] * 256;
             if (distance2 != 0) {
-                //printf("Distance: %d\n", distance);
             }
         }
     }
     memset(buf, 0, sizeof(buf));
-    //ThisThread::sleep_for(1ms);
     return distance2;
-          
 }
 
 
@@ -388,7 +295,6 @@ void Turret1_Function() {
         if (fail <= 199) {
             fail++;
         } else if (fail == 200) {
-            //cout<<"Buoy 1 Not Found"<<endl;
             fail++;
         } else {
             Turret1.sweep();
@@ -421,7 +327,6 @@ void Turret2_Function() {
         if (fail <= 199) {
             fail++;
         } else if (fail == 200) {
-            //cout<<"Buoy 2 Not Found"<<endl;
             fail++;
         } else {
             Turret2.sweep();
