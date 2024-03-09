@@ -21,7 +21,7 @@ const tRadioConfiguration RadioConfiguration = RADIO_CONFIGURATION_DATA;
 static Si4455_T Ret_state;
 
 
-zetaspi::zetaspi(SPIConfig_t Pins, DigitalOut sdn, DigitalIn gpio1, DigitalIn nirq): spidevice(Pins.MOSI, Pins.MISO, Pins.SCLK), CS(Pins.CS), SDN(sdn), GPIO1(gpio1), nIRQ(nirq)
+zetaspi::zetaspi(SPIConfig_t Pins, DigitalOut sdn, DigitalIn gpio2, DigitalIn nirq): spidevice(Pins.MOSI, Pins.MISO, Pins.SCLK), CS(Pins.CS), SDN(sdn), GPIO2(gpio2), nIRQ(nirq)
 {
     
 }
@@ -462,6 +462,7 @@ void zetaspi::Start_Tx(unsigned char *pioFixRadioPacket)
 
 	/* Start sending packet on channel, START immediately, Packet according to PH */
 	StartTX(channel, 0, 0);
+   
 }
 
 /********************************************************************************
@@ -507,3 +508,4 @@ void zetaspi::SPI_Init()
     spidevice.frequency(1000000); //1 MHz
     CS = 1;
 }
+

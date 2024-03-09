@@ -67,7 +67,7 @@ class zetaspi
         SPI spidevice;
         DigitalOut CS;
         DigitalOut SDN;
-        DigitalIn GPIO1;
+        DigitalIn GPIO2;
         DigitalIn nIRQ; 
 
         

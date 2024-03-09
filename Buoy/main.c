@@ -35,14 +35,30 @@ int main(void)
   }
 	
 	Radio_StartRx(); //begin RX mode
+	
+	cmd = 0x20; //get int status
+	respByteCount = 0x08;
+	char intresp[30];
+	
+	SendCmdGetResp(0x01, &cmd, respByteCount, response); 
+	for(int i=0; i<respByteCount; i++)
+	{
+		sprintf(intresp, "Int resp: %X", response[i]);
+		send_array_USART(intresp);
+		send_array_USART("\n\r");
+	}
+	
+	
 	cmd = 0x77; //read fifo command
 	respByteCount = 0x10;
 	//other values parameters will remain the same
 	unsigned char zetaresponse[16];
 	char rxstring[50];
+	
+	
 	while(1)
 	{
-		SendCmdGetResp(parambytescnt, &cmd, respByteCount, zetaresponse); //read 16 bytes?
+		SendCmdGetResp(0x01, &cmd, respByteCount, zetaresponse); //read 16 bytes?
 		for(int i=0; i<respByteCount; i++)
 		{
 			//if(zetaresponse[i] == '\0'){break;} //break on null bit

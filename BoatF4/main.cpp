@@ -24,16 +24,31 @@ int main()
     }
 
     //Zeta433.Start_Tx(NULL); //start TX
+    Zeta433.GetIntStatus(0x00, 0x00, 0xff);
 
     cmd = 0x66; //write to fifo
-    unsigned char msg[13] = "Test message";
+    unsigned char msg[21] = "Test message Test123";
+
+    unsigned char cmd1 = 0x15; //request device state
+    unsigned char resp;
+    
+    
 
     while(1)    
     {
-        Zeta433.SendCmdArgs(cmd, 0x01, sizeof(msg), msg);
+        Zeta433.SendCmdGetResp(0x01, &cmd1, 0x01, &resp);
+        printf("Fifo info prior: %X\n\r", resp);
+
+        Zeta433.SendCmdArgs(0x66, 0x01, sizeof(msg), msg);
+
+        Zeta433.SendCmdGetResp(0x01, &cmd1, 0x01, &resp);
+        printf("Fifo info post-fill: %X\n\r", resp);
+
         Zeta433.Start_Tx(NULL); //start TX
-        printf("Sending msg\n\r");
-        ThisThread::sleep_for(100ms);
+
+        
+        //printf("Sending msg\n\r");
+        ThisThread::sleep_for(1s);
     }
 }
 
