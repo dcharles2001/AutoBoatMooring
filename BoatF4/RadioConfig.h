@@ -1,8 +1,6 @@
 #ifndef RADIOCONFIG_H
 #define RADIOCONFIG_H
 
-
-
 // USER DEFINED PARAMETERS
 // Define your own parameters here
 
