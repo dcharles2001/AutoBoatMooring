@@ -44,9 +44,9 @@ int main(void)
 	
 	
 	cmd = 0x77; //read fifo command
-	respByteCount = 0x10;
+	respByteCount = 0x08;
 	//other values parameters will remain the same
-	unsigned char zetaresponse[16];
+	unsigned char zetaresponse[8];
 	char rxstring[50];
 	
 	

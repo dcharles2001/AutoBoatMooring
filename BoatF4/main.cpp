@@ -31,7 +31,7 @@ int main()
     unsigned char testmsg[4] = "AAA";
 
     unsigned char cmd1 = 0x15; //fifo info
-    unsigned char resp[3];
+    unsigned char resp[2];
     
     unsigned char stateparam = 0x02;
 
