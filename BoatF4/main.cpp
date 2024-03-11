@@ -28,7 +28,11 @@ int main()
 
     cmd = 0x66; //write to fifo
     unsigned char msg[33] = "Test message Test1234Test1234567";
-    unsigned char testmsg[4] = "AAA";
+
+    unsigned char testsync[3] = {0x0A, 0x2D, 0xD4};
+    unsigned char testmsg[6] = "AAAAA";
+    
+    unsigned char testpacket[7] = {0x0A, 0x2D, 0xD4, 0x81, 0x81, 0x81, 0x81};
 
     unsigned char cmd1 = 0x15; //fifo info
     unsigned char resp[2];
@@ -45,7 +49,7 @@ int main()
         //Zeta433.SendCmdGetResp(0x01, &cmd1, 0x01, &resp);
         //printf("Fifo info prior: %X\n\r", resp);
 
-        Zeta433.SendCmdArgs(0x66, 0x01, 0x03, testmsg);
+        Zeta433.SendCmdArgs(0x66, 0x01, 0x07, testpacket);
         //Zeta433.SendCmdArgs(0x66, 0x01, sizeof(msg), msg);
         
         /*

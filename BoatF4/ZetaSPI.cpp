@@ -456,7 +456,7 @@ void zetaspi::StartTX(unsigned char CHANNEL, unsigned char CONDITION,
  * *****************************************************************************/
 void zetaspi::Start_Tx(unsigned char *pioFixRadioPacket)
 {
-	unsigned char channel;
+    volatile unsigned char channel;
 	channel = RadioConfiguration.Radio_ChannelNumber;
 	GetIntStatus(0, 0, 0);
 

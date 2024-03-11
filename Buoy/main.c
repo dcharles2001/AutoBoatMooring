@@ -38,7 +38,7 @@ int main(void)
 	
 	unsigned char stateparam = 0x03;
 	
-	SendCmdArgs(0x34, 0x01, 0x01, &stateparam); //change state
+	//SendCmdArgs(0x34, 0x01, 0x01, &stateparam); //change state
 	SendCmdArgs(0x15, 0x01, 0x01, &stateparam); //clear fifo
 	
 	
@@ -52,8 +52,8 @@ int main(void)
 	
 	while(1)
 	{
-		
-		SendCmdGetResp(0x01, &cmd, respByteCount, zetaresponse); //read 16 bytes?
+		GetIntStatus(0, 0, 0);
+		SendCmdGetResp(0x01, &cmd, respByteCount, zetaresponse); //read 8 bytes?
 		for(int i=0; i<respByteCount; i++)
 		{
 			//if(zetaresponse[i] == '\0'){break;} //break on null bit
@@ -65,7 +65,7 @@ int main(void)
 		{
 			__NOP();
 		}
-		Radio_StartRx();
+
 	}
 	
 }
