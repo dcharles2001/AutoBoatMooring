@@ -42,13 +42,19 @@ using namespace std;
 int dist1 = 0;
 int avgDist1 = 0;
 int lastDist1;
+int lockON1 = 0;
+int lockON2 = 0;
 int dist2 = 0;
 int avgDist2 = 0;
 int lastDist2 = 0;
 
 int sampleSize = 5;
 int IRsensorAddress = 0xB0;
+int tolerance = 5;
+int flashHz = 20; 
+
 float STEP = 0.004;
+
 
 void Write_2bytes(char d1, char d2, int IRsensorAddress) {
     char data[2] = {d1, d2};
@@ -98,6 +104,7 @@ void sweep(void) {
                 flip = 1;
             } else if (posX >= 1) {
                 flip = -1;
+                printf("Turret 1 has no Buoy\n");
             }
                 servoX1 = posX;
                 servoY1 = posY;
@@ -106,6 +113,7 @@ void sweep(void) {
                 flip = 1;
             } else if (posX >= 1) {
                 flip = -1;
+                printf("Turret 2 has no Buoy\n");
             }
                 servoX2 = posX;
                 servoY2 = posY;
@@ -138,13 +146,21 @@ void sweep(void) {
             }else{
                 servoX2 = posX;
             }
+        }else{
+            if (abs(512 - Y) > tolerance) {          
+                if (turretID == 1) {
+                    servoY1 = posY;
+                }else{
+                    servoY2 = posY;
+                }     
+            }
         }
-        if (abs(512 - Y) > tolerance) {          
-            if (turretID == 1) {
-                servoY1 = posY;
+        if (abs(415 - X) <= tolerance && abs(512 - Y) <= tolerance){
+            if(turretID == 1){
+                lockON1 = 1;
             }else{
-                servoY2 = posY;
-            }     
+                lockON2 = 1;
+            }
         }
     }
  int* combineNumbers(int num1, int num2) {
@@ -191,20 +207,20 @@ void sweep(void) {
         return coordinates;
     }
 
-    void ToF_Function(){
+    void ToF_Function(int buoyID){
         if(turretID == 1){
             if(avgDist1 !=0){
                 lastDist1 = avgDist1;
-                printf("Buoy 1 is %d cm away\n", lastDist1);
+                printf("Buoy %d is %d cm away\n", buoyID, lastDist1);
             }else{
-                printf("Last Buoy 1 Distance was %d cm away\n",lastDist1);
+                printf("Last Buoy %d Distance was %d cm away\n",buoyID,lastDist1);
             }
         }else{
             if(avgDist2 !=0){
                 lastDist2 = avgDist2;
-                printf("Buoy 2 is %d cm away\n", lastDist2);
+                printf("Buoy %d is %d cm away\n", lastDist2);
             }else{
-                printf("Last Buoy 2 Distance was %d cm away\n",lastDist2);
+                printf("Last Buoy %d Distance was %d cm away\n",buoyID,lastDist2);
             }
 
         }
@@ -291,25 +307,53 @@ void Turret1_Function() {
 
     if (X == 0 && Y == 0) {
         cout<<"Error:IR Sensor 1 Not Detected"<<endl;
+        ThisThread::sleep_for(1000ms);
     } else if (X == 1023 && Y == 1023) {
         if (fail <= 199) {
             fail++;
         } else if (fail == 200) {
             fail++;
         } else {
+            lockON1 = 0;
             Turret1.sweep();
         }
     }else{
-        Turret1.Track(X,Y,5);
+        Turret1.Track(X,Y,tolerance);
         fail = 0;
-        if(reading == 200){
-        Turret1.ToF_Function();
-        reading = 0;
-        }else{
-            reading++;
-        }
-        ThisThread::sleep_for(1ms);
-    }   
+        if(lockON1 == 1){
+            int flashCount = 0;
+            static int reflectCount = 0;
+            for(int flash = 0; flash<3; flash++){
+                int* Coordinates = Turret1.IR_Sensor(IRsensorAddress);
+                int X = Coordinates[0];
+                int Y = Coordinates[1];
+                //printf("X = %d\n", X);
+                //printf("Y = %d\n", Y);
+	            if(abs(X - 415) <= (tolerance*10) && abs(Y - 512) <= (tolerance*10)){	//target found
+		            flashCount++;
+                }
+                ThisThread::sleep_for(flashHz);
+            }
+            if(flashCount>2){
+                if (reflectCount<3){
+	                printf("Reflection Detected       %d\n",flashCount);
+                    lockON1 == 0;
+                }else if(reflectCount>3){
+                    
+                }
+                reflectCount++;
+            }else{
+                if(reading == 200){
+                    printf("Turret 1 found Buoy %d\n", flashCount);
+                    Turret1.ToF_Function(flashCount);
+                    reading = 0;
+                }else{
+                reading++;
+                }
+            }
+            ThisThread::sleep_for(1ms);
+        }   
+    }
 }
 
 
@@ -323,6 +367,7 @@ void Turret2_Function() {
 
     if (X == 0 && Y == 0) {
         cout<<"Error: IR Sensor 2 Not Detected"<<endl;
+        ThisThread::sleep_for(1000ms);
     } else if (X == 1023 && Y == 1023) {
         if (fail <= 199) {
             fail++;
@@ -332,10 +377,10 @@ void Turret2_Function() {
             Turret2.sweep();
         }
     }else{
-        Turret2.Track(X,Y,5);
+        Turret2.Track(X,Y,tolerance);
         fail = 0;
         if(reading == 200){
-        Turret2.ToF_Function();
+        Turret2.ToF_Function(1);
         reading = 0;
         }else{
             reading++;
@@ -353,8 +398,8 @@ int main(){
     Queue_Turret1.call_every(2ms, Turret1_Function);
     Thread_Turret1.start(callback(&Queue_Turret1, &EventQueue::dispatch_forever));
 
-    Queue_Turret2.call_every(2ms, Turret2_Function);
-    Thread_Turret2.start(callback(&Queue_Turret2, &EventQueue::dispatch_forever));
+    //Queue_Turret2.call_every(2ms, Turret2_Function);
+    //Thread_Turret2.start(callback(&Queue_Turret2, &EventQueue::dispatch_forever));
 
     Queue_Dist1.call_every(10ms, Dist_Avg1);
     Thread_Dist1.start(callback(&Queue_Dist1, &EventQueue::dispatch_forever));
