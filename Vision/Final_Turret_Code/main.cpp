@@ -53,6 +53,7 @@ int IRsensorAddress = 0xB0;
 int tolerance = 5;
 int flashHz = 20; 
 
+
 float STEP = 0.004;
 
 
@@ -72,6 +73,9 @@ private:
     char data_buf[16];
     int Ix[4];
     int Iy[4];
+    int Ix_prev[4];
+    int Iy_prev[4];
+    int flashCounter[4];
     int s;
     int dist = 0;
 
@@ -86,6 +90,7 @@ public:
             Write_2bytes(0x33, 0x33,  IRsensorAddress); ThisThread::sleep_for(10ms);
             ThisThread::sleep_for(100ms);
     }
+    int locatedBuoy = 0;
     // The I2C object is automatically deleted when i2c is deleted
     ~Turret(){
     } 
@@ -172,6 +177,12 @@ void sweep(void) {
     }
 
     int* IR_Sensor(int IRAddress) {
+        int* coordinates = combineNumbers(1023,1023);
+        locatedBuoy = 0;
+        for(int i = 0; i<4; i++){
+            flashCounter[i] = 0;
+        }
+
         if (turretID == 1) {
             i2c1.write(IRAddress, "\x36", 1);  // Send the register address to read
             i2c1.read(IRAddress, data_buf, 16);  // Read 16 bytes
@@ -179,6 +190,7 @@ void sweep(void) {
             i2c2.write(IRAddress, "\x36", 1);  // Send the register address to read
             i2c2.read(IRAddress, data_buf, 16);  // Read 16 bytes
         }
+        for(int mes = 0; mes<3; mes++){
         Ix[0] = data_buf[1];
         Iy[0] = data_buf[2];
         s     = data_buf[3];
@@ -203,7 +215,28 @@ void sweep(void) {
         Ix[3] += (s & 0x30) << 4;
         Iy[3] += (s & 0xC0) << 2;
 
-        int* coordinates = combineNumbers(Ix[0], Iy[0]);
+        for(int i = 0; i<4; i++){
+            if((Ix[i] == 1023 && Ix_prev[i] !=1023) || (Ix[i] != 1023 && Ix_prev[i] == 1023)){
+                flashCounter[i]++;
+            }
+            Ix_prev[i] = Ix[i];
+            Iy_prev[i] = Iy[i];
+            }
+        ThisThread::sleep_for(flashHz*2);
+        }
+        printf("%d , %d , %d , %d\n", flashCounter[0],flashCounter[1],flashCounter[2],flashCounter[3]);
+        for(int i = 4; i<4; i++){
+        
+            if(flashCounter[i] == 1){
+                locatedBuoy = 1;
+                int* coordinates = combineNumbers(Ix[i], Iy[i]);
+                return coordinates;
+            }else if(flashCounter[i] == 2){
+                locatedBuoy = 2;
+                int* coordinates = combineNumbers(Ix[i], Iy[i]);
+                return coordinates;
+            }
+        }
         return coordinates;
     }
 
@@ -305,55 +338,25 @@ void Turret1_Function() {
     static int fail = 0;
     static int reading = 0;
 
-    if (X == 0 && Y == 0) {
-        cout<<"Error:IR Sensor 1 Not Detected"<<endl;
-        ThisThread::sleep_for(1000ms);
-    } else if (X == 1023 && Y == 1023) {
+    if (X == 1023 && Y == 1023) {
         if (fail <= 199) {
             fail++;
         } else if (fail == 200) {
             fail++;
         } else {
-            lockON1 = 0;
             Turret1.sweep();
         }
     }else{
         Turret1.Track(X,Y,tolerance);
         fail = 0;
-        if(lockON1 == 1){
-            int flashCount = 0;
-            static int reflectCount = 0;
-            for(int flash = 0; flash<3; flash++){
-                int* Coordinates = Turret1.IR_Sensor(IRsensorAddress);
-                int X = Coordinates[0];
-                int Y = Coordinates[1];
-                //printf("X = %d\n", X);
-                //printf("Y = %d\n", Y);
-	            if(abs(X - 415) <= (tolerance*10) && abs(Y - 512) <= (tolerance*10)){	//target found
-		            flashCount++;
-                }
-                ThisThread::sleep_for(flashHz);
-            }
-            if(flashCount>2){
-                if (reflectCount<3){
-	                printf("Reflection Detected       %d\n",flashCount);
-                    lockON1 == 0;
-                }else if(reflectCount>3){
-                    
-                }
-                reflectCount++;
-            }else{
-                if(reading == 200){
-                    printf("Turret 1 found Buoy %d\n", flashCount);
-                    Turret1.ToF_Function(flashCount);
-                    reading = 0;
-                }else{
-                reading++;
-                }
-            }
-            ThisThread::sleep_for(1ms);
-        }   
-    }
+        if(reading == 200){
+            Turret1.ToF_Function(Turret1.locatedBuoy);
+            reading = 0;
+        }else{
+            reading++;
+        }
+        ThisThread::sleep_for(1ms);
+    }   
 }
 
 
