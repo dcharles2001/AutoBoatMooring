@@ -2,12 +2,14 @@
 #include "ZetaSPI.h"
 
 zetaspi Zeta433(f429spi1, PC_7, PA_15, PB_15);
+DigitalOut GreenLED(PB_0);
 
 unsigned int packetconstructor(unsigned char* preamble, unsigned char preamblesize, unsigned char* payload, unsigned char payloadsize, 
 unsigned char* syncword, unsigned char syncwordsize, unsigned char* packet, unsigned char packetsize);
 
 int main()
 {
+    GreenLED = 0;
     printf("Starting\n\r");
 
     Zeta433.SPI_Init();
@@ -48,19 +50,25 @@ int main()
     unsigned char fifo_tx = 0x15; //tx fifo info
     unsigned char resp[2];
 
-    unsigned char readystate[2] = {0x34, 0x03};
+    unsigned char readystate[2] = {0x34, 0x07}; //set ready state
 
+    unsigned char devstate = 0x33;
+    unsigned char state[2];
     
+    Zeta433.SendCmdGetResp(0x01, &devstate, 0x02, state);
+    printf("Device state pre send: %x %x\n\r", state[0], state[1]);
 
     while(1)    
     {
-        Zeta433.SendCmdArgs(fifo_clr[1], 0x01, 0x01, &fifo_clr[2]); //clear fifo
-        Zeta433.SendCmdArgs(readystate[1], 0x01, 0x01, &readystate[2]); //set ready state
+        Zeta433.SendCmds(0x02, fifo_clr); //clear fifo
+        //Zeta433.SendCmds(0x02, readystate); //set ready state
+        //Zeta433.GetIntStatus(0xff, 0xff, 0xff);
         //printf("Fifo info prior: %X\n\r", resp);
-
+        GreenLED = 1;
         Zeta433.SendCmdArgs(cmd, 0x01, 0x08, testmsg); //load packet into fifo
         //Zeta433.SendCmdArgs(0x66, 0x01, sizeof(msg), msg);
         
+
         /*
         printf("Delay\n\r");
         ThisThread::sleep_for(3s);
@@ -74,11 +82,15 @@ int main()
         */
         
         Zeta433.Start_Tx(NULL); //start TX
+        //ThisThread::sleep_for(500ms);
+        Zeta433.SendCmdGetResp(0x01, &devstate, 0x02, state);
+        printf("Device state post send: %x %x\n\r", state[0], state[1]);
         //Zeta433.SendCmdArgs(0x34, 0x01, 0x01, &stateparam);
 
         
         //printf("Sending msg\n\r");
-        ThisThread::sleep_for(1s);
+        ThisThread::sleep_for(500ms);
+        GreenLED = 0;
     }
 }
 
