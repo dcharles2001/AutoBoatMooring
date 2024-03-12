@@ -218,7 +218,7 @@ void sweep(void) {
         }else{
             if(avgDist2 !=0){
                 lastDist2 = avgDist2;
-                printf("Buoy %d is %d cm away\n", lastDist2);
+                printf("Buoy %d is %d cm away\n",buoyID, lastDist2);
             }else{
                 printf("Last Buoy %d Distance was %d cm away\n",buoyID,lastDist2);
             }
