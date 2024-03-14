@@ -42,12 +42,11 @@ using namespace std;
 int dist1 = 0;
 int avgDist1 = 0;
 int lastDist1;
-int lockON1 = 0;
-int lockON2 = 0;
 int dist2 = 0;
 int avgDist2 = 0;
 int lastDist2 = 0;
-
+int lockON1 = 0;
+int lockON2 = 0;
 int sampleSize = 5;
 int IRsensorAddress = 0xB0;
 int tolerance = 5;
@@ -74,7 +73,7 @@ private:
     int Iy[4];
     int s;
     int dist = 0;
-
+    int lockBuoy = 0;
 public:
     // Constructor
     Turret(int turretID) : turretID(turretID){
@@ -207,20 +206,20 @@ void sweep(void) {
         return coordinates;
     }
 
-    void ToF_Function(int buoyID){
+    void ToF_Function(){
         if(turretID == 1){
             if(avgDist1 !=0){
                 lastDist1 = avgDist1;
-                printf("Buoy %d is %d cm away\n", buoyID, lastDist1);
+                printf("Buoy %d is %d cm away\n",lockBuoy, lastDist1);
             }else{
-                printf("Last Buoy %d Distance was %d cm away\n",buoyID,lastDist1);
+                printf("Last Buoy %d Distance was %d cm away\n",lockBuoy,lastDist1);
             }
         }else{
             if(avgDist2 !=0){
                 lastDist2 = avgDist2;
-                printf("Buoy %d is %d cm away\n",buoyID, lastDist2);
+                printf("Buoy %d is %d cm away\n",lockBuoy, lastDist2);
             }else{
-                printf("Last Buoy %d Distance was %d cm away\n",buoyID,lastDist2);
+                printf("Last Buoy %d Distance was %d cm away\n",lockBuoy,lastDist2);
             }
 
         }
@@ -321,38 +320,16 @@ void Turret1_Function() {
         Turret1.Track(X,Y,tolerance);
         fail = 0;
         if(lockON1 == 1){
-            int flashCount = 0;
-            static int reflectCount = 0;
-            for(int flash = 0; flash<3; flash++){
-                int* Coordinates = Turret1.IR_Sensor(IRsensorAddress);
-                int X = Coordinates[0];
-                int Y = Coordinates[1];
-                //printf("X = %d\n", X);
-                //printf("Y = %d\n", Y);
-	            if(abs(X - 415) <= (tolerance*10) && abs(Y - 512) <= (tolerance*10)){	//target found
-		            flashCount++;
-                }
-                ThisThread::sleep_for(flashHz);
-            }
-            if(flashCount>2){
-                if (reflectCount<3){
-	                printf("Reflection Detected       %d\n",flashCount);
-                    lockON1 == 0;
-                }else if(reflectCount>3){
-                    
-                }
-                reflectCount++;
+            if(reading == 200){
+            Turret2.ToF_Function();
+            reading = 0;
+            
             }else{
-                if(reading == 200){
-                    printf("Turret 1 found Buoy %d\n", flashCount);
-                    Turret1.ToF_Function(flashCount);
-                    reading = 0;
-                }else{
                 reading++;
-                }
             }
             ThisThread::sleep_for(1ms);
-        }   
+        }
+       
     }
 }
 
@@ -380,7 +357,7 @@ void Turret2_Function() {
         Turret2.Track(X,Y,tolerance);
         fail = 0;
         if(reading == 200){
-        Turret2.ToF_Function(1);
+        Turret2.ToF_Function();
         reading = 0;
         }else{
             reading++;
