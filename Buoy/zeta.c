@@ -126,7 +126,7 @@ unsigned char GetResponse_CTS(unsigned char byteCount, unsigned char* pData)
 		
 		SPI_PORT->ODR &=~ (1u << SPI_NSS);//bring CS low
 		write_SPI_noCS(0x44); //write CTS command
-		for(int i=0; i<3; i++) //approx 10us delay, this prevents CTS fail
+		for(int i=0; i<6; i++) //approx 10us delay, this prevents CTS fail
 		{
       __NOP(); //do nothing
 		}		
@@ -146,6 +146,10 @@ unsigned char GetResponse_CTS(unsigned char byteCount, unsigned char* pData)
 			{
 				SpiReadBytes(byteCount, pData); //also used for getting responses back
 			}
+			for(int i=0; i<3; i++) //approx 10us delay, this prevents CTS fail
+			{
+				__NOP(); //do nothing
+			}		
 			SPI_PORT->ODR |= (1u << SPI_NSS); //bring CS high
 			break;
 		}

@@ -35,7 +35,7 @@ int main(void)
   }
 	
 	unsigned char readystate[2] = {0x34, 0x03};
-	SendCmds(0x02, readystate); //set ready state
+	//SendCmds(0x02, readystate); //set ready state
 	
 	unsigned char fifo_clr[2] = {0x15, 0x03};
 	//SendCmds(0x02, fifo_clr); //clear fifo 
