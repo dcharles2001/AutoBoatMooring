@@ -2,14 +2,15 @@
 #include "ZetaSPI.h"
 
 zetaspi Zeta433(f429spi1, PC_7, PA_15, PB_15);
-DigitalOut GreenLED(PB_0);
+//etaspi Zeta433(l432spi1, PB_6, PB_7, PA_2);
+//DigitalOut GreenLED(PB_0);
 
 unsigned int packetconstructor(unsigned char* preamble, unsigned char preamblesize, unsigned char* payload, unsigned char payloadsize, 
 unsigned char* syncword, unsigned char syncwordsize, unsigned char* packet, unsigned char packetsize);
 
 int main()
 {
-    GreenLED = 0;
+    //GreenLED = 0;
     printf("Starting\n\r");
 
     Zeta433.SPI_Init();
@@ -58,39 +59,37 @@ int main()
     Zeta433.SendCmdGetResp(0x01, &devstate, 0x02, state);
     printf("Device state pre send: %x %x\n\r", state[0], state[1]);
 
+    unsigned char testarray[10] = {0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA};
+	
+
     while(1)    
     {
+        //Zeta433.SendCmds(0x0A, testarray);
+        /*
         Zeta433.SendCmds(0x02, fifo_clr); //clear fifo
         //Zeta433.SendCmds(0x02, readystate); //set ready state
         //Zeta433.GetIntStatus(0xff, 0xff, 0xff);
         //printf("Fifo info prior: %X\n\r", resp);
-        GreenLED = 1;
+       // GreenLED = 1;
         Zeta433.SendCmdArgs(cmd, 0x01, 0x08, testmsg); //load packet into fifo
         //Zeta433.SendCmdArgs(0x66, 0x01, sizeof(msg), msg);
-        
+        */
 
-        /*
-        printf("Delay\n\r");
-        ThisThread::sleep_for(3s);
-        */
-        /*
-        Zeta433.SendCmdGetResp(0x01, &fifo_tx, 0x02, resp);
-        for(int i=0; i<2; i++)
-        {
-            printf("Fifo info post-fill: %X\n\r", resp[i]);
-        }
-        */
         
+        /*
         Zeta433.Start_Tx(NULL); //start TX
         //ThisThread::sleep_for(500ms);
         Zeta433.SendCmdGetResp(0x01, &devstate, 0x02, state);
         printf("Device state post send: %x %x\n\r", state[0], state[1]);
         //Zeta433.SendCmdArgs(0x34, 0x01, 0x01, &stateparam);
+        */
 
         
+        
         //printf("Sending msg\n\r");
-        ThisThread::sleep_for(500ms);
-        GreenLED = 0;
+        //ThisThread::sleep_for(500ms);
+        //GreenLED = 0;
+        
     }
 }
 

@@ -30,7 +30,7 @@ void init_SPI(void)
 												 ( 2u << ( SPI_SCK * 2 ) ) | //high speed pin 5
 												 ( 2u << ( SPI_NSS * 2 ) ) ); //high speed pin 4
 	*/
-	SPI_PORT->ODR |= (1u << SPI_NSS); //CS sits high initially
+	//SPI_PORT->ODR |= (1u << SPI_NSS); //CS sits high initially
 
 	GPIOB->MODER &=~ ( ( 3u << ( SDN * 2 ) ) | //clear pin 3
 										 ( 3u << ( ZetaGPIO1 * 2 ) ) ); //clear pin 1
@@ -71,7 +71,7 @@ void init_SPI(void)
 	SPI_MODULE->CR1 |=( ( 0u << ( 0 ) ) | //CPHA 0
 										  ( 0u << ( 1 ) ) | //CPOL 0
 										  ( 1u << ( 2 ) ) | //Master config
-										  ( 2u << ( 3 ) ) | //baud rate fpclk/8
+										  ( 1u << ( 3 ) ) | //baud rate fpclk
 										  //( 1u << ( 6 ) ) | //SPI peripheral enabled
 										  ( 0u << ( 7 ) ) | //MSB first
 										  ( 1u << ( 8 ) ) | //SSI

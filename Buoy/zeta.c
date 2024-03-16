@@ -42,18 +42,20 @@ void Wait_POR(void)
 
 	/* Pull the SDN pin high for 10 us */
 	GPIOB->ODR |= (1u << SDN); //SDN high
-	for(int i=0; i<8; i++) //approx 10us delay
+	for(int i=0; i<10; i++) //approx 10us delay
   {
       __NOP(); //do nothing
   }
     
 	/* Pull the SDN pin low */
   GPIOB->ODR &=~ (1u << SDN);//SDN LOW
-   
-	for(int i=0; i<1500; i++) //approx ?ms delay
+  
+	
+	for(int i=0; i<1100; i++) //approx ?ms delay
 	{
 				__NOP(); //do nothing
 	}
+	
 
 }
 
@@ -73,12 +75,13 @@ void SpiWriteBytes(unsigned char byteCount, const unsigned char* pData)
 		write_SPI_noCS(*ptr++);
 	}
 	while(!(SPI_MODULE->SR & (1u << 1))); //wait on TXE 
-	while(!(SPI_MODULE->SR & (1u << 7))); //wait on busy bit to indicate end of transmission, lest we bring CS high too early
-	
+	//while(!(SPI_MODULE->SR & (1u << 7))); //wait on busy bit to indicate end of transmission, lest we bring CS high too early
+	/*
 	for(int i = 0; i<6; i++) //hacky delay to stop CS from rising early
 	{
 		__NOP();
 	}
+	*/
 	
 }
 
@@ -93,7 +96,7 @@ void SpiWriteBytes(unsigned char byteCount, const unsigned char* pData)
 void SpiReadBytes(unsigned char byteCount, unsigned char* pData)
 {
 	unsigned char* ptr = pData;
-	uint8_t temp = *(__IO uint8_t*)(&SPI_MODULE->DR); //initiate read/clear buffer
+	//uint8_t temp = *(__IO uint8_t*)(&SPI_MODULE->DR); //initiate read/clear buffer
 	for (int i = 0; i < byteCount; i++)
 	{
 		*ptr++ = read_SPI_noCS(); //keep clock on and read
@@ -119,19 +122,21 @@ unsigned char GetResponse_CTS(unsigned char byteCount, unsigned char* pData)
 {
 	cts_flag = false;
 	unsigned char ctsVal = 0u;
-	unsigned int errCnt = RADIO_CTS_TIMEOUT;
+	unsigned int errCnt = 10000;
 
 	while (errCnt != 0) //attempt based error detection                                                                                              
 	{
 		
 		SPI_PORT->ODR &=~ (1u << SPI_NSS);//bring CS low
 		write_SPI_noCS(0x44); //write CTS command
-		for(int i=0; i<6; i++) //approx 10us delay, this prevents CTS fail
+		/*
+		for(int i=0; i<3; i++) //approx 10us delay, this prevents CTS fail
 		{
       __NOP(); //do nothing
 		}		
+		*/
 		ctsVal = read_SPI_noCS(); 
-		while(!(SPI_MODULE->SR & (1u << 1))); //wait on TXE
+		//while(!(SPI_MODULE->SR & (1u << 1))); //wait on TXE
 		//while(!(SPI_MODULE->SR & (1u << 7))); //wait on busy bit to indicate end of transmission, lest we bring CS high too early
 
 		/*
@@ -146,10 +151,12 @@ unsigned char GetResponse_CTS(unsigned char byteCount, unsigned char* pData)
 			{
 				SpiReadBytes(byteCount, pData); //also used for getting responses back
 			}
+			/*
 			for(int i=0; i<3; i++) //approx 10us delay, this prevents CTS fail
 			{
 				__NOP(); //do nothing
 			}		
+			*/
 			SPI_PORT->ODR |= (1u << SPI_NSS); //bring CS high
 			break;
 		}
@@ -309,6 +316,8 @@ unsigned char Si4455_Configure(const unsigned char *pSetPropCmd)
 	unsigned char col;
 	unsigned char response;
 	unsigned char numOfBytes;
+	
+	SPI_PORT->ODR |= (1u << SPI_NSS);
 
 	/* While cycle as far as the pointer points to a command */
 	while (*pSetPropCmd != 0x00)

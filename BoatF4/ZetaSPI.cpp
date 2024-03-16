@@ -53,7 +53,7 @@ void zetaspi::Wait_POR() //PORTED FUNCTION
 
 	/* Pull the SDN pin low for 10 ms */
     SDN = 0; //SDN LOW
-    //ThisThread::sleep_for(14ms);
+    ThisThread::sleep_for(5ms);
 /*
 #endif 
 	ThisThread::sleep_for(10ms); //sleep for 10ms

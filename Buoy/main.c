@@ -65,11 +65,13 @@ int main(void)
 	unsigned char zetaresponse[8];
 	char rxstring[50];
 	
-	
+	unsigned char testarray[10] = {0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA};
 	
 	while(1)
 	{
+		//SendCmds(0x0A, testarray);
 		//GetIntStatus(0, 0, 0);
+		
 		SendCmdGetResp(0x01, &devstate, 0x02, state);
 		sprintf(respstring, "Device state post RX:\n\r%x\n\r%x\n\r", state[0], state[1]);
 		send_array_USART(respstring);
@@ -77,18 +79,11 @@ int main(void)
 		{
 			__NOP();
 		}
-		/*
-		SendCmdGetResp(0x01, &fifo_clr[1], 0x02, resp);
-    for(int i=0; i<2; i++)
-    {
-			sprintf(fifostring, "Fifo: %x", resp[i]); 
-			send_array_USART(fifostring);
-			send_array_USART("\n\r");
-    }
-		*/
+		
 		
 		SendCmdGetResp(0x01, &cmd, respByteCount, zetaresponse); //read 8 bytes?
-	
+		
+		
 		
 		for(int i=0; i<respByteCount; i++)
 		{
@@ -98,7 +93,7 @@ int main(void)
 			send_array_USART("\n\r");
 		}
 		
-		
+	
 		
 		/*
 		for(int i=0; i<1000000; i++)
