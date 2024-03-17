@@ -8,8 +8,8 @@ void HSIClockConfig(void);
 int main(void)
 {
 	
-	HSIClockConfig();
-	SystemCoreClockUpdate(); 
+	HSIClockConfig(); //Apply HSI config
+	SystemCoreClockUpdate(); //Update clock value
 	RCC->AHB2ENR  |= (RCC_AHB2ENR_GPIOAEN); //enable GPIO A clock for USART and SPI
 	RCC->AHB2ENR 	|= (RCC_AHB2ENR_GPIOBEN); //enable GPIO B clock for SDN and GPIO1
 	
@@ -17,7 +17,6 @@ int main(void)
 
 	send_array_USART("Starting\n\r");
 	
-	unsigned int clkspeed = SystemCoreClock;
 	char clkstring[30];
 	sprintf(clkstring, "Core clock: %d\n\r", SystemCoreClock);
 	send_array_USART(clkstring);
@@ -86,10 +85,7 @@ int main(void)
 			__NOP();
 		}
 		
-		
 		SendCmdGetResp(0x01, &cmd, respByteCount, zetaresponse); //read 8 bytes?
-		
-		
 		
 		for(int i=0; i<respByteCount; i++)
 		{

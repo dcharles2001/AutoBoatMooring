@@ -10,13 +10,13 @@ void init_SPI(void)
 	
 	SPI_PORT->MODER   &=~( ( 3u << ( SPI_MOSI * 2 ) ) |  //clear pin 7
                          ( 3u << ( SPI_MISO * 2 ) ) |  //clear pin 6
-											   ( 3u << ( SPI_SCK * 2 ) ) |  //clear pin 5
-											   ( 3u << ( SPI_NSS * 2 ) ) );	//clear pin 4
+											   ( 3u << ( SPI_SCK * 2 ) ) );  //clear pin 5
+											   
 	
   SPI_PORT->MODER   |=(  ( 2u << ( SPI_MOSI * 2 ) ) |  //alt func mode pin 7
                          ( 2u << ( SPI_MISO * 2 ) ) |  //alt func mode pin 6
-											   ( 2u << ( SPI_SCK * 2 ) ) |  //alt func mode pin 5
-											   ( 1u << ( SPI_NSS * 2 ) ) );	//output mode pin 4
+											   ( 2u << ( SPI_SCK * 2 ) ) );  //alt func mode pin 5
+											   
 								 
 	//SPI_PORT->OTYPER  |=(  ( 1u << ( SPI_MISO ) ) );  //open drain pin 7
                          
@@ -31,17 +31,17 @@ void init_SPI(void)
 												 ( 2u << ( SPI_NSS * 2 ) ) ); //high speed pin 4
 	*/
 	//SPI_PORT->ODR |= (1u << SPI_NSS); //CS sits high initially
-
+	/*
 	GPIOB->MODER &=~ ( ( 3u << ( SDN * 2 ) ) | //clear pin 3
 										 ( 3u << ( ZetaGPIO1 * 2 ) ) ); //clear pin 1
-										 
+	*/						 
 	//GPIOA->PUPDR &=~ ( 3u << (ZetaGPIO1 * 2 ) ); //clear pin 1 pupdr
 	//GPIOA->PUPDR |=  ( 2u << (ZetaGPIO1 * 2 ) ); //pull down on pin 1
-										 
+	/*									 
 	GPIOB->MODER |= ( ( 1u << ( SDN * 2 ) ) | //output mode pin 3
 										( 0u << ( ZetaGPIO1 * 2 ) ) ); //input mode pin 1
-										 
-	GPIOB->ODR &=~ (1u << SDN); //default low
+		*/								 
+	//GPIOB->ODR &=~ (1u << SDN); //default low
 	
 	//configure AFR register for SPI pins
 	
@@ -71,7 +71,7 @@ void init_SPI(void)
 	SPI_MODULE->CR1 |=( ( 0u << ( 0 ) ) | //CPHA 0
 										  ( 0u << ( 1 ) ) | //CPOL 0
 										  ( 1u << ( 2 ) ) | //Master config
-										  ( 1u << ( 3 ) ) | //baud rate fpclk/n
+										  ( 0u << ( 3 ) ) | //baud rate fpclk/n
 										  //( 1u << ( 6 ) ) | //SPI peripheral enabled
 										  ( 0u << ( 7 ) ) | //MSB first
 										  ( 1u << ( 8 ) ) | //SSI
@@ -122,14 +122,14 @@ void write_SPIBytes_noCS(uint8_t *newchars, unsigned int bytes)
 uint8_t read_SPI_noCS(void) //write dummy bytes to keep clock on for SDO data, no CS control
 {
 	//while (!(SPI_MODULE->SR & (1u << 1))); //Wait
-	uint8_t temp = *(__IO uint8_t*)(&SPI_MODULE->DR); //clear buffer
-	*(__IO uint8_t*)(&SPI_MODULE->DR) = 0x00; //Dummy bits to keep clock on
+	//uint8_t temp = *(__IO uint8_t*)(&SPI_MODULE->DR); //clear buffer
+	*(__IO uint8_t*)(&SPI_MODULE->DR) = 0xff; //Dummy bits to keep clock on
 	//uint8_t temp = *(__IO uint8_t*)(&SPI_MODULE->DR); //initiate read / clear buffer
 	
 	//now read result
-	while (!(SPI_MODULE->SR & (1 << 0))); //Wait until RXNE is set
+	while (!(SPI_MODULE->SR & (SPI_SR_RXNE))); //Wait until RXNE is set
 	uint8_t response = *(__IO uint8_t*)(&SPI_MODULE->DR); //read new data
-	while (!(SPI_MODULE->SR & (1 << 1)));
+	//while (!(SPI_MODULE->SR & (1 << 1)));
 	/*
 	while(!(SPI_MODULE->SR & (1u << 7))); //wait for transmission to end
 	for(int i=0; i<1; i++)

@@ -474,9 +474,13 @@ void zetaspi::SPI_SI4455_Init()
 {
 	Ret_state = Si4455_HWInitialize();
 	if(Ret_state == SI4455_SUCCESS)
+    {
 		printf("Configuration Successful");
+    }
 	if(Ret_state == SI4455_FAIL)
+    {
 		printf("Configuration Failed");
+    }
 }
 
 /********************************************************************************

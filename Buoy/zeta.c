@@ -23,6 +23,7 @@ union si4455_cmd_reply_union Si4455Cmd;
 const unsigned char Radio_Configuration_Data_Array[] = RADIO_CONFIGURATION_DATA_ARRAY;
 const tRadioConfiguration RadioConfiguration = RADIO_CONFIGURATION_DATA;
 static Si4455_T Ret_state;
+volatile unsigned int stepcount = 0;
 
 /********************************************************************************************
  * Function Name		:	Wait_POR
@@ -73,7 +74,7 @@ void SpiWriteBytes(unsigned char byteCount, const unsigned char* pData)
 	for (int i = 0; i < byteCount; i++)
 	{
 		write_SPI_noCS(*ptr++);
-		while(!(SPI_MODULE->SR & (1u << 7))); //wait on busy
+		//while(!(SPI_MODULE->SR & (1u << 7))); //wait on busy
 	}
 	//while(!(SPI_MODULE->SR & (1u << 1))); //wait on TXE 
 	//while(!(SPI_MODULE->SR & (1u << 7))); //wait on busy bit to indicate end of transmission, lest we bring CS high too early
@@ -123,7 +124,8 @@ unsigned char GetResponse_CTS(unsigned char byteCount, unsigned char* pData)
 {
 	cts_flag = false;
 	unsigned char ctsVal = 0u;
-	unsigned int errCnt = 10000;
+	unsigned int errCnt = 20000;
+	//char ctsstring[15];
 
 	while (errCnt != 0) //attempt based error detection                                                                                              
 	{
@@ -317,8 +319,6 @@ unsigned char Si4455_Configure(const unsigned char *pSetPropCmd)
 	unsigned char col;
 	unsigned char response;
 	unsigned char numOfBytes;
-	
-	SPI_PORT->ODR |= (1u << SPI_NSS);
 
 	/* While cycle as far as the pointer points to a command */
 	while (*pSetPropCmd != 0x00)
@@ -326,7 +326,8 @@ unsigned char Si4455_Configure(const unsigned char *pSetPropCmd)
 		/* Commands structure in the array:
       --------------------------------
       LEN | <LEN length of data>
-		 */
+		*/
+		stepcount++;
 		numOfBytes = *pSetPropCmd++;
 
 		if (numOfBytes > 16u)
@@ -363,7 +364,8 @@ unsigned char Si4455_Configure(const unsigned char *pSetPropCmd)
 			pSetPropCmd++;
 		}
 
-
+		
+		
 		if (SendCmdGetResp(numOfBytes, radioCmd, 1, &response) != 0xFF)
 		{
 			/* Timeout occured */
@@ -502,9 +504,16 @@ void SPI_SI4455_Init()
 {
 	Ret_state = Si4455_HWInitialize();
 	if(Ret_state == SI4455_SUCCESS)
+	{
 		send_array_USART("Configuration Successful\n\r");
+	}
 	if(Ret_state == SI4455_FAIL)
+	{
+		char countstring[20];
+		sprintf(countstring, "Steps: %d\n\r", stepcount);
+		send_array_USART(countstring);
 		send_array_USART("Configuration Failed\n\r");
+	}
 }
 
 /********************************************************************************
@@ -519,9 +528,14 @@ void SPI_SI4455_Init()
  * *****************************************************************************/
 void SPI_Init()
 {
+	SPI_PORT->MODER &=~ (  3u << ( SPI_NSS * 2 ) ); //clear pin 4
+	GPIOB->MODER &=~ ( 3u << ( SDN * 2 ) ); //clear SDN
 	
-
-	init_SPI();
+	SPI_PORT->MODER |= ( 1u << ( SPI_NSS * 2 ) );	//output mode pin 4
+  GPIOB->MODER |= (1u << (SDN * 2 ) ); //SDN output
+	
+	SPI_PORT->ODR &= ~(1u << SPI_NSS); //Bring CS low
+	GPIOB->ODR &= ~(1u << SDN); //SDN low
 	/*
   	Configure the SPI bus as follows
     	1. SPI bus speed 	= 1 MHz
@@ -531,7 +545,5 @@ void SPI_Init()
 			/* POR */
  	Radio_PowerUp();   
 	
-	/* This delay is required to prevent the WDT from triggering */     
-	//ThisThread::sleep_for(100ms); //delays cause timeouts, leave commented for now      
-	
+	init_SPI();
 }
