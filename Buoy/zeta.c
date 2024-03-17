@@ -42,7 +42,7 @@ void Wait_POR(void)
 
 	/* Pull the SDN pin high for 10 us */
 	GPIOB->ODR |= (1u << SDN); //SDN high
-	for(int i=0; i<10; i++) //approx 10us delay
+	for(int i=0; i<40; i++) //approx 10us delay
   {
       __NOP(); //do nothing
   }
@@ -51,7 +51,7 @@ void Wait_POR(void)
   GPIOB->ODR &=~ (1u << SDN);//SDN LOW
   
 	
-	for(int i=0; i<1100; i++) //approx ?ms delay
+	for(int i=0; i<4000; i++) //approx ?ms delay
 	{
 				__NOP(); //do nothing
 	}
@@ -73,8 +73,9 @@ void SpiWriteBytes(unsigned char byteCount, const unsigned char* pData)
 	for (int i = 0; i < byteCount; i++)
 	{
 		write_SPI_noCS(*ptr++);
+		while(!(SPI_MODULE->SR & (1u << 7))); //wait on busy
 	}
-	while(!(SPI_MODULE->SR & (1u << 1))); //wait on TXE 
+	//while(!(SPI_MODULE->SR & (1u << 1))); //wait on TXE 
 	//while(!(SPI_MODULE->SR & (1u << 7))); //wait on busy bit to indicate end of transmission, lest we bring CS high too early
 	/*
 	for(int i = 0; i<6; i++) //hacky delay to stop CS from rising early

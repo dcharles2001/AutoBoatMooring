@@ -3,18 +3,24 @@
 #include "spi.h"
 #include "zeta.h"
 
-void altstartzeta(void);
-void startzeta(void);
+void HSIClockConfig(void);
 
 int main(void)
 {
-	SystemCoreClockUpdate(); //should be 16MHz default
+	
+	HSIClockConfig();
+	SystemCoreClockUpdate(); 
 	RCC->AHB2ENR  |= (RCC_AHB2ENR_GPIOAEN); //enable GPIO A clock for USART and SPI
 	RCC->AHB2ENR 	|= (RCC_AHB2ENR_GPIOBEN); //enable GPIO B clock for SDN and GPIO1
 	
 	init_USART();
 
 	send_array_USART("Starting\n\r");
+	
+	unsigned int clkspeed = SystemCoreClock;
+	char clkstring[30];
+	sprintf(clkstring, "Core clock: %d\n\r", SystemCoreClock);
+	send_array_USART(clkstring);
 	
 	SPI_Init();
 	SPI_SI4455_Init();
@@ -105,4 +111,12 @@ int main(void)
 	
 }
 
+void HSIClockConfig()
+{
+	RCC->CR |= RCC_CR_HSION; //High speed internal clock (16MHz)
+	while( !(RCC->CR & RCC_CR_HSIRDY)); //wait for HSI clock ready flag
+	RCC->CFGR &=~ RCC_CFGR_SW; //clear system clock switch
+	RCC->CFGR |=  RCC_CFGR_SW_HSI; //set system clock switch to HSI clock
+	while((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_HSI); //wait until system clock switch statys reads HSI
+}
 
