@@ -75,6 +75,7 @@ int main()
         s   = data_buf[12];
         Ix[3] += (s & 0x30) <<4;
         Iy[3] += (s & 0xC0) <<2;
+        printf("%d  :   %d",Ix[0],Iy[0]);
         for(int measurements = 0; measurements<12; measurements++){
             for(int i = 0; i < 3; i++){
                 if((Ix[i] == 1023 && Ix_prev[i] != 1023) || ((Ix[i] != 1023 && Ix_prev[i] == 1023))){
