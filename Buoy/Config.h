@@ -25,6 +25,7 @@
 //GPIOB
 #define ZetaGPIO1 7
 #define SDN 6 
+#define TriggerLine 1 //for triggering a scope at a given point
 
 
 

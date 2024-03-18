@@ -364,7 +364,10 @@ unsigned char Si4455_Configure(const unsigned char *pSetPropCmd)
 			pSetPropCmd++;
 		}
 
-		
+		if(stepcount == 72) //ez config step check
+		{
+			GPIOB->ODR |= (1u << TriggerLine); //triggerline high
+		}
 		
 		if (SendCmdGetResp(numOfBytes, radioCmd, 1, &response) != 0xFF)
 		{
@@ -529,13 +532,16 @@ void SPI_SI4455_Init()
 void SPI_Init()
 {
 	SPI_PORT->MODER &=~ (  3u << ( SPI_NSS * 2 ) ); //clear pin 4
-	GPIOB->MODER &=~ ( 3u << ( SDN * 2 ) ); //clear SDN
+	GPIOB->MODER &=~ ( ( 3u << ( SDN * 2 ) ) | //clear SDN
+										 ( 3u << ( TriggerLine * 2 ) ) ); //clear triggerine
 	
 	SPI_PORT->MODER |= ( 1u << ( SPI_NSS * 2 ) );	//output mode pin 4
-  GPIOB->MODER |= (1u << (SDN * 2 ) ); //SDN output
+  GPIOB->MODER |= ( (1u << (SDN * 2 ) ) | //SDN output
+										(1u << (TriggerLine * 2 ) ) ); //triggerline output
 	
 	SPI_PORT->ODR &= ~(1u << SPI_NSS); //Bring CS low
 	GPIOB->ODR &= ~(1u << SDN); //SDN low
+	GPIOB->ODR &= ~(1u << TriggerLine); //triggerline default low
 	/*
   	Configure the SPI bus as follows
     	1. SPI bus speed 	= 1 MHz

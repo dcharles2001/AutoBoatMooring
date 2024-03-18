@@ -71,7 +71,7 @@ void init_SPI(void)
 	SPI_MODULE->CR1 |=( ( 0u << ( 0 ) ) | //CPHA 0
 										  ( 0u << ( 1 ) ) | //CPOL 0
 										  ( 1u << ( 2 ) ) | //Master config
-										  ( 0u << ( 3 ) ) | //baud rate fpclk/n
+										  ( 1u << ( 3 ) ) | //baud rate fpclk/n
 										  //( 1u << ( 6 ) ) | //SPI peripheral enabled
 										  ( 0u << ( 7 ) ) | //MSB first
 										  ( 1u << ( 8 ) ) | //SSI

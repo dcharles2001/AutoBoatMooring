@@ -94,9 +94,7 @@ int main(void)
 			send_array_USART(rxstring);
 			send_array_USART("\n\r");
 		}
-		
 	
-		
 		/*
 		for(int i=0; i<1000000; i++)
 		{
