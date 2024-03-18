@@ -70,7 +70,7 @@ void Wait_POR(void)
 void SpiWriteBytes(unsigned char byteCount, const unsigned char* pData)
 {
 	const unsigned char* ptr = pData;
-	while(!(SPI_MODULE->SR & (1u << 1))); //wait on TXE 
+	//while(!(SPI_MODULE->SR & (1u << 1))); //wait on TXE 
 	for (int i = 0; i < byteCount; i++)
 	{
 		write_SPI_noCS(*ptr++);

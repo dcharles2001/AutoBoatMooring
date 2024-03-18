@@ -290,10 +290,11 @@ unsigned char zetaspi::Si4455_Configure(const unsigned char *pSetPropCmd)
 	unsigned char col;
 	unsigned char response;
 	unsigned char numOfBytes;
-
+    unsigned int stepcount = 0;
 	/* While cycle as far as the pointer points to a command */
 	while (*pSetPropCmd != 0x00)
 	{
+        stepcount++;
 		/* Commands structure in the array:
       --------------------------------
       LEN | <LEN length of data>
@@ -334,7 +335,10 @@ unsigned char zetaspi::Si4455_Configure(const unsigned char *pSetPropCmd)
 			pSetPropCmd++;
 		}
 
-
+        if(SI4455_CMD_ID_EZCONFIG_CHECK == radioCmd[0])
+        {
+            printf("Check\n\r");
+        }
 		if (SendCmdGetResp(numOfBytes, radioCmd, 1, &response) != 0xFF)
 		{
 			/* Timeout occured */
@@ -344,6 +348,7 @@ unsigned char zetaspi::Si4455_Configure(const unsigned char *pSetPropCmd)
 		/* Check response byte of EZCONFIG_CHECK command */
 		if (SI4455_CMD_ID_EZCONFIG_CHECK == radioCmd[0])
 		{
+            printf("Stepcount: %d\n\r", stepcount);
 			if (response)
 			{
 				/* Number of command bytes exceeds maximal allowable length */
