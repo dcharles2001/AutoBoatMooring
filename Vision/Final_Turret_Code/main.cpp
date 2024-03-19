@@ -55,7 +55,7 @@ int IRsensorAddress = 0xB0;
 int tolerance = 5;
 int flashHz = 20; 
 
-float STEP = 0.0002;
+float STEP = 0.0005;
 
 
 void Write_2bytes(char d1, char d2, int IRsensorAddress) {
@@ -102,9 +102,9 @@ void sweep(void) {
                 flip = 1;
             } else if (posX >= 1) {
                 flip = -1;
-                //printf("Turret 1 has no Buoy\n");
+                printf("Turret 1 has no Buoy\n");
             }
-                //servoX1 = posX;
+                servoX1 = posX;
                 servoY1 = posY;
         }else{
             if (posX <= 0.0) {
@@ -136,7 +136,7 @@ void sweep(void) {
         }
 
         posX -= trackSpeedX; 
-        posY -= trackSpeedY;
+        posY += trackSpeedY;
 
         if (abs(415 - X) > tolerance) {
             if (turretID == 1) {
@@ -144,16 +144,17 @@ void sweep(void) {
             }else{
                 servoX2 = posX;
             }
-        }else{
-            if (abs(512 - Y) > tolerance) {          
+        }
+
+        if (abs(512 - Y) > tolerance) {          
                 if (turretID == 1) {
                     servoY1 = posY;
                 }else{
                     servoY2 = posY;
                 }     
-            }
         }
-        if (abs(415 - X) <= tolerance && abs(512 - Y) <= tolerance){
+        
+        if (abs(415 - X) <= 2*tolerance && abs(512 - Y) <= 2*tolerance){
             if(turretID == 1){
                 lockON1 = 1;
             }else{
@@ -161,6 +162,7 @@ void sweep(void) {
             }
         }
     }
+    
  /*int* combineNumbers(int num1, int num2) {
         static int Temp[2];
         Temp[1] = num1;
@@ -364,6 +366,9 @@ int* combineNumbers(int num1, int num2) {
     int s1;
     int* coordinates1;
     int locate1 = 0;
+    int lost1 = 0;
+
+    int sweep = 0;
 
     void IR_Sensor1() {
         int IRAddress = 0xB0;
@@ -394,9 +399,9 @@ int* combineNumbers(int num1, int num2) {
         Ix1[3] += (s1 & 0x30) << 4;
         Iy1[3] += (s1 & 0xC0) << 2;
         int* coordinates = combineNumbers(Ix1[0], Iy1[0]);
-        //if(Ix1[0] == 0 && Iy1[0] == 0){
-            //printf("ERROR: IR 1 not found");
-        //}
+        if(Ix1[0] == 0 && Iy1[0] == 0){
+            printf("ERROR: IR 1 not found");
+        }
         if(locate1 == 0){
         for(int measurements = 0; measurements<12; measurements++){
             for(int i = 0; i < 3; i++){
@@ -438,29 +443,33 @@ int* combineNumbers(int num1, int num2) {
 
         if(flashCount1[0]>3 && flashCount1[0] < 8){
                 locate1 = 1;
-                printf("Slow Buoy Found 1st     ");
+                lost1 = 0;
+                //printf("Slow Buoy Found 1st     ");
             }else if(flashCount1[0] > 6 && flashCount1[0] < 12){
                 locate1 = 2;
-                printf("Fast Buoy Found 1st     ");
-            }else if (flashCount1[0] < 4){
+                lost1 = 0;
+                //printf("Fast Buoy Found 1st     ");
+            }else{
+                if(flashCount1[1]>3 && flashCount1[1] < 8){
+                //printf("Slow Buoy Found 2nd\n");
+                    locate1 = 1;
+                    lost1 = 0;
+                }else if(flashCount1[1] > 6 && flashCount1[1] < 12){
+                //printf("Fast Buoy Found 2nd\n");
+                    locate1 = 1;
+                    lost1 = 0;
+                }else{
+                //printf("Reflection Found 2nd\n");
                 locate1 = 0;
-                printf("Reflection Found 1st        ");
-            }
-        if(flashCount1[1]>3 && flashCount1[1] < 8){
-                printf("Slow Buoy Found 2nd\n");
-            }else if(flashCount1[1] > 6 && flashCount1[1] < 12){
-                printf("Fast Buoy Found 2nd\n");
-            }else if (flashCount1[1] < 4){
-                printf("Reflection Found 2nd\n");
+                lockON1 = 0;
             }
         //printf("%d : %d\n", Ix[0], flashCount);
         for(int i = 0; i < 3; i++){
             flashCount1[i] = 0;
-        }
-
-        }
-        
+        }      
         coordinates1 = coordinates;
+    }
+    }
     }
 
 
@@ -482,13 +491,14 @@ Turret Turret2(2);
 void Turret1_Function() {
     static int fail = 0;
     static int reading = 0;
-
+    //printf("%d  :   %d  :   %d  :   %d\n", locate1, lockON1, lost1,fail);
     if (locate1 == 0) {
         if (fail <= 199) {
             fail++;
         } else if (fail == 200) {
             fail++;
         } else {
+            fail++;
             lockON1 = 0;
             Turret1.sweep();
         }
@@ -497,20 +507,29 @@ void Turret1_Function() {
         int X = coordinates1[0];
         int Y = coordinates1[1];
         if (X != 1023 && Y != 1023){
-            printf("%d  :   %d\n",X,Y);
             Turret1.Track(X,Y,tolerance);
         }
         if(lockON1 == 1){
-            if(reading == 200){
-            Turret1.ToF_Function(locate1);
-            reading = 0;
+            if (X != 1023 && Y != 1023){
+                lost1 = 0;
             }else{
-                reading++;
+                lost1++;
             }
-            ThisThread::sleep_for(1ms);
-        }
-       
+            if(lost1<600){
+                if(reading == 200){
+                //printf("%d  :   %d      %d  :   %d\n", X,Y, locate1, lockON1);
+                    Turret1.ToF_Function(locate1);
+                    reading = 0;
+                }else{
+                    reading++;
+                }
+                ThisThread::sleep_for(1ms);
+            }else{
+                lockON1 = 0;
+                locate1 = 0;
+            }
     }
+}
 }
 
 
