@@ -11,6 +11,9 @@ EventQueue Queue_ToF1(1 * EVENTS_EVENT_SIZE);
 Thread Thread_Dist1;
 EventQueue Queue_Dist1(1 * EVENTS_EVENT_SIZE);
 
+Thread Thread_Cord1;
+EventQueue Queue_Cord1(1 * EVENTS_EVENT_SIZE);
+
 Thread Thread_ToF2;
 EventQueue Queue_ToF2(1 * EVENTS_EVENT_SIZE);
 
@@ -42,19 +45,17 @@ using namespace std;
 int dist1 = 0;
 int avgDist1 = 0;
 int lastDist1;
-int lockON1 = 0;
-int lockON2 = 0;
 int dist2 = 0;
 int avgDist2 = 0;
 int lastDist2 = 0;
-
+int lockON1 = 0;
+int lockON2 = 0;
 int sampleSize = 5;
 int IRsensorAddress = 0xB0;
 int tolerance = 5;
 int flashHz = 20; 
 
-
-float STEP = 0.004;
+float STEP = 0.0005;
 
 
 void Write_2bytes(char d1, char d2, int IRsensorAddress) {
@@ -70,15 +71,8 @@ private:
     int fail = 0;
     float posX = 0.5; 
     float posY = 0.5;
-    char data_buf[16];
-    int Ix[4];
-    int Iy[4];
-    int Ix_prev[4];
-    int Iy_prev[4];
-    int flashCounter[4];
-    int s;
     int dist = 0;
-
+    int lockBuoy = 0;
 public:
     // Constructor
     Turret(int turretID) : turretID(turretID){
@@ -120,8 +114,8 @@ void sweep(void) {
                 flip = -1;
                 printf("Turret 2 has no Buoy\n");
             }
-                servoX2 = posX;
-                servoY2 = posY;
+                //servoX2 = posX;
+                //servoY2 = posY;
         }
 }
 
@@ -151,16 +145,17 @@ void sweep(void) {
             }else{
                 servoX2 = posX;
             }
-        }else{
-            if (abs(512 - Y) > tolerance) {          
+        }
+
+        if (abs(512 - Y) > tolerance) {          
                 if (turretID == 1) {
                     servoY1 = posY;
                 }else{
                     servoY2 = posY;
                 }     
-            }
         }
-        if (abs(415 - X) <= tolerance && abs(512 - Y) <= tolerance){
+        
+        if (abs(415 - X) <= 2*tolerance && abs(512 - Y) <= 2*tolerance){
             if(turretID == 1){
                 lockON1 = 1;
             }else{
@@ -168,7 +163,8 @@ void sweep(void) {
             }
         }
     }
- int* combineNumbers(int num1, int num2) {
+    
+ /*int* combineNumbers(int num1, int num2) {
         static int Temp[2];
         Temp[1] = num1;
         Temp[0] = num2;
@@ -214,46 +210,87 @@ void sweep(void) {
         s     = data_buf[12];
         Ix[3] += (s & 0x30) << 4;
         Iy[3] += (s & 0xC0) << 2;
-
-        for(int i = 0; i<4; i++){
-            if((Ix[i] == 1023 && Ix_prev[i] !=1023) || (Ix[i] != 1023 && Ix_prev[i] == 1023)){
-                flashCounter[i]++;
+        int* coordinates = combineNumbers(Ix[0], Iy[0]);
+        for(int measurements = 0; measurements<12; measurements++){
+            for(int i = 0; i < 3; i++){
+                if((Ix[i] == 1023 && Ix_prev[i] != 1023) || ((Ix[i] != 1023 && Ix_prev[i] == 1023))){
+                flashCount[i] = flashCount[i] + 1;
             }
             Ix_prev[i] = Ix[i];
             Iy_prev[i] = Iy[i];
+
+            if(turretID == 1){
+                i2c1.write(IRsensorAddress, "\x36", 1);  // Send the register address to read
+                i2c1.read(IRsensorAddress, data_buf, 16);  // Read 16 bytes
+            }else{
+                i2c2.write(IRsensorAddress, "\x36", 1);  // Send the register address to read
+                i2c2.read(IRsensorAddress, data_buf, 16);  // Read 16 bytes 
             }
-        ThisThread::sleep_for(flashHz*2);
+
+            Ix[0] = data_buf[1];
+            Iy[0] = data_buf[2];
+            s   = data_buf[3];
+            Ix[0] += (s & 0x30) <<4;
+            Iy[0] += (s & 0xC0) <<2;
+
+            Ix[1] = data_buf[4];
+            Iy[1] = data_buf[5];
+            s   = data_buf[6];
+            Ix[1] += (s & 0x30) <<4;
+            Iy[1] += (s & 0xC0) <<2;
+
+            Ix[2] = data_buf[7];
+            Iy[2] = data_buf[8];
+            s   = data_buf[9];
+            Ix[2] += (s & 0x30) <<4;
+            Iy[2] += (s & 0xC0) <<2;
+
+            Ix[3] = data_buf[10];
+            Iy[3] = data_buf[11];
+            s   = data_buf[12];
+            Ix[3] += (s & 0x30) <<4;
+            Iy[3] += (s & 0xC0) <<2;
+            ThisThread::sleep_for(30ms);
+            }
         }
-        printf("%d , %d , %d , %d\n", flashCounter[0],flashCounter[1],flashCounter[2],flashCounter[3]);
-        for(int i = 4; i<4; i++){
+        if(flashCount[0]>3 && flashCount[0] < 8){
+                printf("Slow Buoy Found 1st     ");
+            }else if(flashCount[0] > 6 && flashCount[0] < 12){
+                printf("Fast Buoy Found 1st     ");
+            }else if (flashCount[0] < 4){
+                printf("Reflection Found 1st        ");
+            }
+        if(flashCount[1]>3 && flashCount[1] < 8){
+                printf("Slow Buoy Found 2nd\n");
+            }else if(flashCount[1] > 6 && flashCount[1] < 12){
+                printf("Fast Buoy Found 2nd\n");
+            }else if (flashCount[1] < 4){
+                printf("Reflection Found 2nd\n");
+            }
+        //printf("%d : %d\n", Ix[0], flashCount);
+        for(int i = 0; i < 3; i++){
+            flashCount[i] = 0;
+        }
+
         
-            if(flashCounter[i] == 1){
-                locatedBuoy = 1;
-                int* coordinates = combineNumbers(Ix[i], Iy[i]);
-                return coordinates;
-            }else if(flashCounter[i] == 2){
-                locatedBuoy = 2;
-                int* coordinates = combineNumbers(Ix[i], Iy[i]);
-                return coordinates;
-            }
-        }
         return coordinates;
     }
+  */  
 
-    void ToF_Function(int buoyID){
+    void ToF_Function(int BuoyID){
         if(turretID == 1){
             if(avgDist1 !=0){
                 lastDist1 = avgDist1;
-                printf("Buoy %d is %d cm away\n", buoyID, lastDist1);
+                printf("Buoy %d is %d cm away\n",BuoyID, lastDist1);
             }else{
-                printf("Last Buoy %d Distance was %d cm away\n",buoyID,lastDist1);
+                printf("Last Buoy %d Distance was %d cm away\n",BuoyID,lastDist1);
             }
         }else{
             if(avgDist2 !=0){
                 lastDist2 = avgDist2;
-                printf("Buoy %d is %d cm away\n", lastDist2);
+                printf("Buoy %d is %d cm away\n",BuoyID, lastDist2);
             }else{
-                printf("Last Buoy %d Distance was %d cm away\n",buoyID,lastDist2);
+                printf("Last Buoy %d Distance was %d cm away\n",BuoyID,lastDist2);
             }
 
         }
@@ -319,6 +356,135 @@ void Dist_Avg2() {
     avgDist2 /=(sampleSize - missed);
 }
 
+int* combineNumbers(int num1, int num2) {
+        static int Temp[2];
+        Temp[1] = num1;
+        Temp[0] = num2;
+
+        return Temp;
+    }
+
+
+    int Ix1[4];
+    int Iy1[4];
+    int Ix_prev1[4];
+    int Iy_prev1[4];
+    int flashCount1[4] = {0,0,0,0};
+    char data_buf1[16];
+    int s1;
+    int* coordinates1;
+    int locate1 = 0;
+    int lost1 = 0;
+
+    int sweep = 0;
+
+    void IR_Sensor1() {
+        int IRAddress = 0xB0;
+        i2c1.write(IRAddress, "\x36", 1);  // Send the register address to read
+        i2c1.read(IRAddress, data_buf1, 16);  // Read 16 bytes
+
+        Ix1[0] = data_buf1[1];
+        Iy1[0] = data_buf1[2];
+        s1     = data_buf1[3];
+        Ix1[0] += (s1 & 0x30) << 4;
+        Iy1[0] += (s1 & 0xC0) << 2;
+    
+        Ix1[1] = data_buf1[4];
+        Iy1[1] = data_buf1[5];
+        s1     = data_buf1[6];
+        Ix1[1] += (s1 & 0x30) << 4;
+        Iy1[1] += (s1 & 0xC0) << 2;
+
+        Ix1[2] = data_buf1[7];
+        Iy1[2] = data_buf1[8];
+        s1     = data_buf1[9];
+        Ix1[2] += (s1 & 0x30) << 4;
+        Iy1[2] += (s1 & 0xC0) << 2;
+
+        Ix1[3] = data_buf1[10];
+        Iy1[3] = data_buf1[11];
+        s1     = data_buf1[12];
+        Ix1[3] += (s1 & 0x30) << 4;
+        Iy1[3] += (s1 & 0xC0) << 2;
+        int* coordinates = combineNumbers(Ix1[0], Iy1[0]);
+        if(Ix1[0] == 0 && Iy1[0] == 0){
+            printf("ERROR: IR 1 not found");
+        }
+        if(locate1 == 0){
+        for(int measurements = 0; measurements<12; measurements++){
+            for(int i = 0; i < 3; i++){
+                if((Ix1[i] == 1023 && Ix_prev1[i] != 1023) || ((Ix1[i] != 1023 && Ix_prev1[i] == 1023))){
+                flashCount1[i] = flashCount1[i] + 1;
+            }
+            Ix_prev1[i] = Ix1[i];
+            Iy_prev1[i] = Iy1[i];
+
+            i2c1.write(IRsensorAddress, "\x36", 1);  // Send the register address to read
+            i2c1.read(IRsensorAddress, data_buf1, 16);  // Read 16 bytes
+
+            Ix1[0] = data_buf1[1];
+            Iy1[0] = data_buf1[2];
+            s1   = data_buf1[3];
+            Ix1[0] += (s1 & 0x30) <<4;
+            Iy1[0] += (s1 & 0xC0) <<2;
+
+            Ix1[1] = data_buf1[4];
+            Iy1[1] = data_buf1[5];
+            s1   = data_buf1[6];
+            Ix1[1] += (s1 & 0x30) <<4;
+            Iy1[1] += (s1 & 0xC0) <<2;
+
+            Ix1[2] = data_buf1[7];
+            Iy1[2] = data_buf1[8];
+            s1   = data_buf1[9];
+            Ix1[2] += (s1 & 0x30) <<4;
+            Iy1[2] += (s1 & 0xC0) <<2;
+
+            Ix1[3] = data_buf1[10];
+            Iy1[3] = data_buf1[11];
+            s1   = data_buf1[12];
+            Ix1[3] += (s1 & 0x30) <<4;
+            Iy1[3] += (s1 & 0xC0) <<2;
+            ThisThread::sleep_for(30ms);
+            }
+        }
+
+        if(flashCount1[0]>3 && flashCount1[0] < 8){
+                locate1 = 1;
+                lost1 = 0;
+                //printf("Slow Buoy Found 1st     ");
+            }else if(flashCount1[0] > 6 && flashCount1[0] < 12){
+                locate1 = 2;
+                lost1 = 0;
+                //printf("Fast Buoy Found 1st     ");
+            }else{
+                if(flashCount1[1]>3 && flashCount1[1] < 8){
+                //printf("Slow Buoy Found 2nd\n");
+                    locate1 = 1;
+                    lost1 = 0;
+                }else if(flashCount1[1] > 6 && flashCount1[1] < 12){
+                //printf("Fast Buoy Found 2nd\n");
+                    locate1 = 1;
+                    lost1 = 0;
+                }else{
+                //printf("Reflection Found 2nd\n");
+                locate1 = 0;
+                lockON1 = 0;
+            }
+        //printf("%d : %d\n", Ix[0], flashCount);
+        for(int i = 0; i < 3; i++){
+            flashCount1[i] = 0;
+        }      
+        coordinates1 = coordinates;
+    }
+    }
+    }
+
+
+
+
+
+
 
 
 extern Turret Turret1;
@@ -331,36 +497,51 @@ Turret Turret2(2);
 
 
 void Turret1_Function() {
-    int* Coordinates = Turret1.IR_Sensor(IRsensorAddress);
-
-    int X = Coordinates[0];
-    int Y = Coordinates[1];
     static int fail = 0;
     static int reading = 0;
-
-    if (X == 1023 && Y == 1023) {
+    //printf("%d  :   %d  :   %d  :   %d\n", locate1, lockON1, lost1,fail);
+    if (locate1 == 0) {
         if (fail <= 199) {
             fail++;
         } else if (fail == 200) {
             fail++;
         } else {
+            fail++;
+            lockON1 = 0;
             Turret1.sweep();
         }
     }else{
-        Turret1.Track(X,Y,tolerance);
         fail = 0;
-        if(reading == 200){
-            Turret1.ToF_Function(Turret1.locatedBuoy);
-            reading = 0;
-        }else{
-            reading++;
+        int X = coordinates1[0];
+        int Y = coordinates1[1];
+        if (X != 1023 && Y != 1023){
+            Turret1.Track(X,Y,tolerance);
         }
-        ThisThread::sleep_for(1ms);
-    }   
+        if(lockON1 == 1){
+            if (X != 1023 && Y != 1023){
+                lost1 = 0;
+            }else{
+                lost1++;
+            }
+            if(lost1<600){
+                if(reading == 200){
+                //printf("%d  :   %d      %d  :   %d\n", X,Y, locate1, lockON1);
+                    Turret1.ToF_Function(locate1);
+                    reading = 0;
+                }else{
+                    reading++;
+                }
+                ThisThread::sleep_for(1ms);
+            }else{
+                lockON1 = 0;
+                locate1 = 0;
+            }
+    }
+}
 }
 
 
-void Turret2_Function() {
+/*void Turret2_Function() {
     int* Coordinates = Turret2.IR_Sensor(IRsensorAddress);
 
     int X = Coordinates[0];
@@ -383,7 +564,7 @@ void Turret2_Function() {
         Turret2.Track(X,Y,tolerance);
         fail = 0;
         if(reading == 200){
-        Turret2.ToF_Function(1);
+        Turret2.ToF_Function();
         reading = 0;
         }else{
             reading++;
@@ -391,15 +572,20 @@ void Turret2_Function() {
         ThisThread::sleep_for(1ms);
     }   
 }
-
+*/
 int main(){
-    
+    servoX1 = 0.5;
+    servoY1 = 0.5;
+
     pc.set_baud(115200); // Set baud rate for PC serial communication
     lidarSerial1.set_baud(115200); // Set baud rate for Lidar serial communication
     lidarSerial2.set_baud(115200);
 
     Queue_Turret1.call_every(2ms, Turret1_Function);
     Thread_Turret1.start(callback(&Queue_Turret1, &EventQueue::dispatch_forever));
+
+    Queue_Cord1.call_every(50ms, IR_Sensor1);
+    Thread_Cord1.start(callback(&Queue_Cord1, &EventQueue::dispatch_forever));
 
     //Queue_Turret2.call_every(2ms, Turret2_Function);
     //Thread_Turret2.start(callback(&Queue_Turret2, &EventQueue::dispatch_forever));
