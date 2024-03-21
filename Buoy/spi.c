@@ -2,7 +2,7 @@
 
 void init_SPI(void)
 {
-	RCC->APB2ENR|=RCC_APB2ENR_SPI1EN; //enable SPI1 clock
+	RCC->APB2ENR  |= (RCC_APB2ENR_SPI1EN); //enable SPI1 clock 
 	//RCC->APB1ENR1|=RCC_APB1ENR1_SPI3EN; //enable SPI3 clock
 
 	

@@ -2,7 +2,7 @@
 #define CONFIG_H
 
 #include "stdio.h"
-
+#include <stm32l4xx.h>
 #include "Radio_Config.h"
 #include "si4455_defs.h"
 

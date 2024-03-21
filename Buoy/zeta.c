@@ -52,7 +52,7 @@ void Wait_POR(void)
   GPIOB->ODR &=~ (1u << SDN);//SDN LOW
   
 	
-	for(int i=0; i<4000; i++) //approx ?ms delay
+	for(int i=0; i<3600; i++) //approx ?ms delay
 	{
 				__NOP(); //do nothing
 	}
@@ -209,6 +209,8 @@ unsigned char PollCTS(void)
 void SendCmdArgs(unsigned char cmd, unsigned char pollcts, 
 		unsigned char bytecount, const unsigned char *pData)
 {
+	//cts_flag = false; //assert false modification for test
+	//original code
 	if (pollcts)
 	{
 		while (!cts_flag)
@@ -216,6 +218,7 @@ void SendCmdArgs(unsigned char cmd, unsigned char pollcts,
 			PollCTS();
 		}
 	}
+	
 	SPI_PORT->ODR &=~ (1u << SPI_NSS); //CS low
 	write_SPI_noCS(cmd); //write command byte
 	SpiWriteBytes(bytecount, pData); //write param bytes 
@@ -342,6 +345,7 @@ unsigned char Si4455_Configure(const unsigned char *pSetPropCmd)
 				}
 
 				/* Load array to the device */
+				
 				pSetPropCmd++;
 				WriteEZConfigArray(numOfBytes - 1, pSetPropCmd);
 
@@ -364,10 +368,12 @@ unsigned char Si4455_Configure(const unsigned char *pSetPropCmd)
 			pSetPropCmd++;
 		}
 
-		if(stepcount == 72) //ez config step check
+		
+		if(radioCmd[0] == 0x66) //step check for debug
 		{
 			GPIOB->ODR |= (1u << TriggerLine); //triggerline high
 		}
+		
 		
 		if (SendCmdGetResp(numOfBytes, radioCmd, 1, &response) != 0xFF)
 		{
@@ -380,6 +386,9 @@ unsigned char Si4455_Configure(const unsigned char *pSetPropCmd)
 		{
 			if (response)
 			{
+				char checkstring[30];
+				sprintf(checkstring, "Ez check resp: %x\n\r", response);
+				send_array_USART(checkstring);
 				/* Number of command bytes exceeds maximal allowable length */
 				return SI4455_COMMAND_ERROR;
 			}

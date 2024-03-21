@@ -1,7 +1,6 @@
 #ifndef SPI_H
 #define SPI_H
 
-#include <stm32l4xx.h>
 
 #include "Config.h"
 #include "usart.h"

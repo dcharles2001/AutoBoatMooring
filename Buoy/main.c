@@ -13,6 +13,9 @@ int main(void)
 	RCC->AHB2ENR  |= (RCC_AHB2ENR_GPIOAEN); //enable GPIO A clock for USART and SPI
 	RCC->AHB2ENR 	|= (RCC_AHB2ENR_GPIOBEN); //enable GPIO B clock for SDN and GPIO1
 	
+	//I could do everything on one APB, do later
+	
+	
 	init_USART();
 
 	send_array_USART("Starting\n\r");
