@@ -4,6 +4,7 @@
 #include "spi.h"
 #include "Config.h"
 #include "usart.h"
+#include "timers.h"
 
 /* Structure for accessing parameters from config file */
 typedef struct

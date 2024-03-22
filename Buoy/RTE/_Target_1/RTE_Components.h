@@ -3,7 +3,7 @@
  * Auto generated Run-Time-Environment Configuration File
  *      *** Do not modify ! ***
  *
- * Project: 'Buoys' 
+ * Project: 'Buoy' 
  * Target:  'Target 1' 
  */
 

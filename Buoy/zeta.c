@@ -40,7 +40,7 @@ volatile unsigned int stepcount = 0;
  ********************************************************************************************/
 void Wait_POR(void) 
 {
-
+	init_TIM2();
 	/* Pull the SDN pin high for 10 us */
 	GPIOB->ODR |= (1u << SDN); //SDN high
 	for(int i=0; i<40; i++) //approx 10us delay
@@ -51,11 +51,14 @@ void Wait_POR(void)
 	/* Pull the SDN pin low */
   GPIOB->ODR &=~ (1u << SDN);//SDN LOW
   
-	
+	/*
 	for(int i=0; i<3600; i++) //approx ?ms delay
 	{
 				__NOP(); //do nothing
 	}
+	*/
+	delayms_TIM2(5); //5ms delay;
+	GPIOB->ODR |= (1u << TriggerLine); //triggerline high
 	
 
 }
@@ -368,12 +371,12 @@ unsigned char Si4455_Configure(const unsigned char *pSetPropCmd)
 			pSetPropCmd++;
 		}
 
-		
+		/*
 		if(radioCmd[0] == 0x66) //step check for debug
 		{
 			GPIOB->ODR |= (1u << TriggerLine); //triggerline high
 		}
-		
+		*/
 		
 		if (SendCmdGetResp(numOfBytes, radioCmd, 1, &response) != 0xFF)
 		{
