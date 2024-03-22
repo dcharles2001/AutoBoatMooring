@@ -164,118 +164,7 @@ void sweep(void) {
         }
     }
     
- /*int* combineNumbers(int num1, int num2) {
-        static int Temp[2];
-        Temp[1] = num1;
-        Temp[0] = num2;
 
-        return Temp;
-    }
-
-    int* IR_Sensor(int IRAddress) {
-        int* coordinates = combineNumbers(1023,1023);
-        locatedBuoy = 0;
-        for(int i = 0; i<4; i++){
-            flashCounter[i] = 0;
-        }
-
-        if (turretID == 1) {
-            i2c1.write(IRAddress, "\x36", 1);  // Send the register address to read
-            i2c1.read(IRAddress, data_buf, 16);  // Read 16 bytes
-        }else{
-            i2c2.write(IRAddress, "\x36", 1);  // Send the register address to read
-            i2c2.read(IRAddress, data_buf, 16);  // Read 16 bytes
-        }
-        for(int mes = 0; mes<3; mes++){
-        Ix[0] = data_buf[1];
-        Iy[0] = data_buf[2];
-        s     = data_buf[3];
-        Ix[0] += (s & 0x30) << 4;
-        Iy[0] += (s & 0xC0) << 2;
-    
-        Ix[1] = data_buf[4];
-        Iy[1] = data_buf[5];
-        s     = data_buf[6];
-        Ix[1] += (s & 0x30) << 4;
-        Iy[1] += (s & 0xC0) << 2;
-
-        Ix[2] = data_buf[7];
-        Iy[2] = data_buf[8];
-        s     = data_buf[9];
-        Ix[2] += (s & 0x30) << 4;
-        Iy[2] += (s & 0xC0) << 2;
-
-        Ix[3] = data_buf[10];
-        Iy[3] = data_buf[11];
-        s     = data_buf[12];
-        Ix[3] += (s & 0x30) << 4;
-        Iy[3] += (s & 0xC0) << 2;
-        int* coordinates = combineNumbers(Ix[0], Iy[0]);
-        for(int measurements = 0; measurements<12; measurements++){
-            for(int i = 0; i < 3; i++){
-                if((Ix[i] == 1023 && Ix_prev[i] != 1023) || ((Ix[i] != 1023 && Ix_prev[i] == 1023))){
-                flashCount[i] = flashCount[i] + 1;
-            }
-            Ix_prev[i] = Ix[i];
-            Iy_prev[i] = Iy[i];
-
-            if(turretID == 1){
-                i2c1.write(IRsensorAddress, "\x36", 1);  // Send the register address to read
-                i2c1.read(IRsensorAddress, data_buf, 16);  // Read 16 bytes
-            }else{
-                i2c2.write(IRsensorAddress, "\x36", 1);  // Send the register address to read
-                i2c2.read(IRsensorAddress, data_buf, 16);  // Read 16 bytes 
-            }
-
-            Ix[0] = data_buf[1];
-            Iy[0] = data_buf[2];
-            s   = data_buf[3];
-            Ix[0] += (s & 0x30) <<4;
-            Iy[0] += (s & 0xC0) <<2;
-
-            Ix[1] = data_buf[4];
-            Iy[1] = data_buf[5];
-            s   = data_buf[6];
-            Ix[1] += (s & 0x30) <<4;
-            Iy[1] += (s & 0xC0) <<2;
-
-            Ix[2] = data_buf[7];
-            Iy[2] = data_buf[8];
-            s   = data_buf[9];
-            Ix[2] += (s & 0x30) <<4;
-            Iy[2] += (s & 0xC0) <<2;
-
-            Ix[3] = data_buf[10];
-            Iy[3] = data_buf[11];
-            s   = data_buf[12];
-            Ix[3] += (s & 0x30) <<4;
-            Iy[3] += (s & 0xC0) <<2;
-            ThisThread::sleep_for(30ms);
-            }
-        }
-        if(flashCount[0]>3 && flashCount[0] < 8){
-                printf("Slow Buoy Found 1st     ");
-            }else if(flashCount[0] > 6 && flashCount[0] < 12){
-                printf("Fast Buoy Found 1st     ");
-            }else if (flashCount[0] < 4){
-                printf("Reflection Found 1st        ");
-            }
-        if(flashCount[1]>3 && flashCount[1] < 8){
-                printf("Slow Buoy Found 2nd\n");
-            }else if(flashCount[1] > 6 && flashCount[1] < 12){
-                printf("Fast Buoy Found 2nd\n");
-            }else if (flashCount[1] < 4){
-                printf("Reflection Found 2nd\n");
-            }
-        //printf("%d : %d\n", Ix[0], flashCount);
-        for(int i = 0; i < 3; i++){
-            flashCount[i] = 0;
-        }
-
-        
-        return coordinates;
-    }
-  */  
 
     void ToF_Function(int BuoyID){
         if(turretID == 1){
@@ -317,8 +206,6 @@ int Distance2(){
         lidarSerial2.read(buf, 9); // Read 9 bytes of data
         if (buf[0] == 0x59 && buf[1] == 0x59) {
             distance2 = buf[2] + buf[3] * 256;
-            if (distance2 != 0) {
-            }
         }
     }
     memset(buf, 0, sizeof(buf));
@@ -488,6 +375,133 @@ int* combineNumbers(int num1, int num2) {
      //printf("%d :   %d\n", locate1,lost1);
 }
     
+
+
+
+   int Ix2[4];
+    int Iy2[4];
+    int Ix_prev2[4];
+    int Iy_prev2[4];
+    int flashCount2[4] = {0,0,0,0};
+    char data_buf2[16];
+    int s2;
+    int* coordinates2;
+    int locate2 = 0;
+    int lost2 = 0;
+
+
+
+    void IR_Sensor2() {
+        int IRAddress = 0xB0;
+        i2c2.write(IRAddress, "\x36", 1);  // Send the register address to read
+        i2c2.read(IRAddress, data_buf2, 16);  // Read 16 bytes
+
+        Ix2[0] = data_buf2[1];
+        Iy2[0] = data_buf2[2];
+        s2     = data_buf2[3];
+        Ix2[0] += (s2 & 0x30) << 4;
+        Iy2[0] += (s2 & 0xC0) << 2;
+    
+        Ix2[1] = data_buf2[4];
+        Iy2[1] = data_buf2[5];
+        s2     = data_buf2[6];
+        Ix2[1] += (s2 & 0x30) << 4;
+        Iy2[1] += (s2 & 0xC0) << 2;
+
+        Ix2[2] = data_buf2[7];
+        Iy2[2] = data_buf2[8];
+
+        
+        s2     = data_buf1[9];
+        Ix2[2] += (s1 & 0x30) << 4;
+        Iy2[2] += (s1 & 0xC0) << 2;
+
+        Ix2[3] = data_buf1[10];
+        Iy2[3] = data_buf1[11];
+        s2     = data_buf1[12];
+        Ix2[3] += (s1 & 0x30) << 4;
+        Iy2[3] += (s1 & 0xC0) << 2;
+        int* coordinates = combineNumbers(Ix1[0], Iy1[0]);
+        if(Ix2[0] == 0 && Iy1[0] == 0){
+            printf("ERROR: IR 1 not found\n");
+        }
+        if(locate2 == 0){
+        for(int measurements = 0; measurements<12; measurements++){
+            for(int i = 0; i < 3; i++){
+                if((Ix2[i] == 1023 && Ix_prev1[i] != 1023) || ((Ix1[i] != 1023 && Ix_prev1[i] == 1023))){
+                flashCount2[i] = flashCount1[i] + 1;
+            }
+            Ix_prev2[i] = Ix1[i];
+            Iy_prev2[i] = Iy1[i];
+
+            i2c2.write(IRsensorAddress, "\x36", 1);  // Send the register address to read
+            i2c2.read(IRsensorAddress, data_buf1, 16);  // Read 16 bytes
+
+            Ix2[0] = data_buf1[1];
+            Iy2[0] = data_buf1[2];
+            s2   = data_buf1[3];
+            Ix2[0] += (s1 & 0x30) <<4;
+            Iy2[0] += (s1 & 0xC0) <<2;
+
+            Ix2[1] = data_buf1[4];
+            Iy2[1] = data_buf1[5];
+            s2   = data_buf1[6];
+            Ix2[1] += (s1 & 0x30) <<4;
+            Iy2[1] += (s1 & 0xC0) <<2;
+
+            Ix2[2] = data_buf1[7];
+            Iy2[2] = data_buf1[8];
+            s2   = data_buf1[9];
+            Ix2[2] += (s1 & 0x30) <<4;
+            Iy2[2] += (s1 & 0xC0) <<2;
+
+            Ix2[3] = data_buf1[10];
+            Iy2[3] = data_buf1[11];
+            s2   = data_buf1[12];
+            Ix2[3] += (s1 & 0x30) <<4;
+            Iy2[3] += (s1 & 0xC0) <<2;
+            ThisThread::sleep_for(30ms);
+            }
+        }
+        if(flashCount2[0]>3 && flashCount1[0] < 8){
+                locate2 = 1;
+                lost2 = 0;
+                //printf("Slow Buoy Found 1st     ");
+            }else if(flashCount2[0] > 6 && flashCount1[0] < 12){
+                locate2 = 2;
+                lost2 = 0;
+                //printf("Fast Buoy Found 1st     ");
+            }else{
+                locate2 = 0;
+                if(flashCount2[1]>3 && flashCount1[1] < 8){
+                //printf("Slow Buoy Found 2nd\n");
+                    locate2 = 1;
+                    lost2 = 0;
+                }else if(flashCount2[1] > 6 && flashCount1[1] < 12){
+                //printf("Fast Buoy Found 2nd\n");
+                    locate2 = 2;
+                    lost2 = 0;
+                }else{
+                //printf("Reflection Found 2nd\n");
+                locate2 = 0;
+                lockON2 = 0;
+            }
+       
+        for(int i = 0; i < 3; i++){
+            flashCount2[i] = 0;
+        }      
+        coordinates2 = coordinates;
+    }
+    }else{
+        if(lost2>600){
+            locate2 = 0;
+            for(int i = 0; i < 3; i++){
+                flashCount2[i] = 0;
+            }      
+        }
+    }
+     //printf("%d :   %d\n", locate1,lost1);
+}
 
 
 
