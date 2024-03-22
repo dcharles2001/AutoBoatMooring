@@ -8,10 +8,12 @@ int x = 1;
 
 PwmIn Cha1(D9);
 PwmIn Cha2(D10);
-float Cha1Read,Cha2Read;
+PwmIn Cha8(D3);
+float Cha1Read,Cha2Read,Cha8Read;
 int delayTime;
 
-Servo servo(D6);
+Servo Yservo(D6);
+Servo Trigger(D5);
 
 float map(float in, float inMin, float inMax, float outMin, float outMax) {
   // check it's within the range
@@ -62,13 +64,25 @@ void stepperRCControl(){
             stepPin = 1;
         }
 }
-int servoMove;
+
+float servoMove;
 void servoRCControl(){
     Cha2Read = Cha2.pulsewidth();
     //printf("%f\n", Cha2.pulsewidth());
-    servoMove = map(Cha2Read, 1000, 1990, 0, 180);
-    printf("%d\n", servoMove);
+    servoMove = map(Cha2Read, 1000, 1990, 0, 1);
+    //printf("%f\n", servoMove);
+    Yservo = servoMove;
     wait_us(200);
+}
+
+void triggerRCControl(){
+    Cha8Read = Cha8.pulsewidth();
+    if(Cha8Read>1800){
+        Trigger = 1;
+    }else if(Cha8Read<1100){
+        Trigger = 0;
+    }
+    //printf("%f\n",Cha8Read);
 }
 
 int main()
@@ -78,5 +92,6 @@ int main()
         
         stepperRCControl();
         servoRCControl();
+        triggerRCControl();
     }
 }
