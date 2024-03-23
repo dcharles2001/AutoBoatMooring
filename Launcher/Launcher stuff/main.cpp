@@ -12,8 +12,11 @@ int x = 1;
 PwmIn Cha1(PE_6);
 PwmIn Cha2(PE_5);
 PwmIn Cha5(PF_7);
+PwmIn Cha7(D3);
 PwmIn Cha8(PF_8);
-float Cha1Read,Cha2Read,Cha5Read,Cha8Read;
+
+float servoMove;
+float Cha1Read,Cha2Read,Cha5Read,Cha7Read,Cha8Read = 1500;
 int delayTime;
 
 Servo Yservo(D6);
@@ -74,7 +77,7 @@ void stepperRCControl(){
         }
 }
 
-float servoMove;
+
 void servoRCControl(){
     Cha2Read = Cha2.pulsewidth();
     //printf("%f\n", Cha2.pulsewidth());
@@ -104,14 +107,80 @@ void safetyRCControl(){
     //printf("%f\n",Cha8Read);
 }
 
+////////////////////////
+
+void stepperSControl(int XPos){
+        if (XPos == 1){
+            x = 1;
+        }else if(XPos == 0){
+            x = 0;
+        }else{
+            x = 3;
+        }
+        float delayTime1 = 2;
+        delayTime = 2;
+        if(x < 2){
+            if(x == 1){
+                dirPin = 1;
+                stepPin = 1;
+                ThisThread::sleep_for(delayTime1);
+                stepPin = 0;
+                ThisThread::sleep_for(delayTime1);
+            }else if(x == 0){
+                dirPin = 0;
+                stepPin = 1;
+                ThisThread::sleep_for(delayTime);
+                stepPin = 0;
+                ThisThread::sleep_for(delayTime);
+            }
+        }else{
+            stepPin = 1;
+        }
+}
+
+
+void servoSControl(float YPos){
+    Yservo = YPos;
+    ThisThread::sleep_for(1);
+}
+
+void triggerSControl(int fire){
+    if(fire == 1){
+        Trigger = 1;
+    }else if(fire == 0){
+        Trigger = 0;
+    }
+}
+
+void safetySControl(int safe){
+    if(safe == 1){
+        Saftey = 1;
+    }else if(safe == 0){
+        Saftey = 0;
+    }
+}
+int xAxisControl = 0;
+float yAxisControl = 0.5;
+int readyToFire = 0;
+int safteyControl = 0;
+
 int main()
 {
 
     while (true) {
-        
-        stepperRCControl();
-        servoRCControl();
-        triggerRCControl();
-        safetyRCControl();
+        Cha7Read = Cha7.pulsewidth();
+        if(Cha7Read<1300){
+            stepperSControl(xAxisControl);
+            servoSControl(yAxisControl);
+            triggerSControl(readyToFire);
+            safetySControl(safteyControl);
+        }else if(Cha7Read>1800){
+            stepperRCControl();
+            servoRCControl();
+            triggerRCControl();
+            safetyRCControl();
+        }else{
+            printf("Stopped\n");
+        }
     }
 }
