@@ -54,10 +54,10 @@ PwmIn Cha7(D3);
 
 //Setup for Sensor Turrets
 Timer tick;
-int dist1 = 0,dist2 = 0,avgDist1 = 0,avgDist2 = 0,lastDist1,lastDist2 = 0,lockON1 = 0;
-int lockON2 = 0,sampleSize = 5,IRsensorAddress = 0xB0,tolerance = 5,flashHz = 20,sweep = 0;
-int Ix1[4],Iy1[4],Ix_prev1[4],Iy_prev1[4],flashCount1[4] = {0,0,0,0},s1,locate1 = 0,lost1 = 0;
-int Ix2[4],Iy2[4],Ix_prev2[4],Iy_prev2[4],flashCount2[4] = {0,0,0,0},s2,locate2 = 0,lost2 = 0;
+int dist1 = 0,dist2 = 0,avgDist1 = 0,avgDist2 = 0,lastDist1,lastDist2 = 0,lockON1 = 0,
+    lockON2 = 0,sampleSize = 5,IRsensorAddress = 0xB0,tolerance = 5,flashHz = 20,sweep = 0,
+    Ix1[4],Iy1[4],Ix_prev1[4],Iy_prev1[4],flashCount1[4] = {0,0,0,0},s1,locate1 = 0,lost1 = 0,
+    Ix2[4],Iy2[4],Ix_prev2[4],Iy_prev2[4],flashCount2[4] = {0,0,0,0},s2,locate2 = 0,lost2 = 0;
 char data_buf1[16],data_buf2[16];
 int* coordinates1;
 int* coordinates2;
@@ -73,8 +73,8 @@ float yAxisControl = 0.5;
 //Functions for Sesnor Turrets
 void Write_2bytes(char d1, char d2, int IRsensorAddress) {
     char data[2] = {d1, d2};
-        i2c1.write(IRsensorAddress, data, 2);
-        i2c2.write(IRsensorAddress, data, 2);
+    i2c1.write(IRsensorAddress, data, 2);
+    i2c2.write(IRsensorAddress, data, 2);
 }
 
 class Turret {
@@ -89,13 +89,13 @@ private:
 public:
     // Constructor
     Turret(int turretID) : turretID(turretID){
-            Write_2bytes(0x30, 0x01,  IRsensorAddress); ThisThread::sleep_for(10ms);
-            Write_2bytes(0x30, 0x08,  IRsensorAddress); ThisThread::sleep_for(10ms);
-            Write_2bytes(0x06, 0x90,  IRsensorAddress); ThisThread::sleep_for(10ms);
-            Write_2bytes(0x08, 0xC0,  IRsensorAddress); ThisThread::sleep_for(10ms);
-            Write_2bytes(0x1A, 0x40,  IRsensorAddress); ThisThread::sleep_for(10ms);
-            Write_2bytes(0x33, 0x33,  IRsensorAddress); ThisThread::sleep_for(10ms);
-            ThisThread::sleep_for(100ms);
+        Write_2bytes(0x30, 0x01,  IRsensorAddress); ThisThread::sleep_for(10ms);
+        Write_2bytes(0x30, 0x08,  IRsensorAddress); ThisThread::sleep_for(10ms);
+        Write_2bytes(0x06, 0x90,  IRsensorAddress); ThisThread::sleep_for(10ms);
+        Write_2bytes(0x08, 0xC0,  IRsensorAddress); ThisThread::sleep_for(10ms);
+        Write_2bytes(0x1A, 0x40,  IRsensorAddress); ThisThread::sleep_for(10ms);
+        Write_2bytes(0x33, 0x33,  IRsensorAddress); ThisThread::sleep_for(10ms);
+        ThisThread::sleep_for(100ms);
     }
     int locatedBuoy = 0;
     // The I2C object is automatically deleted when i2c is deleted
@@ -297,37 +297,37 @@ void IR_Sensor1() {
             for(int i = 0; i < 3; i++){
                 if((Ix1[i] == 1023 && Ix_prev1[i] != 1023) || ((Ix1[i] != 1023 && Ix_prev1[i] == 1023))){
                 flashCount1[i] = flashCount1[i] + 1;
-            }
-            Ix_prev1[i] = Ix1[i];
-            Iy_prev1[i] = Iy1[i];
+                }
+                Ix_prev1[i] = Ix1[i];
+                Iy_prev1[i] = Iy1[i];
 
-            i2c1.write(IRsensorAddress, "\x36", 1);  // Send the register address to read
-            i2c1.read(IRsensorAddress, data_buf1, 16);  // Read 16 bytes
+                i2c1.write(IRsensorAddress, "\x36", 1);  // Send the register address to read
+                i2c1.read(IRsensorAddress, data_buf1, 16);  // Read 16 bytes
 
-            Ix1[0] = data_buf1[1];
-            Iy1[0] = data_buf1[2];
-            s1   = data_buf1[3];
-            Ix1[0] += (s1 & 0x30) <<4;
-            Iy1[0] += (s1 & 0xC0) <<2;
+                Ix1[0] = data_buf1[1];
+                Iy1[0] = data_buf1[2];
+                s1   = data_buf1[3];
+                Ix1[0] += (s1 & 0x30) <<4;
+                Iy1[0] += (s1 & 0xC0) <<2;
 
-            Ix1[1] = data_buf1[4];
-            Iy1[1] = data_buf1[5];
-            s1   = data_buf1[6];
-            Ix1[1] += (s1 & 0x30) <<4;
-            Iy1[1] += (s1 & 0xC0) <<2;
+                Ix1[1] = data_buf1[4];
+                Iy1[1] = data_buf1[5];
+                s1   = data_buf1[6];
+                Ix1[1] += (s1 & 0x30) <<4;
+                Iy1[1] += (s1 & 0xC0) <<2;
 
-            Ix1[2] = data_buf1[7];
-            Iy1[2] = data_buf1[8];
-            s1   = data_buf1[9];
-            Ix1[2] += (s1 & 0x30) <<4;
-            Iy1[2] += (s1 & 0xC0) <<2;
+                Ix1[2] = data_buf1[7];
+                Iy1[2] = data_buf1[8];
+                s1   = data_buf1[9];
+                Ix1[2] += (s1 & 0x30) <<4;
+                Iy1[2] += (s1 & 0xC0) <<2;
 
-            Ix1[3] = data_buf1[10];
-            Iy1[3] = data_buf1[11];
-            s1   = data_buf1[12];
-            Ix1[3] += (s1 & 0x30) <<4;
-            Iy1[3] += (s1 & 0xC0) <<2;
-            ThisThread::sleep_for(30ms);
+                Ix1[3] = data_buf1[10];
+                Iy1[3] = data_buf1[11];
+                s1   = data_buf1[12];
+                Ix1[3] += (s1 & 0x30) <<4;
+                Iy1[3] += (s1 & 0xC0) <<2;
+                ThisThread::sleep_for(30ms);
             }
         }
         if(flashCount1[0]>3 && flashCount1[0] < 8){
