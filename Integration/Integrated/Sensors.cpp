@@ -1,43 +1,6 @@
-#include "mbed.h"
-#include "Servo.h"
-#include "stdio.h"
-#include <cstdio>
-#include <iostream>
-#include "PwmIn.h"
-#include "Launcher.h"
 #include "Sensors.h"
 
-using namespace std;
-
-Launcher Launch;
-extern Sensors Sensors;
-//Thread Creation and Event queue for Sensor Turrets
-Thread Thread_ToF1;
-EventQueue Queue_ToF1(1 * EVENTS_EVENT_SIZE);
-
-Thread Thread_Dist1;
-EventQueue Queue_Dist1(1 * EVENTS_EVENT_SIZE);
-
-Thread Thread_Cord1;
-EventQueue Queue_Cord1(1 * EVENTS_EVENT_SIZE);
-
-Thread Thread_ToF2;
-EventQueue Queue_ToF2(1 * EVENTS_EVENT_SIZE);
-
-Thread Thread_Dist2;
-EventQueue Queue_Dist2(1 * EVENTS_EVENT_SIZE);
-
-Thread Thread_Turret1;
-EventQueue Queue_Turret1(1 * EVENTS_EVENT_SIZE);
-
-Thread Thread_Turret2;
-EventQueue Queue_Turret2(1 * EVENTS_EVENT_SIZE);
-
-//Thread Creation and Event queue for Launcher
-Thread Thread_Launcher;
-EventQueue Queue_Launcher(1 * EVENTS_EVENT_SIZE);
-
-/*//Pin Setup Sensor Turrets
+//Pin Setup Sensor Turrets
 I2C i2c1(PB_9, PB_8); //IR1
 I2C i2c2(PB_11, PB_10); //IR2
 
@@ -48,154 +11,114 @@ BufferedSerial lidarSerial2(PE_8, PE_7);
 Servo servoX1(PA_5);
 Servo servoY1(PA_6);
 Servo servoX2(PD_14);
-Servo servoY2(PD_15);*/
+Servo servoY2(PD_15);
 
-//Pin Setup Launcher Turret
-PwmIn Cha7(D3);
+void Sensors::Setup(){
+    servoX1 = 0.5;
+    servoY1 = 0.5;
+    pc.set_baud(115200); // Set baud rate for PC serial communication
+    lidarSerial1.set_baud(115200); // Set baud rate for Lidar serial communication
+    lidarSerial2.set_baud(115200);
+}
 
-//Setup for Sensor Turrets
-Timer tick;/*
-int dist1 = 0,dist2 = 0,avgDist1 = 0,avgDist2 = 0,lastDist1,lastDist2 = 0,lockON1 = 0,
-    lockON2 = 0,sampleSize = 5,IRsensorAddress = 0xB0,tolerance = 5,flashHz = 20,sweep = 0,
-    Ix1[4],Iy1[4],Ix_prev1[4],Iy_prev1[4],flashCount1[4] = {0,0,0,0},s1,locate1 = 0,lost1 = 0,
-    Ix2[4],Iy2[4],Ix_prev2[4],Iy_prev2[4],flashCount2[4] = {0,0,0,0},s2,locate2 = 0,lost2 = 0;
-char data_buf1[16],data_buf2[16];
-int* coordinates1;
-int* coordinates2;
-float STEP = 0.0005;
-*/
-//Setup for Launcher Turret
-float Cha7Read = 1500;
-/////TEMP REPLACE WITH SESNOR VALUES/////
-int xAxisControl = 0,readyToFire = 0,safteyControl = 0;
-float yAxisControl = 0.5;
-/////////////////////////////////////////
-
-/*//Functions for Sesnor Turrets
-void Write_2bytes(char d1, char d2, int IRsensorAddress) {
+void Sensors::Write_2bytes(char d1, char d2, int IRsensorAddress) {
     char data[2] = {d1, d2};
     i2c1.write(IRsensorAddress, data, 2);
     i2c2.write(IRsensorAddress, data, 2);
 }
 
-class Turret {
-private:
-    int turretID;
-    int flip = 1;
-    int fail = 0;
-    float posX = 0.5; 
-    float posY = 0.5;
-    int dist = 0;
-    int lockBuoy = 0;
-public:
-    // Constructor
-    Turret(int turretID) : turretID(turretID){
-        Write_2bytes(0x30, 0x01,  IRsensorAddress); ThisThread::sleep_for(10ms);
-        Write_2bytes(0x30, 0x08,  IRsensorAddress); ThisThread::sleep_for(10ms);
-        Write_2bytes(0x06, 0x90,  IRsensorAddress); ThisThread::sleep_for(10ms);
-        Write_2bytes(0x08, 0xC0,  IRsensorAddress); ThisThread::sleep_for(10ms);
-        Write_2bytes(0x1A, 0x40,  IRsensorAddress); ThisThread::sleep_for(10ms);
-        Write_2bytes(0x33, 0x33,  IRsensorAddress); ThisThread::sleep_for(10ms);
-        ThisThread::sleep_for(100ms);
+void Sensors::sweep(void) {
+    if (flip == 1) {
+        posY = 0.6;
+        posX = posX + STEP;
+    } else {
+        posX = posX - STEP;
+        posY = 0.4;
     }
-    int locatedBuoy = 0;
-    // The I2C object is automatically deleted when i2c is deleted
-    ~Turret(){
-    } 
 
-    void sweep(void) {
-        if (flip == 1) {
-            posY = 0.6;
-            posX = posX + STEP;
-        } else {
-            posX = posX - STEP;
-            posY = 0.4;
+    if (turretID == 1) {
+        if (posX <= 0.0) {
+            flip = 1;
+        } else if (posX >= 1) {
+            flip = -1;
+            printf("Turret 1 has no Buoy\n");
         }
+            servoX1 = posX;
+            servoY1 = posY;
+    }else{
+        if (posX <= 0.0) {
+            flip = 1;
+        } else if (posX >= 1) {
+            flip = -1;
+            printf("Turret 2 has no Buoy\n");
+        }
+        //servoX2 = posX;
+        //servoY2 = posY;
+    }
+}
 
+// Method to move the turret to a specific X-Y position
+void Sensors::Track(int X, int Y, int tolerance) {
+    float trackSpeedX = (((415.000000 - X)) / 150000);
+    float trackSpeedY = (((512.000000 - Y)) / 150000);
+
+    if (trackSpeedX > 0.003) {
+        trackSpeedX = 0.005;
+    } else if (trackSpeedX < -0.003) {
+        trackSpeedX = -0.005;
+    }
+    if (trackSpeedY > 0.003) {
+        trackSpeedY = 0.005;
+    } else if (trackSpeedY < -0.003) {
+        trackSpeedY = -0.005;
+    }
+
+    posX -= trackSpeedX; 
+    posY += trackSpeedY;
+
+    if (abs(415 - X) > tolerance) {
         if (turretID == 1) {
-            if (posX <= 0.0) {
-                flip = 1;
-            } else if (posX >= 1) {
-                flip = -1;
-                printf("Turret 1 has no Buoy\n");
-            }
-                servoX1 = posX;
-                servoY1 = posY;
+            servoX1 = posX;
         }else{
-            if (posX <= 0.0) {
-                flip = 1;
-            } else if (posX >= 1) {
-                flip = -1;
-                printf("Turret 2 has no Buoy\n");
-            }
-                //servoX2 = posX;
-                //servoY2 = posY;
+            servoX2 = posX;
         }
     }
 
-    // Method to move the turret to a specific X-Y position
-    void Track(int X, int Y, int tolerance) {
-        float trackSpeedX = (((415.000000 - X)) / 150000);
-        float trackSpeedY = (((512.000000 - Y)) / 150000);
-
-        if (trackSpeedX > 0.003) {
-            trackSpeedX = 0.005;
-        } else if (trackSpeedX < -0.003) {
-            trackSpeedX = -0.005;
-        }
-        if (trackSpeedY > 0.003) {
-            trackSpeedY = 0.005;
-        } else if (trackSpeedY < -0.003) {
-            trackSpeedY = -0.005;
-        }
-
-        posX -= trackSpeedX; 
-        posY += trackSpeedY;
-
-        if (abs(415 - X) > tolerance) {
+    if (abs(512 - Y) > tolerance) {          
             if (turretID == 1) {
-                servoX1 = posX;
+                servoY1 = posY;
             }else{
-                servoX2 = posX;
-            }
-        }
-
-        if (abs(512 - Y) > tolerance) {          
-                if (turretID == 1) {
-                    servoY1 = posY;
-                }else{
-                    servoY2 = posY;
-                }     
-        }
-        
-        if (abs(415 - X) <= 2*tolerance && abs(512 - Y) <= 2*tolerance){
-            if(turretID == 1){
-                lockON1 = 1;
-            }else{
-                lockON2 = 1;
-            }
-        }
+                servoY2 = posY;
+            }     
     }
-
-    void ToF_Function(int BuoyID){
+    
+    if (abs(415 - X) <= 2*tolerance && abs(512 - Y) <= 2*tolerance){
         if(turretID == 1){
-            if(avgDist1 !=0){
-                lastDist1 = avgDist1;
-                printf("Buoy %d is %d cm away\n",BuoyID, lastDist1);
-            }else{
-                printf("Last Buoy %d Distance was %d cm away\n",BuoyID,lastDist1);
-            }
+            lockON1 = 1;
         }else{
-            if(avgDist2 !=0){
-                lastDist2 = avgDist2;
-                printf("Buoy %d is %d cm away\n",BuoyID, lastDist2);
-            }else{
-                printf("Last Buoy %d Distance was %d cm away\n",BuoyID,lastDist2);
-            }
-
+            lockON2 = 1;
         }
     }
-};
+}
+
+void Sensors::ToF_Function(int BuoyID){
+    if(turretID == 1){
+        if(avgDist1 !=0){
+            lastDist1 = avgDist1;
+            printf("Buoy %d is %d cm away\n",BuoyID, lastDist1);
+        }else{
+            printf("Last Buoy %d Distance was %d cm away\n",BuoyID,lastDist1);
+        }
+    }else{
+        if(avgDist2 !=0){
+            lastDist2 = avgDist2;
+            printf("Buoy %d is %d cm away\n",BuoyID, lastDist2);
+        }else{
+            printf("Last Buoy %d Distance was %d cm away\n",BuoyID,lastDist2);
+        }
+
+    }
+}
 
 int Distance1(){
     uint8_t buf[9] = {0}; // An array that holds data
@@ -223,7 +146,7 @@ int Distance2(){
     return distance2;
 }
 
-void Dist_Avg1() {
+void Sensors::Dist_Avg1() {
     int missed = 0;
     avgDist1 = 0;
 
@@ -238,7 +161,7 @@ void Dist_Avg1() {
     avgDist1 /=(sampleSize - missed);
 }
 
-void Dist_Avg2() {
+void Sensors::Dist_Avg2() {
     int missed = 0;
     avgDist2 = 0;
 
@@ -261,7 +184,7 @@ int* combineNumbers(int num1, int num2) {
     return Temp;
 }   
 
-void IR_Sensor1() {
+void Sensors::IR_Sensor1() {
     int IRAddress = 0xB0;
     i2c1.write(IRAddress, "\x36", 1);  // Send the register address to read
     i2c1.read(IRAddress, data_buf1, 16);  // Read 16 bytes
@@ -370,7 +293,7 @@ void IR_Sensor1() {
      //printf("%d :   %d\n", locate1,lost1);
 }
 
-void IR_Sensor2() {
+void Sensors::IR_Sensor2() {
     int IRAddress = 0xB0;
     i2c2.write(IRAddress, "\x36", 1);  // Send the register address to read
     i2c2.read(IRAddress, data_buf2, 16);  // Read 16 bytes
@@ -483,15 +406,15 @@ void IR_Sensor2() {
     //printf("%d :   %d\n", locate1,lost1);
 }
 
-extern Turret Turret1;
-class Turret;
-Turret Turret1(1);
+extern Sensors Turret1;
+class Sensors;
+Sensors Turret1(1);
 
-extern Turret Turret2;
-class Turret;
-Turret Turret2(2);
+extern Sensors Turret2;
+class Sensors;
+Sensors Turret2(2);
 
-void Turret1_Function() {
+void Sensors::Turret1_Function() {
     static int fail = 0;
     static int reading = 0;
     if (locate1 == 0 || lost1>600) {
@@ -539,8 +462,8 @@ void Turret1_Function() {
     }
 }
 
-void Turret2_Function() {
-    int* Coordinates = Turret2.IR_Sensor(IRsensorAddress);
+void Sensors::Turret2_Function() {
+    /*int* Coordinates = Turret2.IR_Sensor(IRsensorAddress);
 
     int X = Coordinates[0];
     int Y = Coordinates[1];
@@ -568,67 +491,5 @@ void Turret2_Function() {
             reading++;
         }
         ThisThread::sleep_for(1ms);
-    }   
-}*/
-
-void Turret1Func(){
-    Sensors.Turret1_Function();
-}
-void Turret2Func(){
-    Sensors.Turret2_Function();
-}
-void IRSensor1(){
-    Sensors.IR_Sensor1();
-}
-void DistAvg1(){
-    Sensors.Dist_Avg1();
-}
-void DistAvg2(){
-    Sensors.Dist_Avg2();
-}
-
-//Functions for Launcher Turret
-void LauncherMain(){
-    Cha7Read = Cha7.pulsewidth();
-    if((Cha7Read>1300)&&(Cha7Read<1800)){
-        Launch.stepperSControl(xAxisControl);
-        Launch.servoSControl(yAxisControl);
-        Launch.triggerSControl(readyToFire);
-        Launch.safetySControl(safteyControl);
-    }else if(Cha7Read>1800){
-        Launch.stepperRCControl();
-        Launch.servoRCControl();
-        Launch.triggerRCControl();
-        Launch.safetyRCControl();
-    }else{
-        //printf("Stopped\n");
-        Launch.servoSControl(yAxisControl);
-        Launch.triggerSControl(readyToFire);
-        Launch.safetySControl(safteyControl);
-    }
-}
-
-//MAIN
-int main(){
-    //Sesnor Code
-    Sensors.Setup();
-
-    Queue_Turret1.call_every(2ms, Turret1Func);
-    Thread_Turret1.start(callback(&Queue_Turret1, &EventQueue::dispatch_forever));
-
-    Queue_Cord1.call_every(50ms, IRSensor1);
-    Thread_Cord1.start(callback(&Queue_Cord1, &EventQueue::dispatch_forever));
-
-    //Queue_Turret2.call_every(2ms, Turret2Func);
-    //Thread_Turret2.start(callback(&Queue_Turret2, &EventQueue::dispatch_forever));
-
-    Queue_Dist1.call_every(10ms, DistAvg1);
-    Thread_Dist1.start(callback(&Queue_Dist1, &EventQueue::dispatch_forever));
-
-    Queue_Dist2.call_every(10ms, DistAvg2);
-    Thread_Dist2.start(callback(&Queue_Dist2, &EventQueue::dispatch_forever));
-
-    //Launcher Code
-    Queue_Launcher.call_every(10ms, LauncherMain);
-    Thread_Launcher.start(callback(&Queue_Launcher, &EventQueue::dispatch_forever));
+    }*/  
 }
