@@ -120,7 +120,7 @@ void Sensors::ToF_Function(int BuoyID){
     }
 }
 
-int Distance1(){
+int Sensors::Distance1(){
     uint8_t buf[9] = {0}; // An array that holds data
     int distance1 = 0;
     if (lidarSerial1.readable()) {
@@ -133,7 +133,7 @@ int Distance1(){
     return distance1;
 }
 
-int Distance2(){
+int Sensors::Distance2(){
     uint8_t buf[9] = {0}; // An array that holds data
     int distance2 = 0;
     if (lidarSerial2.readable()) {
@@ -176,7 +176,7 @@ void Sensors::Dist_Avg2() {
     avgDist2 /=(sampleSize - missed);
 }
 
-int* combineNumbers(int num1, int num2) {
+int* Sensors::combineNumbers(int num1, int num2) {
     static int Temp[2];
     Temp[1] = num1;
     Temp[0] = num2;
@@ -325,7 +325,7 @@ void Sensors::IR_Sensor2() {
     Iy2[3] += (s1 & 0xC0) << 2;
     int* coordinates = combineNumbers(Ix1[0], Iy1[0]);
     if(Ix2[0] == 0 && Iy1[0] == 0){
-        printf("ERROR: IR 1 not found\n");
+        printf("ERROR: IR 2 not found\n");
     }
     if(locate2 == 0){
         for(int measurements = 0; measurements<12; measurements++){
@@ -405,16 +405,14 @@ void Sensors::IR_Sensor2() {
     }
     //printf("%d :   %d\n", locate1,lost1);
 }
-
+/*
 extern Sensors Turret1;
-class Sensors;
 Sensors Turret1(1);
 
 extern Sensors Turret2;
-class Sensors;
 Sensors Turret2(2);
-
-void Sensors::Turret1_Function() {
+*/
+void Sensors::Turret_Function1() {
     static int fail = 0;
     static int reading = 0;
     if (locate1 == 0 || lost1>600) {
@@ -427,7 +425,7 @@ void Sensors::Turret1_Function() {
             lockON1 = 0;
             locate1 = 0;      
             //printf("HERE");
-            Turret1.sweep();
+            sweep();
             //printf("%d  :   %d  :   %d  :   %d\n", locate1, lockON1, lost1,fail);
         }
     }else{
@@ -437,7 +435,7 @@ void Sensors::Turret1_Function() {
         //printf("%d  :   %d\n",X,Y);
         if (X != 1023 && Y != 1023){
             lost1 = 0;
-            Turret1.Track(X,Y,tolerance);
+            Track(X,Y,tolerance);
         }else{
             lost1++;
         }
@@ -446,7 +444,7 @@ void Sensors::Turret1_Function() {
             if(lost1<600){
                 if(reading == 200){
                 //printf("%d  :   %d      %d  :   %d\n", X,Y, locate1, lockON1);
-                    Turret1.ToF_Function(locate1);
+                    ToF_Function(locate1);
                     reading = 0;
                 }else{
                     reading++;
@@ -462,34 +460,50 @@ void Sensors::Turret1_Function() {
     }
 }
 
-void Sensors::Turret2_Function() {
-    /*int* Coordinates = Turret2.IR_Sensor(IRsensorAddress);
-
-    int X = Coordinates[0];
-    int Y = Coordinates[1];
+void Sensors::Turret_Function2() {
     static int fail = 0;
     static int reading = 0;
-
-    if (X == 0 && Y == 0) {
-        cout<<"Error: IR Sensor 2 Not Detected"<<endl;
-        ThisThread::sleep_for(1000ms);
-    } else if (X == 1023 && Y == 1023) {
+    if (locate2 == 0 || lost2>600) {
         if (fail <= 199) {
             fail++;
         } else if (fail == 200) {
             fail++;
         } else {
-            Turret2.sweep();
+            fail++;
+            lockON2 = 0;
+            locate2 = 0;      
+            //printf("HERE");
+            sweep();
+            //printf("%d  :   %d  :   %d  :   %d\n", locate1, lockON1, lost1,fail);
         }
     }else{
-        Turret2.Track(X,Y,tolerance);
         fail = 0;
-        if(reading == 200){
-        Turret2.ToF_Function();
-        reading = 0;
+        int X = coordinates2[0];
+        int Y = coordinates2[1];
+        //printf("%d  :   %d\n",X,Y);
+        if (X != 1023 && Y != 1023){
+            lost2 = 0;
+            Track(X,Y,tolerance);
         }else{
-            reading++;
+            lost2++;
         }
-        ThisThread::sleep_for(1ms);
-    }*/  
+        //printf("THERE");
+        if(lockON2 == 1){
+            if(lost2<600){
+                if(reading == 200){
+                //printf("%d  :   %d      %d  :   %d\n", X,Y, locate1, lockON1);
+                    ToF_Function(locate2);
+                    reading = 0;
+                }else{
+                    reading++;
+                }
+                ThisThread::sleep_for(1ms);
+            }else{
+                lockON2 = 0;
+                locate2 = 0;
+                lost2 = 0;
+                //printf("EVERYWHERE");
+            }
+        }
+    }
 }
