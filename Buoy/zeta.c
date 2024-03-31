@@ -40,24 +40,30 @@ volatile unsigned int stepcount = 0;
  ********************************************************************************************/
 void Wait_POR(void) 
 {
-	init_TIM2();
+	
 	/* Pull the SDN pin high for 10 us */
 	GPIOB->ODR |= (1u << SDN); //SDN high
-	for(int i=0; i<40; i++) //approx 10us delay
+	for(int i=0; i<150; i++) //approx 10us delay
   {
       __NOP(); //do nothing
   }
     
 	/* Pull the SDN pin low */
   GPIOB->ODR &=~ (1u << SDN);//SDN LOW
-  
+	
 	/*
-	for(int i=0; i<3600; i++) //approx ?ms delay
+	init_TIM15();
+	while((TIM15->SR & TIM_SR_UIF) == 0);
+  TIM15->SR &= ~TIM_SR_UIF;
+	*/
+	
+	
+	for(int i=0; i<20000; i++) //approx ?ms delay
 	{
 				__NOP(); //do nothing
 	}
-	*/
-	delayms_TIM2(5); //5ms delay;
+	
+	
 	GPIOB->ODR |= (1u << TriggerLine); //triggerline high
 	
 
@@ -108,7 +114,7 @@ void SpiReadBytes(unsigned char byteCount, unsigned char* pData)
 		//while(!(SPI_MODULE->SR & (1u << 1))); //wait on TXE
 		//while(!(SPI_MODULE->SR & (1u << 7))); //wait on busy bit to indicate end of transmission, lest we bring CS high too early
 	}
- 
+	//while((SPI_MODULE->SR & (1u << 7))); //wait for transmission to end
 }
 
 /*********************************************************************************************
@@ -127,7 +133,7 @@ unsigned char GetResponse_CTS(unsigned char byteCount, unsigned char* pData)
 {
 	cts_flag = false;
 	unsigned char ctsVal = 0u;
-	unsigned int errCnt = 20000;
+	unsigned int errCnt = RADIO_CTS_TIMEOUT;
 	//char ctsstring[15];
 
 	while (errCnt != 0) //attempt based error detection                                                                                              
@@ -143,7 +149,7 @@ unsigned char GetResponse_CTS(unsigned char byteCount, unsigned char* pData)
 		*/
 		ctsVal = read_SPI_noCS(); 
 		//while(!(SPI_MODULE->SR & (1u << 1))); //wait on TXE
-		//while(!(SPI_MODULE->SR & (1u << 7))); //wait on busy bit to indicate end of transmission, lest we bring CS high too early
+		//while((SPI_MODULE->SR & (1u << 7))); //wait on busy bit to indicate end of transmission, lest we bring CS high too early
 
 		/*
 		char ctsstring[15];
@@ -385,17 +391,16 @@ unsigned char Si4455_Configure(const unsigned char *pSetPropCmd)
 		}
 
 		/* Check response byte of EZCONFIG_CHECK command */
+		/*
 		if (SI4455_CMD_ID_EZCONFIG_CHECK == radioCmd[0])
 		{
 			if (response)
 			{
-				char checkstring[30];
-				sprintf(checkstring, "Ez check resp: %x\n\r", response);
-				send_array_USART(checkstring);
-				/* Number of command bytes exceeds maximal allowable length */
+				// Number of command bytes exceeds maximal allowable length 
 				return SI4455_COMMAND_ERROR;
 			}
 		}
+		*/
 
 		/* Get and clear all interrupts.  An error has occured... */
 		GetIntStatus(0, 0, 0);

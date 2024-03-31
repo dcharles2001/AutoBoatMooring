@@ -20,6 +20,7 @@ const unsigned char Radio_Configuration_Data_Array[] = RADIO_CONFIGURATION_DATA_
 const tRadioConfiguration RadioConfiguration = RADIO_CONFIGURATION_DATA;
 static Si4455_T Ret_state;
 
+extern DigitalOut TriggerLine;
 
 zetaspi::zetaspi(SPIConfig_t Pins, DigitalOut sdn, DigitalIn gpio2, DigitalIn nirq): spidevice(Pins.MOSI, Pins.MISO, Pins.SCLK), CS(Pins.CS), SDN(sdn), GPIO2(gpio2), nIRQ(nirq)
 {
@@ -42,10 +43,12 @@ zetaspi::zetaspi(SPIConfig_t Pins, DigitalOut sdn, DigitalIn gpio2, DigitalIn ni
  ********************************************************************************************/
 void zetaspi::Wait_POR() //PORTED FUNCTION
 {
+    spidevice.format(8, 0); //8 bits, cpol, cpha 0, MSB first default
+    spidevice.frequency(5000000); //1 MHz
 //#ifdef	ENABLE_POR
 	/* Pull the SDN pin high for 10 us */
 	SDN = 1; //SDN HIGH
-	for(int i=0; i<450; i++) //approx 10us delay
+	for(int i=0; i<125; i++) //approx 10us delay
     {
         __NOP(); //do nothing
     }
@@ -53,7 +56,12 @@ void zetaspi::Wait_POR() //PORTED FUNCTION
 
 	/* Pull the SDN pin low for 10 ms */
     SDN = 0; //SDN LOW
-    ThisThread::sleep_for(5ms);
+    //ThisThread::sleep_for(5ms);
+    for(int i=0; i<15000; i++)
+    {
+        __NOP();
+    }
+    TriggerLine = 1;
 /*
 #endif 
 	ThisThread::sleep_for(10ms); //sleep for 10ms
@@ -334,11 +342,12 @@ unsigned char zetaspi::Si4455_Configure(const unsigned char *pSetPropCmd)
 			radioCmd[col] = *pSetPropCmd;
 			pSetPropCmd++;
 		}
-
+        /*
         if(SI4455_CMD_ID_EZCONFIG_CHECK == radioCmd[0])
         {
             printf("Check\n\r");
         }
+        */
 		if (SendCmdGetResp(numOfBytes, radioCmd, 1, &response) != 0xFF)
 		{
 			/* Timeout occured */
@@ -480,11 +489,11 @@ void zetaspi::SPI_SI4455_Init()
 	Ret_state = Si4455_HWInitialize();
 	if(Ret_state == SI4455_SUCCESS)
     {
-		printf("Configuration Successful");
+		printf("Configuration Successful\n\r");
     }
 	if(Ret_state == SI4455_FAIL)
     {
-		printf("Configuration Failed");
+		printf("Configuration Failed\n\r");
     }
 }
 
@@ -513,8 +522,7 @@ void zetaspi::SPI_Init()
     	2. Data Out 		= From MSB bit ---> To LSB bit
     	3. Data Mode 		= SPI MODE0
 	 */
-	spidevice.format(8, 0); //8 bits, cpol, cpha 0, MSB first default
-    spidevice.frequency(1000000); //1 MHz
+	
     CS = 1;
 }
 

@@ -4,11 +4,13 @@
 #include "zeta.h"
 
 void HSIClockConfig(void);
+void PLLHSIConfig(void);
 
 int main(void)
 {
 	
-	HSIClockConfig(); //Apply HSI config
+	PLLHSIConfig(); //Apply HSI config
+	//HSIClockConfig();
 	SystemCoreClockUpdate(); //Update clock value
 	RCC->AHB2ENR  |= (RCC_AHB2ENR_GPIOAEN); //enable GPIO A clock for USART and SPI
 	RCC->AHB2ENR 	|= (RCC_AHB2ENR_GPIOBEN); //enable GPIO B clock for SDN and GPIO1
@@ -33,7 +35,7 @@ int main(void)
   unsigned char response[16];
     
 	char respstring[40];
- 
+	
   SendCmdGetResp(parambytescnt, &cmd, respByteCount, response);
 	
   for(int i=0; i<respByteCount; i++)
@@ -115,5 +117,57 @@ void HSIClockConfig()
 	RCC->CFGR &=~ RCC_CFGR_SW; //clear system clock switch
 	RCC->CFGR |=  RCC_CFGR_SW_HSI; //set system clock switch to HSI clock
 	while((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_HSI); //wait until system clock switch statys reads HSI
+}
+
+void PLLHSIConfig()
+{
+		RCC->CR |= RCC_CR_HSION; //High speed internal clock (16MHz)
+		while(!(RCC->CR & RCC_CR_HSIRDY)); //wait for HSI clock ready flag
+	
+		RCC->APB1ENR1 |= RCC_APB1ENR1_PWREN; //power interface clock enable
+		PWR->CR1 |= PWR_CR1_VOS; 
+	
+	
+		FLASH->ACR |= FLASH_ACR_ICEN | 
+									FLASH_ACR_PRFTEN | 
+									FLASH_ACR_DCEN | 
+									FLASH_ACR_LATENCY_3WS;
+	
+	
+		RCC->PLLCFGR &=~ (127u << (8)); //PLLN reset (only part of PLLCFGR not 0 by default						
+	
+		
+		// 16/2 * 16/2 = 64 system clock 
+		RCC->PLLCFGR |= (2u << 0) | //HSI source
+										(1u << 4) | // PLLM primary div /2
+										(16u << 8) | //multiply x20
+										(1u << 16) | // PLLPEN
+										(0u << 17) | // PLLP /7
+										(1u << 20) | // PLLQEN
+										(0u << 21) | // PLLQ /2
+										(1u << 24) | // PLLREN
+										(0u << 25); //PLLR /2 
+										
+																
+	  RCC->CFGR |= (0u << 4)| //AHB div /1
+								 (5u << 8)| //APB1 div /1
+		             (5u << 11); //APB2 div /1
+		
+		
+		RCC->CR |= RCC_CR_PLLON; //turn PLL on 
+		while(!(RCC->CR & RCC_CR_PLLRDY)); //wait for PLL 
+		
+		
+		RCC->CFGR &=~ RCC_CFGR_SW; //clear system clock switch 
+		RCC->CFGR |= RCC_CFGR_SW_PLL; //set PLL as clock source
+		
+		while(!(RCC->CFGR & RCC_CFGR_SWS_PLL)); //wait for PLL switch status
+	
+		
+	
+		RCC->CR &=~ RCC_CR_MSION; //MSI off
+		
+	
+	
 }
 

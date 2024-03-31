@@ -26,8 +26,8 @@ void init_TIM2(void)
 	RCC->APB1ENR1 |= RCC_APB1ENR1_TIM2EN; //enable timer 2 clock
 	TIM2->DIER |= TIM_DIER_UIE; //timer update interrupt enabled
 	
-	TIM2->PSC = PSC_polling; //set prescaler
-	TIM2->ARR = ARR_polling; //set ARR
+	TIM2->PSC = PSC_1ms; //set prescaler
+	TIM2->ARR = ARR_1ms; //set ARR
 	
 	
 	
@@ -69,5 +69,18 @@ void TIM2_IRQHandler(void)
 		GPIOB->ODR |= (1u << TriggerLine); //triggerline high to signal interrupt
 	}
 	TIM2->SR = 0; //reset SR
+}
+
+void init_TIM15(void)
+{
+	RCC->APB2ENR |= RCC_APB2ENR_TIM15EN; //enable timer 15 clock
+	TIM15->DIER |= TIM_DIER_UIE; 
+	
+	TIM15->PSC = PSC_1ms;
+	TIM15->ARR = ARR_1ms;
+	
+	TIM15->CNT = 0;
+	
+	TIM15->CR1 |= TIM_CR1_CEN; //enable timer
 }
 

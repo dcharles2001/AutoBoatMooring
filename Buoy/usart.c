@@ -30,17 +30,21 @@ void init_USART(void)
 			|USART_CR1_RE												//receive enable
 			|USART_CR1_UE												//usart main enable bit
 				);
-	uint16_t div = SystemCoreClock/9600; //calculate value for baud rate register (BRR)
+				
+	
+	uint32_t div = SystemCoreClock/(9600*4); //calculate value for baud rate register (BRR)
 	
 	USART_MODULE->BRR = div; //set baud rate
+	/* 
 	//set USART control register
 	USART_MODULE->CR1|=(										//USART CONFIG
-			USART_CR1_TE												//transmit enable
+			USART_CR1_TE									
+			//transmit enable
 			|USART_CR1_RE												//receive enable
 			|USART_CR1_UE												//usart main enable bit
 										//RXNE interrupt enable
 				);
-	
+	*/
 }
 
 char send_USART(char newchar)

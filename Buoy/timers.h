@@ -6,8 +6,8 @@
 #define PSC_polling 320 //psc for 1us
 #define ARR_polling 0xffff //max for 16 bits
 
-#define PSC_1ms 16 //1MHz scale
-#define ARR_1ms 1000 //1000 counts for 1ms
+#define PSC_1ms 15 //1MHz scale
+#define ARR_1ms 999 //1000 counts for 1ms
 
 
 void init_LPTIM(void);
@@ -16,6 +16,7 @@ void WaiT2(unsigned int delay_us);
 void delayms_TIM2(int cycles);
 void TIM2_IRQHandler(void);
 
+void init_TIM15(void);
 
 
 

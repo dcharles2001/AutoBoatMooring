@@ -71,7 +71,7 @@ void init_SPI(void)
 	SPI_MODULE->CR1 |=( ( 0u << ( 0 ) ) | //CPHA 0
 										  ( 0u << ( 1 ) ) | //CPOL 0
 										  ( 1u << ( 2 ) ) | //Master config
-										  ( 1u << ( 3 ) ) | //baud rate fpclk/n
+										  ( 0u << ( 3 ) ) | //baud rate fpclk/n
 										  //( 1u << ( 6 ) ) | //SPI peripheral enabled
 										  ( 0u << ( 7 ) ) | //MSB first
 										  ( 1u << ( 8 ) ) | //SSI
@@ -105,8 +105,10 @@ void write_SPI(uint8_t newchar) //write a single byte over SPI and manage CS wit
 
 void write_SPI_noCS(uint8_t newchar) //write a single byte over SPI but don't manipulate CS
 {		
+	
 	  *(__IO uint8_t*)(&SPI_MODULE->DR) = newchar; //Write to SPI data register (only 8 bits)
 		while (!(SPI_MODULE->SR & (SPI_SR_TXE))); //Wait on TXE
+		while((SPI_MODULE->SR & (1u << 7))); //wait for transmission to end
 }
 
 void write_SPIBytes_noCS(uint8_t *newchars, unsigned int bytes)
@@ -122,16 +124,18 @@ void write_SPIBytes_noCS(uint8_t *newchars, unsigned int bytes)
 uint8_t read_SPI_noCS(void) //write dummy bytes to keep clock on for SDO data, no CS control
 {
 	//while (!(SPI_MODULE->SR & (1u << 1))); //Wait
-	//uint8_t temp = *(__IO uint8_t*)(&SPI_MODULE->DR); //clear buffer
+	uint8_t temp = *(__IO uint8_t*)(&SPI_MODULE->DR); //clear buffer
 	*(__IO uint8_t*)(&SPI_MODULE->DR) = 0xff; //Dummy bits to keep clock on
 	//uint8_t temp = *(__IO uint8_t*)(&SPI_MODULE->DR); //initiate read / clear buffer
 	
 	//now read result
 	while (!(SPI_MODULE->SR & (SPI_SR_RXNE))); //Wait until RXNE is set
 	uint8_t response = *(__IO uint8_t*)(&SPI_MODULE->DR); //read new data
+	
 	//while (!(SPI_MODULE->SR & (1 << 1)));
+	
+	while((SPI_MODULE->SR & (1u << 7))); //wait for transmission to end
 	/*
-	while(!(SPI_MODULE->SR & (1u << 7))); //wait for transmission to end
 	for(int i=0; i<1; i++)
 	{
 		__NOP();

@@ -2,16 +2,18 @@
 #include "ZetaSPI.h"
 
 zetaspi Zeta433(f429spi1, PC_7, PA_15, PB_15);
-//etaspi Zeta433(l432spi1, PB_6, PB_7, PA_2);
-//DigitalOut GreenLED(PB_0);
-
-unsigned int packetconstructor(unsigned char* preamble, unsigned char preamblesize, unsigned char* payload, unsigned char payloadsize, 
-unsigned char* syncword, unsigned char syncwordsize, unsigned char* packet, unsigned char packetsize);
+//zetaspi Zeta433(l432spi1, PB_6, PB_7, PA_2);
+DigitalOut GreenLED(PB_0);
+DigitalOut TriggerLine(PB_1);
 
 int main()
 {
+    SystemCoreClockUpdate();
     //GreenLED = 0;
     printf("Starting\n\r");
+    printf("Clock: %d\n\r", SystemCoreClock);
+
+    
 
     Zeta433.SPI_Init();
     Zeta433.SPI_SI4455_Init();
@@ -93,36 +95,3 @@ int main()
     }
 }
 
-unsigned int packetconstructor(unsigned char* preamble, unsigned char preamblesize, unsigned char* payload, unsigned char payloadsize, unsigned char* syncword, unsigned char syncwordsize, unsigned char* packet, unsigned char packetsize)
-{
-
-    if(packetsize != sizeof(preamble) + sizeof(payload) + sizeof(syncword)) //mismatch, this will not work
-    {
-        printf("Packet component size mismatch\n\r");
-        return 1; //fail
-    }
-
-    if(payloadsize != RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH) //check config packet length
-    {
-        printf("Packet size mismatch\n\r");
-        return 1; //fail
-    }
-    
-  
-    for(int i=0; i<preamblesize; i++)
-    {
-        packet[i] = preamble[i]; //copy preamble into packet
-    }
-
-    for(int i=preamblesize; i<(preamblesize + payloadsize); i++)
-    {
-        packet[i] = payload[i-preamblesize];
-    }
-
-    for(int i=(preamblesize + payloadsize); i<(packetsize - syncwordsize); i++)
-    {
-        packet[i] = syncword[i-(preamblesize + payloadsize)];
-    }
-
-    return 0; //success
-}
