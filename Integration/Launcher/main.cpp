@@ -164,6 +164,7 @@ int main()
 
     while (true) {
         Cha7Read = Cha7.pulsewidth();
+        printf("%f\n", Cha7Read);
         if(Cha7Read<1300){
             stepperSControl(xAxisControl);
             servoSControl(yAxisControl);

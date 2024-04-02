@@ -35,7 +35,7 @@ float map(float in, float inMin, float inMax, float outMin, float outMax) {
 void Launcher::stepperRCControl(){
 
     Cha1Read = Cha1.pulsewidth();
-    //printf("%f\n", Cha1.pulsewidth());
+    //printf("%f\n", Cha1Read);
     if (Cha1Read >1600){
         stepperx= 1;
         delayTime = map(Cha1Read, 1500, 1990, 1000, 2000);
@@ -68,7 +68,7 @@ void Launcher::stepperRCControl(){
 
 void Launcher::servoRCControl(){
     Cha2Read = Cha2.pulsewidth();
-    servoMove = map(Cha2Read, 1000, 1990, 0, 1);
+    servoMove = map(Cha2Read, 1000, 1990, 0.05, 0.5);
     Yservo = servoMove;
     wait_us(200);
 }

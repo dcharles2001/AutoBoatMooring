@@ -75,12 +75,13 @@ void DistAvg2(){
 //Functions for Launcher Turret
 void LauncherMain(){
     Cha7Read = Cha7.pulsewidth();
+    //printf("%f\n", Cha7Read);
     if((Cha7Read>1300)&&(Cha7Read<1800)){
         Launch.stepperSControl(xAxisControl);
         Launch.servoSControl(yAxisControl);
         Launch.triggerSControl(readyToFire);
         Launch.safetySControl(safteyControl);
-    }else if(Cha7Read>1800){
+    }else if(Cha7Read<1300){
         Launch.stepperRCControl();
         Launch.servoRCControl();
         Launch.triggerRCControl();

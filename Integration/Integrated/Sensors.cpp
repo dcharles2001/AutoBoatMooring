@@ -315,26 +315,26 @@ void Sensors::IR_Sensor2() {
 
         
     s2     = data_buf1[9];
-    Ix2[2] += (s1 & 0x30) << 4;
-    Iy2[2] += (s1 & 0xC0) << 2;
+    Ix2[2] += (s2 & 0x30) << 4;
+    Iy2[2] += (s2 & 0xC0) << 2;
 
     Ix2[3] = data_buf1[10];
     Iy2[3] = data_buf1[11];
     s2     = data_buf1[12];
-    Ix2[3] += (s1 & 0x30) << 4;
-    Iy2[3] += (s1 & 0xC0) << 2;
-    int* coordinates = combineNumbers(Ix1[0], Iy1[0]);
-    if(Ix2[0] == 0 && Iy1[0] == 0){
+    Ix2[3] += (s2 & 0x30) << 4;
+    Iy2[3] += (s2 & 0xC0) << 2;
+    int* coordinates = combineNumbers(Ix2[0], Iy2[0]);
+    if(Ix2[0] == 0 && Iy2[0] == 0){
         printf("ERROR: IR 2 not found\n");
     }
     if(locate2 == 0){
         for(int measurements = 0; measurements<12; measurements++){
             for(int i = 0; i < 3; i++){
-                if((Ix2[i] == 1023 && Ix_prev1[i] != 1023) || ((Ix1[i] != 1023 && Ix_prev1[i] == 1023))){
+                if((Ix2[i] == 1023 && Ix_prev1[i] != 1023) || ((Ix2[i] != 1023 && Ix_prev1[i] == 1023))){
                 flashCount2[i] = flashCount1[i] + 1;
                 }
-                Ix_prev2[i] = Ix1[i];
-                Iy_prev2[i] = Iy1[i];
+                Ix_prev2[i] = Ix2[i];
+                Iy_prev2[i] = Iy2[i];
 
                 i2c2.write(IRsensorAddress, "\x36", 1);  // Send the register address to read
                 i2c2.read(IRsensorAddress, data_buf1, 16);  // Read 16 bytes
@@ -342,26 +342,26 @@ void Sensors::IR_Sensor2() {
                 Ix2[0] = data_buf1[1];
                 Iy2[0] = data_buf1[2];
                 s2   = data_buf1[3];
-                Ix2[0] += (s1 & 0x30) <<4;
-                Iy2[0] += (s1 & 0xC0) <<2;
+                Ix2[0] += (s2 & 0x30) <<4;
+                Iy2[0] += (s2 & 0xC0) <<2;
 
                 Ix2[1] = data_buf1[4];
                 Iy2[1] = data_buf1[5];
                 s2   = data_buf1[6];
-                Ix2[1] += (s1 & 0x30) <<4;
-                Iy2[1] += (s1 & 0xC0) <<2;
+                Ix2[1] += (s2 & 0x30) <<4;
+                Iy2[1] += (s2 & 0xC0) <<2;
 
                 Ix2[2] = data_buf1[7];
                 Iy2[2] = data_buf1[8];
                 s2   = data_buf1[9];
-                Ix2[2] += (s1 & 0x30) <<4;
-                Iy2[2] += (s1 & 0xC0) <<2;
+                Ix2[2] += (s2 & 0x30) <<4;
+                Iy2[2] += (s2 & 0xC0) <<2;
 
                 Ix2[3] = data_buf1[10];
                 Iy2[3] = data_buf1[11];
                 s2   = data_buf1[12];
-                Ix2[3] += (s1 & 0x30) <<4;
-                Iy2[3] += (s1 & 0xC0) <<2;
+                Ix2[3] += (s2 & 0x30) <<4;
+                Iy2[3] += (s2 & 0xC0) <<2;
                 ThisThread::sleep_for(30ms);
             }
         }
