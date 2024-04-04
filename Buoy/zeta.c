@@ -58,7 +58,7 @@ void Wait_POR(void)
 	*/
 	
 	
-	for(int i=0; i<20000; i++) //approx ?ms delay
+	for(int i=0; i<15000; i++) //approx ?ms delay
 	{
 				__NOP(); //do nothing
 	}
@@ -107,8 +107,8 @@ void SpiWriteBytes(unsigned char byteCount, const unsigned char* pData)
 void SpiReadBytes(unsigned char byteCount, unsigned char* pData)
 {
 	unsigned char* ptr = pData;
-	//uint8_t temp = *(__IO uint8_t*)(&SPI_MODULE->DR); //initiate read/clear buffer
-	for (int i = 0; i < byteCount; i++)
+	
+	for (int i = 0; i <byteCount; i++)
 	{
 		*ptr++ = read_SPI_noCS(); //keep clock on and read
 		//while(!(SPI_MODULE->SR & (1u << 1))); //wait on TXE
@@ -116,6 +116,26 @@ void SpiReadBytes(unsigned char byteCount, unsigned char* pData)
 	}
 	//while((SPI_MODULE->SR & (1u << 7))); //wait for transmission to end
 }
+
+void SpiReadBytesHack(unsigned char byteCount, unsigned char* pData)
+{
+	unsigned char* ptr = pData;
+	
+	
+	for(int i= 0; i<4; i++) //hackiest fix of my life
+	{
+		read_SPI_noCS();
+	}
+	
+	for (int i = 0; i <byteCount; i++)
+	{
+		*ptr++ = read_SPI_noCS(); //keep clock on and read
+		//while(!(SPI_MODULE->SR & (1u << 1))); //wait on TXE
+		//while(!(SPI_MODULE->SR & (1u << 7))); //wait on busy bit to indicate end of transmission, lest we bring CS high too early
+	}
+	//while((SPI_MODULE->SR & (1u << 7))); //wait for transmission to end
+}
+
 
 /*********************************************************************************************
  * Function Name		:	GetResponse_CTS
@@ -140,38 +160,27 @@ unsigned char GetResponse_CTS(unsigned char byteCount, unsigned char* pData)
 	{
 		
 		SPI_PORT->ODR &=~ (1u << SPI_NSS);//bring CS low
+	
 		write_SPI_noCS(0x44); //write CTS command
-		/*
-		for(int i=0; i<3; i++) //approx 10us delay, this prevents CTS fail
-		{
-      __NOP(); //do nothing
-		}		
-		*/
+		
 		ctsVal = read_SPI_noCS(); 
-		//while(!(SPI_MODULE->SR & (1u << 1))); //wait on TXE
-		//while((SPI_MODULE->SR & (1u << 7))); //wait on busy bit to indicate end of transmission, lest we bring CS high too early
-
-		/*
-		char ctsstring[15];
-		sprintf(ctsstring, "CTS: %x \n\r", ctsVal);
-		send_array_USART(ctsstring);
-		*/
 		
 		if (ctsVal == 0xFF)
 		{
 			if (byteCount)
 			{
+				
+				for(int i=0; i<4; i++)
+				{
+					uint8_t temp = *(__IO uint8_t*)(&SPI_MODULE->DR); //clear buffer
+				}
+				
 				SpiReadBytes(byteCount, pData); //also used for getting responses back
 			}
-			/*
-			for(int i=0; i<3; i++) //approx 10us delay, this prevents CTS fail
-			{
-				__NOP(); //do nothing
-			}		
-			*/
 			SPI_PORT->ODR |= (1u << SPI_NSS); //bring CS high
 			break;
 		}
+		
 		SPI_PORT->ODR |= (1u << SPI_NSS); //bring CS high
 		errCnt--;
 	}
@@ -378,11 +387,16 @@ unsigned char Si4455_Configure(const unsigned char *pSetPropCmd)
 		}
 
 		/*
-		if(radioCmd[0] == 0x66) //step check for debug
+		if(radioCmd[0] == 0x19) //step check for debug
 		{
 			GPIOB->ODR |= (1u << TriggerLine); //triggerline high
 		}
 		*/
+		
+		if(SI4455_CMD_ID_EZCONFIG_CHECK == radioCmd[0])
+		{
+			__NOP();
+		}
 		
 		if (SendCmdGetResp(numOfBytes, radioCmd, 1, &response) != 0xFF)
 		{
@@ -391,16 +405,16 @@ unsigned char Si4455_Configure(const unsigned char *pSetPropCmd)
 		}
 
 		/* Check response byte of EZCONFIG_CHECK command */
-		/*
-		if (SI4455_CMD_ID_EZCONFIG_CHECK == radioCmd[0])
+		
+		if(SI4455_CMD_ID_EZCONFIG_CHECK == radioCmd[0])
 		{
 			if (response)
 			{
-				// Number of command bytes exceeds maximal allowable length 
 				return SI4455_COMMAND_ERROR;
 			}
 		}
-		*/
+		
+	
 
 		/* Get and clear all interrupts.  An error has occured... */
 		GetIntStatus(0, 0, 0);

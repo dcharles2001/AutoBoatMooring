@@ -1,8 +1,8 @@
 #include "mbed.h"
 #include "ZetaSPI.h"
 
-zetaspi Zeta433(f429spi1, PC_7, PA_15, PB_15);
-//zetaspi Zeta433(l432spi1, PB_6, PB_7, PA_2);
+//zetaspi Zeta433(f429spi1, PC_7, PA_15, PB_15);
+zetaspi Zeta433(l432spi1, PB_6, PB_7, PA_2);
 DigitalOut GreenLED(PB_0);
 DigitalOut TriggerLine(PB_1);
 

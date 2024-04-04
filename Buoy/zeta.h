@@ -30,6 +30,7 @@ typedef enum
 void Wait_POR(void);
 void SpiWriteBytes(unsigned char byteCount, const unsigned char* pData);
 void SpiReadBytes(unsigned char byteCount, unsigned char* pData);
+void SpiReadBytesHack(unsigned char byteCount, unsigned char* pData);
 unsigned char GetResponse_CTS(unsigned char byteCount, unsigned char* pData);
 unsigned char PollCTS(void);
 void SendCmdArgs(unsigned char cmd, unsigned char pollcts, unsigned char bytecount, const unsigned char *pData);

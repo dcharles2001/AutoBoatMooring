@@ -54,16 +54,24 @@ int main(void)
 	
 	
 	unsigned char devstate = 0x33;
-  unsigned char state[2];
+  unsigned char state[6];
   SendCmdGetResp(0x01, &devstate, 0x02, state);
-	sprintf(respstring, "Device state pre RX:\n\r%x\n\r%x\n\r", state[0], state[1]);
-	send_array_USART(respstring);
+	send_array_USART("State pre RX:\n\r");
+	for(int i=0; i<2; i++)
+	{
+		sprintf(respstring, "%x\n\r", state[i]);
+		send_array_USART(respstring);
+	}		
 	
 	Radio_StartRx(); //begin RX mode
 	
   SendCmdGetResp(0x01, &devstate, 0x02, state);
-	sprintf(respstring, "Device state post RX:\n\r%x\n\r%x\n\r", state[0], state[1]);
-	send_array_USART(respstring);
+	send_array_USART("State post RX:\n\r");
+	for(int i=0; i<2; i++)
+	{
+		sprintf(respstring, "%x\n\r", state[i]);
+		send_array_USART(respstring);
+	}		
 	
 	cmd = 0x77; //read fifo command
 	respByteCount = 0x08;
@@ -83,13 +91,20 @@ int main(void)
 		//GetIntStatus(0, 0, 0);
 		
 		SendCmdGetResp(0x01, &devstate, 0x02, state);
-		sprintf(respstring, "Device state post RX:\n\r%x\n\r%x\n\r", state[0], state[1]);
-		send_array_USART(respstring);
+		
+		send_array_USART("Device state:\n\r");
+		for(int i=0; i<2; i++)
+		{
+			sprintf(respstring, "%x\n\r", state[i]);
+			send_array_USART(respstring);
+			
+		}
+		
 		for(int i=0; i<1000000; i++)
 		{
 			__NOP();
 		}
-		
+		/*
 		SendCmdGetResp(0x01, &cmd, respByteCount, zetaresponse); //read 8 bytes?
 		
 		for(int i=0; i<respByteCount; i++)
@@ -99,7 +114,7 @@ int main(void)
 			send_array_USART(rxstring);
 			send_array_USART("\n\r");
 		}
-	
+		*/
 		/*
 		for(int i=0; i<1000000; i++)
 		{
@@ -140,7 +155,7 @@ void PLLHSIConfig()
 		// 16/2 * 16/2 = 64 system clock 
 		RCC->PLLCFGR |= (2u << 0) | //HSI source
 										(1u << 4) | // PLLM primary div /2
-										(16u << 8) | //multiply x20
+										(16u << 8) | //multiply xn
 										(1u << 16) | // PLLPEN
 										(0u << 17) | // PLLP /7
 										(1u << 20) | // PLLQEN

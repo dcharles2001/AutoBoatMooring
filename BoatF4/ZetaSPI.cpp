@@ -44,7 +44,7 @@ zetaspi::zetaspi(SPIConfig_t Pins, DigitalOut sdn, DigitalIn gpio2, DigitalIn ni
 void zetaspi::Wait_POR() //PORTED FUNCTION
 {
     spidevice.format(8, 0); //8 bits, cpol, cpha 0, MSB first default
-    spidevice.frequency(5000000); //1 MHz
+    spidevice.frequency(5000000); //10 MHz
 //#ifdef	ENABLE_POR
 	/* Pull the SDN pin high for 10 us */
 	SDN = 1; //SDN HIGH
@@ -342,12 +342,12 @@ unsigned char zetaspi::Si4455_Configure(const unsigned char *pSetPropCmd)
 			radioCmd[col] = *pSetPropCmd;
 			pSetPropCmd++;
 		}
-        /*
+        
         if(SI4455_CMD_ID_EZCONFIG_CHECK == radioCmd[0])
         {
-            printf("Check\n\r");
+            __NOP();
         }
-        */
+        
 		if (SendCmdGetResp(numOfBytes, radioCmd, 1, &response) != 0xFF)
 		{
 			/* Timeout occured */
