@@ -1,8 +1,8 @@
 #include "mbed.h"
 #include "ZetaSPI.h"
 
-//zetaspi Zeta433(f429spi1, PC_7, PA_15, PB_15);
-zetaspi Zeta433(l432spi1, PB_6, PB_7, PA_2);
+zetaspi Zeta433(f429spi1, PC_7, PA_15, PB_15);
+//zetaspi Zeta433(l432spi1, PB_6, PB_7, PA_2);
 DigitalOut GreenLED(PB_0);
 DigitalOut TriggerLine(PB_1);
 
@@ -34,7 +34,7 @@ int main()
     //Zeta433.Start_Tx(NULL); //start TX
     Zeta433.GetIntStatus(0x00, 0x00, 0xff);
 
-    cmd = 0x66; //write to fifo
+    cmd = 0x77; //write to fifo
 
     unsigned char preamble[2] = {0xAA, 0xAA}; //2 byte preamble 10101010 101010
     unsigned char testmsg[8] = {0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81}; //8 byte test payload
@@ -63,19 +63,22 @@ int main()
 
     unsigned char testarray[10] = {0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA};
 	
+    unsigned char zetaresponse[1];
+    unsigned char zetarespcount = 0x04;
+    Zeta433.Radio_StartRx();
 
     while(1)    
     {
         //Zeta433.SendCmds(0x0A, testarray);
-        /*
-        Zeta433.SendCmds(0x02, fifo_clr); //clear fifo
+        
+        //Zeta433.SendCmds(0x02, fifo_clr); //clear fifo
         //Zeta433.SendCmds(0x02, readystate); //set ready state
         //Zeta433.GetIntStatus(0xff, 0xff, 0xff);
         //printf("Fifo info prior: %X\n\r", resp);
        // GreenLED = 1;
-        Zeta433.SendCmdArgs(cmd, 0x01, 0x08, testmsg); //load packet into fifo
+        //Zeta433.SendCmdArgs(cmd, 0x01, 0x08, testmsg); //load packet into fifo
         //Zeta433.SendCmdArgs(0x66, 0x01, sizeof(msg), msg);
-        */
+        
 
         
         /*
@@ -85,11 +88,19 @@ int main()
         printf("Device state post send: %x %x\n\r", state[0], state[1]);
         //Zeta433.SendCmdArgs(0x34, 0x01, 0x01, &stateparam);
         */
+        Zeta433.SendCmdGetResp(0x01, &cmd, zetarespcount, zetaresponse); //read 8 bytes?
+        for(int i=0; i<zetarespcount; i++)
+		{
+			//if(zetaresponse[i] == '\0'){break;} //break on null bit
+			printf("RX: %x\n\r", zetaresponse[i]);
+		}
 
+        Zeta433.SendCmdGetResp(0x01, &devstate, 0x02, state);
+        printf("Device state post read: %x %x\n\r", state[0], state[1]);
         
         
         //printf("Sending msg\n\r");
-        //ThisThread::sleep_for(500ms);
+        ThisThread::sleep_for(500ms);
         //GreenLED = 0;
         
     }

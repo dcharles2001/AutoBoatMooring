@@ -83,6 +83,10 @@ void SpiWriteBytes(unsigned char byteCount, const unsigned char* pData)
 	for (int i = 0; i < byteCount; i++)
 	{
 		write_SPI_noCS(*ptr++);
+		for(int x=0; x<35; x++)
+		{
+			__NOP();
+		}
 		//while(!(SPI_MODULE->SR & (1u << 7))); //wait on busy
 	}
 	//while(!(SPI_MODULE->SR & (1u << 1))); //wait on TXE 
@@ -111,6 +115,10 @@ void SpiReadBytes(unsigned char byteCount, unsigned char* pData)
 	for (int i = 0; i <byteCount; i++)
 	{
 		*ptr++ = read_SPI_noCS(); //keep clock on and read
+		for(int x=0; x<35; x++)
+		{
+			__NOP();
+		}
 		//while(!(SPI_MODULE->SR & (1u << 1))); //wait on TXE
 		//while(!(SPI_MODULE->SR & (1u << 7))); //wait on busy bit to indicate end of transmission, lest we bring CS high too early
 	}
@@ -169,12 +177,12 @@ unsigned char GetResponse_CTS(unsigned char byteCount, unsigned char* pData)
 		{
 			if (byteCount)
 			{
-				
-				for(int i=0; i<4; i++)
+				/*
+				for(int i=0; i<3; i++)
 				{
 					uint8_t temp = *(__IO uint8_t*)(&SPI_MODULE->DR); //clear buffer
 				}
-				
+				*/
 				SpiReadBytes(byteCount, pData); //also used for getting responses back
 			}
 			SPI_PORT->ODR |= (1u << SPI_NSS); //bring CS high

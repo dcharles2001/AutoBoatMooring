@@ -55,6 +55,7 @@ int main(void)
 	
 	unsigned char devstate = 0x33;
   unsigned char state[6];
+	/*
   SendCmdGetResp(0x01, &devstate, 0x02, state);
 	send_array_USART("State pre RX:\n\r");
 	for(int i=0; i<2; i++)
@@ -62,9 +63,9 @@ int main(void)
 		sprintf(respstring, "%x\n\r", state[i]);
 		send_array_USART(respstring);
 	}		
-	
-	Radio_StartRx(); //begin RX mode
-	
+	*/
+	//Radio_StartRx(); //begin RX mode
+	/*
   SendCmdGetResp(0x01, &devstate, 0x02, state);
 	send_array_USART("State post RX:\n\r");
 	for(int i=0; i<2; i++)
@@ -72,15 +73,15 @@ int main(void)
 		sprintf(respstring, "%x\n\r", state[i]);
 		send_array_USART(respstring);
 	}		
-	
-	cmd = 0x77; //read fifo command
-	respByteCount = 0x08;
+	*/
+	cmd = 0x66; //read fifo command
+	respByteCount = 0x10;
 	//other values parameters will remain the same
 	
 	unsigned char resp[2];
 	char fifostring[20];
 	
-	unsigned char zetaresponse[8];
+	unsigned char zetaresponse[16];
 	char rxstring[50];
 	
 	unsigned char testarray[10] = {0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA};
@@ -90,20 +91,13 @@ int main(void)
 		//SendCmds(0x0A, testarray);
 		//GetIntStatus(0, 0, 0);
 		
-		SendCmdGetResp(0x01, &devstate, 0x02, state);
 		
-		send_array_USART("Device state:\n\r");
-		for(int i=0; i<2; i++)
-		{
-			sprintf(respstring, "%x\n\r", state[i]);
-			send_array_USART(respstring);
-			
-		}
-		
+		/*
 		for(int i=0; i<1000000; i++)
 		{
 			__NOP();
 		}
+		*/
 		/*
 		SendCmdGetResp(0x01, &cmd, respByteCount, zetaresponse); //read 8 bytes?
 		
@@ -115,12 +109,29 @@ int main(void)
 			send_array_USART("\n\r");
 		}
 		*/
-		/*
+		
+		SendCmdArgs(cmd, 0x01, 0x0A, testarray); //load packet into fifo
+		Start_Tx(NULL);
+		
+		
+		SendCmdGetResp(0x01, &devstate, 0x06, state);
+		
+		send_array_USART("Device state:\n\r");
+		for(int i=0; i<6; i++)
+		{
+			sprintf(respstring, "%x\n\r", state[i]);
+			send_array_USART(respstring);
+			
+		}
+		
 		for(int i=0; i<1000000; i++)
 		{
 			__NOP();
 		}
-		*/
+		
+		
+		
+		
 	}
 	
 }
