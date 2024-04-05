@@ -5,6 +5,10 @@
 #include "RadioConfig.h"
 #include "stdio.h"
 
+#define BOAT 0
+#define LBUOY 1
+#define RBUOY 2
+
 
 typedef struct  //template struct for SPI devices
 {
@@ -24,6 +28,8 @@ const SPIConfig_t l432spi1
 {
     PA_7, PA_6, PA_5, PA_3
 };
+
+
 
 
 
