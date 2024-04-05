@@ -4,6 +4,7 @@
 #include "mbed.h"
 #include "RadioConfig.h"
 #include "stdio.h"
+#include "si4455_defs.h"
 
 #define BOAT 0
 #define LBUOY 1

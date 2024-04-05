@@ -4,8 +4,7 @@
 //#include "mbed.h"
 #include "SPI.h"
 #include "L4config.h"
-#include "RadioConfig.h"
-#include "si4455_defs.h"
+
 
 /* Structure for accessing parameters from config file */
 typedef struct
