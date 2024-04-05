@@ -178,7 +178,7 @@ unsigned char GetResponse_CTS(unsigned char byteCount, unsigned char* pData)
 			if (byteCount)
 			{
 				/*
-				for(int i=0; i<3; i++)
+				for(int i=0; i<4; i++)
 				{
 					uint8_t temp = *(__IO uint8_t*)(&SPI_MODULE->DR); //clear buffer
 				}
