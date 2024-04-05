@@ -34,6 +34,13 @@ int main()
     while(1)    
     {
         Boat.SendMessage(TestMessage, 8);
+        Boat.GetCurrentState(state);
+        for(int i=0; i<2; i++)
+        {
+            printf("State: %x\n\r", state[i]);
+        }
+        
+
         ThisThread::sleep_for(1s);
     }
 }
