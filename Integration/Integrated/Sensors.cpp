@@ -52,8 +52,8 @@ void Sensors::sweep(void) {
             flip = -1;
             printf("Turret 2 has no Buoy\n");
         }
-        //servoX2 = posX;
-        //servoY2 = posY;
+        servoX2 = posX;
+        servoY2 = posY;
     }
 }
 
@@ -424,26 +424,21 @@ void Sensors::Turret_Function1() {
             fail++;
             lockON1 = 0;
             locate1 = 0;      
-            //printf("HERE");
             sweep();
-            //printf("%d  :   %d  :   %d  :   %d\n", locate1, lockON1, lost1,fail);
         }
     }else{
         fail = 0;
         int X = coordinates1[0];
         int Y = coordinates1[1];
-        //printf("%d  :   %d\n",X,Y);
         if (X != 1023 && Y != 1023){
             lost1 = 0;
             Track(X,Y,tolerance);
         }else{
             lost1++;
         }
-        //printf("THERE");
         if(lockON1 == 1){
             if(lost1<600){
                 if(reading == 200){
-                //printf("%d  :   %d      %d  :   %d\n", X,Y, locate1, lockON1);
                     ToF_Function(locate1);
                     reading = 0;
                 }else{
@@ -454,7 +449,6 @@ void Sensors::Turret_Function1() {
                 lockON1 = 0;
                 locate1 = 0;
                 lost1 = 0;
-                //printf("EVERYWHERE");
             }
         }
     }

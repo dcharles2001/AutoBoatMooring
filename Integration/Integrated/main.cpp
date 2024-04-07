@@ -96,25 +96,25 @@ void LauncherMain(){
 
 //MAIN
 int main(){
-    //Sesnor Code
+    //Sensor Code
     Turret1.Setup();
     Turret2.Setup();
-
+    //Turret 1
     Queue_Turret1.call_every(2ms, Turret1Func);
     Thread_Turret1.start(callback(&Queue_Turret1, &EventQueue::dispatch_forever));
-
+    //IR 1
     Queue_Cord1.call_every(50ms, IRSensor1);
     Thread_Cord1.start(callback(&Queue_Cord1, &EventQueue::dispatch_forever));
-
-    Queue_Turret2.call_every(2ms, Turret2Func);
-    Thread_Turret2.start(callback(&Queue_Turret2, &EventQueue::dispatch_forever));
-
-    Queue_Cord1.call_every(50ms, IRSensor2);
-    Thread_Cord1.start(callback(&Queue_Cord1, &EventQueue::dispatch_forever));
-    
+    //ToF 1
     Queue_Dist1.call_every(10ms, DistAvg1);
     Thread_Dist1.start(callback(&Queue_Dist1, &EventQueue::dispatch_forever));
-
+    //Turret 2
+    Queue_Turret2.call_every(2ms, Turret2Func);
+    Thread_Turret2.start(callback(&Queue_Turret2, &EventQueue::dispatch_forever));
+    //IR 2
+    Queue_Cord2.call_every(50ms, IRSensor2);
+    Thread_Cord2.start(callback(&Queue_Cord2, &EventQueue::dispatch_forever));
+    //ToF 2
     Queue_Dist2.call_every(10ms, DistAvg2);
     Thread_Dist2.start(callback(&Queue_Dist2, &EventQueue::dispatch_forever));
 
