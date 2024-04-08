@@ -29,6 +29,9 @@ EventQueue Queue_ToF2(1 * EVENTS_EVENT_SIZE);
 Thread Thread_Dist2;
 EventQueue Queue_Dist2(1 * EVENTS_EVENT_SIZE);
 
+Thread Thread_Cord2;
+EventQueue Queue_Cord2(1 * EVENTS_EVENT_SIZE);
+
 Thread Thread_Turret1;
 EventQueue Queue_Turret1(1 * EVENTS_EVENT_SIZE);
 
@@ -99,6 +102,7 @@ int main(){
     //Sensor Code
     Turret1.Setup();
     Turret2.Setup();
+    ThisThread::sleep_for(200ms);
     //Turret 1
     Queue_Turret1.call_every(2ms, Turret1Func);
     Thread_Turret1.start(callback(&Queue_Turret1, &EventQueue::dispatch_forever));
@@ -117,8 +121,7 @@ int main(){
     //ToF 2
     Queue_Dist2.call_every(10ms, DistAvg2);
     Thread_Dist2.start(callback(&Queue_Dist2, &EventQueue::dispatch_forever));
-
     //Launcher Code
-    Queue_Launcher.call_every(10ms, LauncherMain);
-    Thread_Launcher.start(callback(&Queue_Launcher, &EventQueue::dispatch_forever));
+    //FQueue_Launcher.call_every(10ms, LauncherMain);
+    //Thread_Launcher.start(callback(&Queue_Launcher, &EventQueue::dispatch_forever));
 }

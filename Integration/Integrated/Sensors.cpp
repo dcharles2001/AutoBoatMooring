@@ -1,17 +1,26 @@
 #include "Sensors.h"
 
 //Pin Setup Sensor Turrets
-I2C i2c1(PB_9, PB_8); //IR1
-I2C i2c2(PB_11, PB_10); //IR2
+I2C i2c2(PB_9, PB_8); //IR1
+I2C i2c1(PB_11, PB_10); //IR2
 
 BufferedSerial pc(USBTX, USBRX);
 BufferedSerial lidarSerial1(D1, D0);
 BufferedSerial lidarSerial2(PE_8, PE_7);
 
-Servo servoX1(PA_5);
-Servo servoY1(PA_6);
-Servo servoX2(PD_14);
-Servo servoY2(PD_15);
+
+Servo servoX1(D5);
+Servo servoY1(D6);
+
+Servo servoX2(D9);
+Servo servoY2(D10);
+
+int IRAddress1 = 0xB0;
+int IRAddress2 = 0xB0;
+//Servo servoX1(PA_5);
+//Servo servoY1(PA_6);
+//Servo servoX2(PD_14);
+//Servo servoY2(PD_15);
 
 void Sensors::Setup(){
     servoX1 = 0.5;
@@ -19,12 +28,18 @@ void Sensors::Setup(){
     pc.set_baud(115200); // Set baud rate for PC serial communication
     lidarSerial1.set_baud(115200); // Set baud rate for Lidar serial communication
     lidarSerial2.set_baud(115200);
+    Write_2bytes(0x30, 0x01,  IRAddress1); ThisThread::sleep_for(10ms);
+    Write_2bytes(0x30, 0x08,  IRAddress1); ThisThread::sleep_for(10ms);
+    Write_2bytes(0x06, 0x90,  IRAddress1); ThisThread::sleep_for(10ms);
+    Write_2bytes(0x08, 0xC0,  IRAddress1); ThisThread::sleep_for(10ms);
+    Write_2bytes(0x1A, 0x40,  IRAddress1); ThisThread::sleep_for(10ms);
+    Write_2bytes(0x33, 0x33,  IRAddress1); ThisThread::sleep_for(10ms);
 }
 
 void Sensors::Write_2bytes(char d1, char d2, int IRsensorAddress) {
     char data[2] = {d1, d2};
-    i2c1.write(IRsensorAddress, data, 2);
-    i2c2.write(IRsensorAddress, data, 2);
+    i2c1.write(IRAddress1, data, 2);
+    i2c2.write(IRAddress2, data, 2);
 }
 
 void Sensors::sweep(void) {
@@ -52,8 +67,8 @@ void Sensors::sweep(void) {
             flip = -1;
             printf("Turret 2 has no Buoy\n");
         }
-        servoX2 = posX;
-        servoY2 = posY;
+            servoX2 = posX;
+            servoY2 = posY;
     }
 }
 
@@ -103,18 +118,18 @@ void Sensors::Track(int X, int Y, int tolerance) {
 
 void Sensors::ToF_Function(int BuoyID){
     if(turretID == 1){
-        if(avgDist1 !=0){
+        if(avgDist1 !=0 && lockON1 == 1){
             lastDist1 = avgDist1;
-            printf("Buoy %d is %d cm away\n",BuoyID, lastDist1);
+            //printf("Buoy %d is %d cm away\n",BuoyID, lastDist1);
         }else{
-            printf("Last Buoy %d Distance was %d cm away\n",BuoyID,lastDist1);
+            //printf("Last Buoy %d Distance was %d cm away\n",BuoyID,lastDist1);
         }
     }else{
-        if(avgDist2 !=0){
+        if(avgDist2 !=0 && lockON2 == 1){
             lastDist2 = avgDist2;
-            printf("Buoy %d is %d cm away\n",BuoyID, lastDist2);
+            //printf("Buoy %d is %d cm away\n",BuoyID, lastDist2);
         }else{
-            printf("Last Buoy %d Distance was %d cm away\n",BuoyID,lastDist2);
+            //printf("Last Buoy %d Distance was %d cm away\n",BuoyID,lastDist2);
         }
 
     }
@@ -185,7 +200,7 @@ int* Sensors::combineNumbers(int num1, int num2) {
 }   
 
 void Sensors::IR_Sensor1() {
-    int IRAddress = 0xB0;
+    int IRAddress = IRAddress1;
     i2c1.write(IRAddress, "\x36", 1);  // Send the register address to read
     i2c1.read(IRAddress, data_buf1, 16);  // Read 16 bytes
 
@@ -290,11 +305,10 @@ void Sensors::IR_Sensor1() {
             }      
         }
     }
-     //printf("%d :   %d\n", locate1,lost1);
 }
 
 void Sensors::IR_Sensor2() {
-    int IRAddress = 0xB0;
+    int IRAddress = IRAddress2;
     i2c2.write(IRAddress, "\x36", 1);  // Send the register address to read
     i2c2.read(IRAddress, data_buf2, 16);  // Read 16 bytes
 
@@ -314,13 +328,13 @@ void Sensors::IR_Sensor2() {
     Iy2[2] = data_buf2[8];
 
         
-    s2     = data_buf1[9];
+    s2     = data_buf2[9];
     Ix2[2] += (s2 & 0x30) << 4;
     Iy2[2] += (s2 & 0xC0) << 2;
 
-    Ix2[3] = data_buf1[10];
-    Iy2[3] = data_buf1[11];
-    s2     = data_buf1[12];
+    Ix2[3] = data_buf2[10];
+    Iy2[3] = data_buf2[11];
+    s2     = data_buf2[12];
     Ix2[3] += (s2 & 0x30) << 4;
     Iy2[3] += (s2 & 0xC0) << 2;
     int* coordinates = combineNumbers(Ix2[0], Iy2[0]);
@@ -330,36 +344,36 @@ void Sensors::IR_Sensor2() {
     if(locate2 == 0){
         for(int measurements = 0; measurements<12; measurements++){
             for(int i = 0; i < 3; i++){
-                if((Ix2[i] == 1023 && Ix_prev1[i] != 1023) || ((Ix2[i] != 1023 && Ix_prev1[i] == 1023))){
-                flashCount2[i] = flashCount1[i] + 1;
+                if((Ix2[i] == 1023 && Ix_prev2[i] != 1023) || ((Ix2[i] != 1023 && Ix_prev2[i] == 1023))){
+                flashCount2[i] = flashCount2[i] + 1;
                 }
                 Ix_prev2[i] = Ix2[i];
                 Iy_prev2[i] = Iy2[i];
 
                 i2c2.write(IRsensorAddress, "\x36", 1);  // Send the register address to read
-                i2c2.read(IRsensorAddress, data_buf1, 16);  // Read 16 bytes
+                i2c2.read(IRsensorAddress, data_buf2, 16);  // Read 16 bytes
 
-                Ix2[0] = data_buf1[1];
-                Iy2[0] = data_buf1[2];
-                s2   = data_buf1[3];
+                Ix2[0] = data_buf2[1];
+                Iy2[0] = data_buf2[2];
+                s2   = data_buf2[3];
                 Ix2[0] += (s2 & 0x30) <<4;
                 Iy2[0] += (s2 & 0xC0) <<2;
 
-                Ix2[1] = data_buf1[4];
-                Iy2[1] = data_buf1[5];
-                s2   = data_buf1[6];
+                Ix2[1] = data_buf2[4];
+                Iy2[1] = data_buf2[5];
+                s2   = data_buf2[6];
                 Ix2[1] += (s2 & 0x30) <<4;
                 Iy2[1] += (s2 & 0xC0) <<2;
 
-                Ix2[2] = data_buf1[7];
-                Iy2[2] = data_buf1[8];
-                s2   = data_buf1[9];
+                Ix2[2] = data_buf2[7];
+                Iy2[2] = data_buf2[8];
+                s2   = data_buf2[9];
                 Ix2[2] += (s2 & 0x30) <<4;
                 Iy2[2] += (s2 & 0xC0) <<2;
 
-                Ix2[3] = data_buf1[10];
-                Iy2[3] = data_buf1[11];
-                s2   = data_buf1[12];
+                Ix2[3] = data_buf2[10];
+                Iy2[3] = data_buf2[11];
+                s2   = data_buf2[12];
                 Ix2[3] += (s2 & 0x30) <<4;
                 Iy2[3] += (s2 & 0xC0) <<2;
                 ThisThread::sleep_for(30ms);
@@ -369,10 +383,12 @@ void Sensors::IR_Sensor2() {
         if(flashCount2[0]>3 && flashCount1[0] < 8){
             locate2 = 1;
             lost2 = 0;
+            printf("RST 1");
             //printf("Slow Buoy Found 1st     ");
         }else if(flashCount2[0] > 6 && flashCount1[0] < 12){
             locate2 = 2;
             lost2 = 0;
+            printf("RST 2");
             //printf("Fast Buoy Found 1st     ");
         }else{
             locate2 = 0;
@@ -380,10 +396,12 @@ void Sensors::IR_Sensor2() {
                 //printf("Slow Buoy Found 2nd\n");
                 locate2 = 1;
                 lost2 = 0;
+                printf("RST 3");
             }else if(flashCount2[1] > 6 && flashCount1[1] < 12){
                 //printf("Fast Buoy Found 2nd\n");
                 locate2 = 2;
                 lost2 = 0;
+                printf("RST 4");
             }else{
                 //printf("Reflection Found 2nd\n");
                 locate2 = 0;
@@ -403,7 +421,6 @@ void Sensors::IR_Sensor2() {
             }      
         }
     }
-    //printf("%d :   %d\n", locate1,lost1);
 }
 /*
 extern Sensors Turret1;
@@ -423,18 +440,19 @@ void Sensors::Turret_Function1() {
         } else {
             fail++;
             lockON1 = 0;
-            locate1 = 0;      
+            locate1 = 0;   
             sweep();
         }
     }else{
         fail = 0;
-        int X = coordinates1[0];
-        int Y = coordinates1[1];
-        if (X != 1023 && Y != 1023){
+        int X1 = coordinates1[0];
+        int Y1 = coordinates1[1];
+        if (X1 != 1023 && Y1 != 1023){
             lost1 = 0;
-            Track(X,Y,tolerance);
+            Track(X1,Y1,tolerance);
         }else{
             lost1++;
+            printf("%d\n", lost1);
         }
         if(lockON1 == 1){
             if(lost1<600){
@@ -465,27 +483,23 @@ void Sensors::Turret_Function2() {
         } else {
             fail++;
             lockON2 = 0;
-            locate2 = 0;      
-            //printf("HERE");
+            locate2 = 0;   
             sweep();
-            //printf("%d  :   %d  :   %d  :   %d\n", locate1, lockON1, lost1,fail);
         }
     }else{
         fail = 0;
         int X = coordinates2[0];
         int Y = coordinates2[1];
-        //printf("%d  :   %d\n",X,Y);
         if (X != 1023 && Y != 1023){
             lost2 = 0;
             Track(X,Y,tolerance);
         }else{
             lost2++;
+            //printf("%d\n", lost2);
         }
-        //printf("THERE");
         if(lockON2 == 1){
             if(lost2<600){
                 if(reading == 200){
-                //printf("%d  :   %d      %d  :   %d\n", X,Y, locate1, lockON1);
                     ToF_Function(locate2);
                     reading = 0;
                 }else{
@@ -496,7 +510,7 @@ void Sensors::Turret_Function2() {
                 lockON2 = 0;
                 locate2 = 0;
                 lost2 = 0;
-                //printf("EVERYWHERE");
+                printf("RST 6");
             }
         }
     }
