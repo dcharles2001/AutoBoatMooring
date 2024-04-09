@@ -40,7 +40,7 @@ void BuoyComms::ReceiveAndRead(unsigned char* response, unsigned char respsize)
 {
     //respsize must be set correctly to represent the number of elements in array that response points to
     Radio_StartRx(); //enter RX mode 
-    unsigned char cmd = SI4455_CMD_ID_READ_RX_FIFO; //read rx fifo cmd id 0x77
-    SendCmdGetResp(1, &cmd, respsize, response); //read rx fifo
+    ThisThread::sleep_for(2s);
+    ReadRX(respsize, response);
 }
 

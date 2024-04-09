@@ -36,7 +36,7 @@ int main()
         Buoy.ReceiveAndRead(response, 8);
         for(int i=0; i<8; i++)
         {
-            printf("RX: %x\n\r", response[i]);
+            printf("RX: %c\n\r", response[i]);
         }
         
         Buoy.GetCurrentState(state);
@@ -45,7 +45,7 @@ int main()
             printf("State %d: %x\n\r", i, state[i]);
         }
 
-        ThisThread::sleep_for(1s);
+        //ThisThread::sleep_for(1s);
     }
 }
 

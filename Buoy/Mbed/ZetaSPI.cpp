@@ -114,6 +114,21 @@ void zetaspi::SpiReadBytes(unsigned char byteCount, unsigned char* pData)
 	}
 }
 
+void zetaspi::ReadRX(unsigned char bytecount, unsigned char*pData)
+{
+    unsigned char* ptr = pData;
+    
+    CS = 0;
+    spidevice.write(SI4455_CMD_ID_READ_RX_FIFO); //0x77 cmd ID
+
+    for(int i = 0; i<bytecount; i++)
+    {
+        *ptr++ = spidevice.write(0xFF);
+    }
+    
+    CS = 1;
+}
+
 /*********************************************************************************************
  * Function Name		:	GetResponse_CTS
  * Description			:	API to Poll CTS and also read an array of data from
