@@ -22,8 +22,8 @@ EventQueue Queue_Dist2(1 * EVENTS_EVENT_SIZE);
 Thread Thread_Cord2;
 EventQueue Queue_Cord2(1 * EVENTS_EVENT_SIZE);
 
-I2C i2c1(PB_9, PB_8);
-I2C i2c2(PB_11, PB_10);
+I2C i2c2(PB_9, PB_8);
+I2C i2c1(PB_11, PB_10);
 BufferedSerial pc(USBTX, USBRX);
 BufferedSerial lidarSerial1(D1, D0);
 BufferedSerial lidarSerial2(PE_8, PE_7);
