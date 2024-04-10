@@ -265,6 +265,17 @@ int* combineNumbers(int num1, int num2) {
     int locate1 = 0;
     int lost1 = 0;
 
+    int Ix2[4];
+    int Iy2[4];
+    int Ix_prev2[4];
+    int Iy_prev2[4];
+    int flashCount2[4] = {0,0,0,0};
+    char data_buf2[16];
+    int s2;
+    int* coordinates2;
+    int locate2 = 0;
+    int lost2 = 0;
+
     int sweep = 0;
 
     void IR_Sensor1() {
@@ -299,7 +310,7 @@ int* combineNumbers(int num1, int num2) {
         if(Ix1[0] == 0 && Iy1[0] == 0){
             printf("ERROR: IR 1 not found\n");
         }
-        if(locate1 == 0){
+        if(locate1 == 0 || locate1 == locate2){
         for(int measurements = 0; measurements<12; measurements++){
             for(int i = 0; i < 3; i++){
                 if((Ix1[i] == 1023 && Ix_prev1[i] != 1023) || ((Ix1[i] != 1023 && Ix_prev1[i] == 1023))){
@@ -378,21 +389,6 @@ int* combineNumbers(int num1, int num2) {
 }
     
 
-
-
-   int Ix2[4];
-    int Iy2[4];
-    int Ix_prev2[4];
-    int Iy_prev2[4];
-    int flashCount2[4] = {0,0,0,0};
-    char data_buf2[16];
-    int s2;
-    int* coordinates2;
-    int locate2 = 0;
-    int lost2 = 0;
-
-
-
     void IR_Sensor2() {
         int IRAddress = 0xB0;
         i2c2.write(IRAddress, "\x36", 1);  // Send the register address to read
@@ -427,7 +423,7 @@ int* combineNumbers(int num1, int num2) {
         if(Ix2[0] == 0 && Iy1[0] == 0){
             printf("ERROR: IR 1 not found\n");
         }
-        if(locate2 == 0){
+        if(locate2 == 0 || locate1 == locate2){
         for(int measurements = 0; measurements<12; measurements++){
             for(int i = 0; i < 3; i++){
                 if((Ix2[i] == 1023 && Ix_prev1[i] != 1023) || ((Ix1[i] != 1023 && Ix_prev1[i] == 1023))){
@@ -527,6 +523,11 @@ void Turret1_Function() {
     int X = coordinates1[0];
     int Y = coordinates1[1];
     //printf("%d  :   %d\n",X,Y);
+    if (locate1 == locate2 && locate1 == 0){
+        if (swap == 1){
+            Turret1.sweep();
+        }
+    }
     if (locate1 == 0 || lost1>600) {
         if (fail <= 199) {
             fail++;

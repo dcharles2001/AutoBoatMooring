@@ -17,6 +17,8 @@ Servo servoY2(D10);
 
 int IRAddress1 = 0xB0;
 int IRAddress2 = 0xB0;
+
+int tolerance = 50;
 //Servo servoX1(PA_5);
 //Servo servoY1(PA_6);
 //Servo servoX2(PD_14);
@@ -35,6 +37,7 @@ void Sensors::Setup(){
     Write_2bytes(0x1A, 0x40,  IRAddress1); ThisThread::sleep_for(10ms);
     Write_2bytes(0x33, 0x33,  IRAddress1); ThisThread::sleep_for(10ms);
 }
+int SWAP = 0;
 
 void Sensors::Write_2bytes(char d1, char d2, int IRsensorAddress) {
     char data[2] = {d1, d2};
@@ -56,7 +59,12 @@ void Sensors::sweep(void) {
             flip = 1;
         } else if (posX >= 0.6) {
             flip = -1;
-            printf("Turret 1 has no Buoy\n");
+            if(locate1 == locate2 && locate1 != 0){
+                SWAP = 2;
+            }else{
+                printf("Turret 1 has no Buoy\n");
+            }
+    
         }
             servoX1 = posX;
             servoY1 = posY;
@@ -65,7 +73,11 @@ void Sensors::sweep(void) {
             flip = 1;
         } else if (posX >= 1) {
             flip = -1;
-            printf("Turret 2 has no Buoy\n");
+            if(locate1 == locate2 && locate2 != 0){
+                SWAP = 1;
+            }else{
+                printf("Turret 1 has no Buoy\n");
+            }
         }
             servoX2 = posX;
             servoY2 = posY;
@@ -120,16 +132,16 @@ void Sensors::ToF_Function(int BuoyID){
     if(turretID == 1){
         if(avgDist1 !=0 && lockON1 == 1){
             lastDist1 = avgDist1;
-            printf("Buoy %d is %d cm away\n",BuoyID, lastDist1);
+            printf("Buoy %d is %d cm away from Turret 1\n",BuoyID, lastDist1);
         }else{
-            printf("Last Buoy %d Distance was %d cm away\n",BuoyID,lastDist1);
+            printf("Last Buoy %d Distance was %d cm away from Turret 1\n",BuoyID,lastDist1);
         }
     }else{
         if(avgDist2 !=0 && lockON2 == 1){
             lastDist2 = avgDist2;
-            //printf("Buoy %d is %d cm away\n",BuoyID, lastDist2);
+            printf("Buoy %d is %d cm away from Turret 2\n",BuoyID, lastDist2);
         }else{
-            //printf("Last Buoy %d Distance was %d cm away\n",BuoyID,lastDist2);
+            printf("Last Buoy %d Distance was %d cm away from Turret 2\n",BuoyID,lastDist2);
         }
 
     }
@@ -239,7 +251,7 @@ void Sensors::IR_Sensor1() {
     if(Ix1[0] == 0 && Iy1[0] == 0){
         printf("ERROR: IR 1 not found\n");
     }
-    if(locate1 == 0){
+    if(locate1 == 0 || locate1 == locate2){
         for(int measurements = 0; measurements<12; measurements++){
             for(int i = 0; i < 3; i++){
                 if((Ix1[i] == 1023 && Ix_prev1[i] != 1023) || ((Ix1[i] != 1023 && Ix_prev1[i] == 1023))){
@@ -277,6 +289,7 @@ void Sensors::IR_Sensor1() {
                 ThisThread::sleep_for(30ms);
             }
         }
+        printf("%d\n",flashCount1[0]);
         if(flashCount1[0]>3 && flashCount1[0] < 8){
             locate1 = 1;
             lost1 = 0;
@@ -349,7 +362,7 @@ void Sensors::IR_Sensor2() {
     if(Ix2[0] == 0 && Iy2[0] == 0){
         printf("ERROR: IR 2 not found\n");
     }
-    if(locate2 == 0){
+    //if(locate2 == 0 || locate1 == locate2){
         for(int measurements = 0; measurements<12; measurements++){
             for(int i = 0; i < 3; i++){
                 if((Ix2[i] == 1023 && Ix_prev2[i] != 1023) || ((Ix2[i] != 1023 && Ix_prev2[i] == 1023))){
@@ -387,22 +400,22 @@ void Sensors::IR_Sensor2() {
                 ThisThread::sleep_for(30ms);
             }
         }
-
-        if(flashCount2[0]>3 && flashCount1[0] < 8){
+        //printf("%d\n",flashCount2[0]);
+        if(flashCount2[0]>3 && flashCount2[0] < 8){
             locate2 = 1;
             lost2 = 0;
             //printf("Slow Buoy Found 1st     ");
-        }else if(flashCount2[0] > 6 && flashCount1[0] < 12){
+        }else if(flashCount2[0] > 6 && flashCount2[0] < 12){
             locate2 = 2;
             lost2 = 0;
             //printf("Fast Buoy Found 1st     ");
         }else{
             locate2 = 0;
-            if(flashCount2[1]>3 && flashCount1[1] < 8){
+            if(flashCount2[1]>3 && flashCount2[1] < 8){
                 //printf("Slow Buoy Found 2nd\n");
                 locate2 = 1;
                 lost2 = 0;
-            }else if(flashCount2[1] > 6 && flashCount1[1] < 12){
+            }else if(flashCount2[1] > 6 && flashCount2[1] < 12){
                 //printf("Fast Buoy Found 2nd\n");
                 locate2 = 2;
                 lost2 = 0;
@@ -417,14 +430,14 @@ void Sensors::IR_Sensor2() {
             }      
             coordinates2 = coordinates;
         }
-    }else{
+    //}else{
         if(lost2>600){
             locate2 = 0;
             for(int i = 0; i < 3; i++){
                 flashCount2[i] = 0;
             }      
         }
-    }
+    //}
 }
 /*
 extern Sensors Turret1;
@@ -436,84 +449,100 @@ Sensors Turret2(2);
 void Sensors::Turret_Function1() {
     static int fail = 0;
     static int reading = 0;
-    if (locate1 == 0 || lost1>600) {
-        if (fail <= 199) {
-            fail++;
-        } else if (fail == 200) {
-            fail++;
-        } else {
-            fail++;
-            lockON1 = 0;
-            locate1 = 0;   
+    if(locate1 == locate2 && locate1 != 0){
+        if(SWAP == 1){
+            locate1 = 0;
             sweep();
         }
     }else{
-        fail = 0;
-        int X1 = coordinates1[0];
-        int Y1 = coordinates1[1];
-        if (X1 != 1023 && Y1 != 1023){
-            lost1 = 0;
-            Track(X1,Y1,tolerance);
-        }else{
-            lost1++;
-            //printf("%d\n", lost1);
-        }
-        if(lockON1 == 1){
-            if(lost1<600){
-                if(reading == 200){
-                    ToF_Function(locate1);
-                    reading = 0;
-                }else{
-                    reading++;
-                }
-                ThisThread::sleep_for(1ms);
-            }else{
+        SWAP = 0;
+        if (locate1 == 0 || lost1>600) {
+            if (fail <= 199) {
+                fail++;
+            } else if (fail == 200) {
+                fail++;
+            } else {
+                fail++;
                 lockON1 = 0;
-                locate1 = 0;
+                locate1 = 0;   
+                sweep();
+            }
+        }else{
+            fail = 0;
+            int X1 = coordinates1[0];
+            int Y1 = coordinates1[1];
+            if (X1 != 1023 && Y1 != 1023){
                 lost1 = 0;
+                Track(X1,Y1,tolerance);
+            }else{
+                lost1++;
+                //printf("%d\n", lost1);
+            }
+            if(lockON1 == 1){
+                if(lost1<600){
+                    if(reading == 200){
+                        ToF_Function(locate1);
+                        reading = 0;
+                    }else{
+                        reading++;
+                    }
+                    ThisThread::sleep_for(1ms);
+                }else{
+                    lockON1 = 0;
+                    locate1 = 0;
+                    lost1 = 0;
+                }
             }
         }
     }
 }
 
 void Sensors::Turret_Function2() {
-    static int fail = 0;
-    static int reading = 0;
-    if (locate2 == 0 || lost2>600) {
-        if (fail <= 199) {
-            fail++;
-        } else if (fail == 200) {
-            fail++;
-        } else {
-            fail++;
-            lockON2 = 0;
-            locate2 = 0;   
+        static int fail = 0;
+        static int reading = 0;
+    if(locate1 == locate2 && locate2 != 0){
+        if(SWAP == 2){
+            locate2 = 0;
             sweep();
         }
     }else{
-        fail = 0;
-        int X = coordinates2[0];
-        int Y = coordinates2[1];
-        if (X != 1023 && Y != 1023){
-            lost2 = 0;
-            Track(X,Y,tolerance);
-        }else{
-            lost2++;
-            //printf("%d\n", lost2);
-        }
-        if(lockON2 == 1){
-            if(lost2<600){
-                if(reading == 200){
-                    ToF_Function(locate2);
-                    reading = 0;
-                }else{
-                    reading++;
-                }
-                ThisThread::sleep_for(1ms);
-            }else{
+            SWAP = 0;
+        if (locate2 == 0 || lost2>600) {
+            if (fail <= 199) {
+                fail++;
+            } else if (fail == 200) {
+                fail++;
+            } else {
+                fail++;
                 lockON2 = 0;
-                locate2 = 0;
+                locate2 = 0;   
+                sweep();
+            }
+        }else{
+            fail = 0;
+            int X = coordinates2[0];
+            int Y = coordinates2[1];
+            if (X != 1023 && Y != 1023){
                 lost2 = 0;
+                Track(X,Y,tolerance);
+            }else{
+                lost2++;
+                //printf("%d\n", lost2);
+            }
+            if(lockON2 == 1){
+                if(lost2<600){
+                    if(reading == 200){
+                        ToF_Function(locate2);
+                        reading = 0;
+                    }else{
+                        reading++;
+                    }
+                    ThisThread::sleep_for(1ms);
+                }else{
+                    lockON2 = 0;
+                    locate2 = 0;
+                    lost2 = 0;
+                }
             }
         }
     }
