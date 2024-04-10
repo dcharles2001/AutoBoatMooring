@@ -22,8 +22,8 @@ EventQueue Queue_Dist2(1 * EVENTS_EVENT_SIZE);
 Thread Thread_Cord2;
 EventQueue Queue_Cord2(1 * EVENTS_EVENT_SIZE);
 
-I2C i2c2(PB_9, PB_8);
-I2C i2c1(PB_11, PB_10);
+I2C i2c1(PB_9, PB_8);
+I2C i2c2(PB_11, PB_10);
 BufferedSerial pc(USBTX, USBRX);
 BufferedSerial lidarSerial1(D1, D0);
 BufferedSerial lidarSerial2(PE_8, PE_7);
@@ -141,9 +141,9 @@ void sweep(void) {
         }
 
         if (turretID == 1) {
-            if (posX <= 0.3) {
+            if (posX <= 0.4) {
                 flip = 1;
-            } else if (posX >= 0.7) {
+            } else if (posX >= 0.6) {
                 flip = -1;
                 //printf("Turret 1 has no Buoy\n");
             }
@@ -168,14 +168,14 @@ void sweep(void) {
         float trackSpeedY = (((512.000000 - Y)) / 150000);
 
         if (trackSpeedX > 0.003) {
-            trackSpeedX = 0.005;
+            trackSpeedX = 0.001;
         } else if (trackSpeedX < -0.003) {
-            trackSpeedX = -0.005;
+            trackSpeedX = -0.001;
         }
-        if (trackSpeedY > 0.003) {
-            trackSpeedY = 0.005;
-        } else if (trackSpeedY < -0.003) {
-            trackSpeedY = -0.005;
+        if (trackSpeedY > 0.006) {
+            trackSpeedY = 0.001;
+        } else if (trackSpeedY < -0.006) {
+            trackSpeedY = -0.001;
         }
 
         posX -= trackSpeedX; 
@@ -512,6 +512,9 @@ Turret Turret2(2);
 
 void Turret1_Function() {
     static int readings = 0;
+    int X = coordinates1[0];
+    int Y = coordinates1[1];
+    //printf("Turret 1    %d  :   %d\n",X,Y);
     if (locate1 == 0){
         lost1++;
         //have we lost it ?
@@ -520,8 +523,6 @@ void Turret1_Function() {
             Turret1.sweep();
         }
     }else{
-        int X = coordinates1[0];
-        int Y = coordinates1[1];
         //yes
         //say we've found it
         //take coordinates
@@ -542,6 +543,7 @@ void Turret1_Function() {
             if(readings>20){
                 Turret1.ToF_Function(locate1);
                 //printf("[INSERT DISTANCE READING]\n");
+
                 readings = 0;
             }else{
                 readings++;
@@ -557,6 +559,7 @@ void Turret1_Function() {
 
 void Turret2_Function() {
     static int readings = 0;
+    //printf("Turret 1    %d  :   %d\n",X,Y);
     if (locate2 == 0){
         lost2++;
         //have we lost it ?
@@ -608,25 +611,25 @@ int main()
     Write_2bytes(0x08, 0xC0,  IRsensorAddress); ThisThread::sleep_for(10ms);
     Write_2bytes(0x1A, 0x40,  IRsensorAddress); ThisThread::sleep_for(10ms);
     Write_2bytes(0x33, 0x33,  IRsensorAddress); ThisThread::sleep_for(10ms);
-    ThisThread::sleep_for(100ms);
+    //ThisThread::sleep_for(1000ms);
 
-    Queue_Cord1.call_every(15ms, IR_Sensor1);
+    Queue_Cord1.call_every(10ms, IR_Sensor1);
     Thread_Cord1.start(callback(&Queue_Cord1, &EventQueue::dispatch_forever));
 
-    Queue_Turret1.call_every(15ms, Turret1_Function);
+    Queue_Turret1.call_every(2ms, Turret1_Function);
     Thread_Turret1.start(callback(&Queue_Turret1, &EventQueue::dispatch_forever));
 
     Queue_Dist1.call_every(100ms, Dist_Avg1);
     Thread_Dist1.start(callback(&Queue_Dist1, &EventQueue::dispatch_forever));
 
 
-    Queue_Turret2.call_every(15ms, Turret2_Function);
+    Queue_Turret2.call_every(2ms, Turret2_Function);
     Thread_Turret2.start(callback(&Queue_Turret2, &EventQueue::dispatch_forever));
 
     Queue_Dist2.call_every(100ms, Dist_Avg2);
     Thread_Dist2.start(callback(&Queue_Dist2, &EventQueue::dispatch_forever));
 
-    Queue_Cord2.call_every(15ms, IR_Sensor2);
+    Queue_Cord2.call_every(10ms, IR_Sensor2);
     Thread_Cord2.start(callback(&Queue_Cord2, &EventQueue::dispatch_forever));
 
     while(1){

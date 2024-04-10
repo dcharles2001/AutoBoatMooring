@@ -122,6 +122,7 @@ int main(){
     Queue_Dist2.call_every(10ms, DistAvg2);
     Thread_Dist2.start(callback(&Queue_Dist2, &EventQueue::dispatch_forever));
     //Launcher Code
-    //FQueue_Launcher.call_every(10ms, LauncherMain);
+    //Queue_Launcher.call_every(10ms, LauncherMain);
     //Thread_Launcher.start(callback(&Queue_Launcher, &EventQueue::dispatch_forever));
+    
 }

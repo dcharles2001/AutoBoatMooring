@@ -54,6 +54,7 @@ int sampleSize = 5;
 int IRsensorAddress = 0xB0;
 int tolerance = 5;
 int flashHz = 20; 
+int swap = 0;
 
 float STEP = 0.0005;
 
@@ -171,6 +172,7 @@ void sweep(void) {
             if(avgDist1 !=0){
                 lastDist1 = avgDist1;
                 printf("Buoy %d is %d cm away\n",BuoyID, lastDist1);
+                ThisThread::sleep_for(1000ms);
             }else{
                 printf("Last Buoy %d Distance was %d cm away\n",BuoyID,lastDist1);
             }
@@ -522,6 +524,9 @@ Turret Turret2(2);
 void Turret1_Function() {
     static int fail = 0;
     static int reading = 0;
+    int X = coordinates1[0];
+    int Y = coordinates1[1];
+    //printf("%d  :   %d\n",X,Y);
     if (locate1 == 0 || lost1>600) {
         if (fail <= 199) {
             fail++;
@@ -537,9 +542,6 @@ void Turret1_Function() {
         }
     }else{
         fail = 0;
-        int X = coordinates1[0];
-        int Y = coordinates1[1];
-        //printf("%d  :   %d\n",X,Y);
         if (X != 1023 && Y != 1023){
             lost1 = 0;
             Turret1.Track(X,Y,tolerance);
@@ -572,6 +574,9 @@ void Turret1_Function() {
 void Turret2_Function() {
     static int fail = 0;
     static int reading = 0;
+    int X = coordinates2[0];
+    int Y = coordinates2[1];
+    printf("%d  :   %d\n",X,Y);
     if (locate2 == 0 || lost2>600) {
         if (fail <= 199) {
             fail++;
@@ -587,9 +592,6 @@ void Turret2_Function() {
         }
     }else{
         fail = 0;
-        int X = coordinates1[0];
-        int Y = coordinates1[1];
-        //printf("%d  :   %d\n",X,Y);
         if (X != 1023 && Y != 1023){
             lost2 = 0;
             Turret2.Track(X,Y,tolerance);

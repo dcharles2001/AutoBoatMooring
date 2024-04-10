@@ -1,8 +1,8 @@
 #include "Sensors.h"
 
 //Pin Setup Sensor Turrets
-I2C i2c2(PB_9, PB_8); //IR1
-I2C i2c1(PB_11, PB_10); //IR2
+I2C i2c1(PB_9, PB_8); //IR1
+I2C i2c2(PB_11, PB_10); //IR2
 
 BufferedSerial pc(USBTX, USBRX);
 BufferedSerial lidarSerial1(D1, D0);
@@ -52,9 +52,9 @@ void Sensors::sweep(void) {
     }
 
     if (turretID == 1) {
-        if (posX <= 0.0) {
+        if (posX <= 0.4) {
             flip = 1;
-        } else if (posX >= 1) {
+        } else if (posX >= 0.6) {
             flip = -1;
             printf("Turret 1 has no Buoy\n");
         }
@@ -120,9 +120,9 @@ void Sensors::ToF_Function(int BuoyID){
     if(turretID == 1){
         if(avgDist1 !=0 && lockON1 == 1){
             lastDist1 = avgDist1;
-            //printf("Buoy %d is %d cm away\n",BuoyID, lastDist1);
+            printf("Buoy %d is %d cm away\n",BuoyID, lastDist1);
         }else{
-            //printf("Last Buoy %d Distance was %d cm away\n",BuoyID,lastDist1);
+            printf("Last Buoy %d Distance was %d cm away\n",BuoyID,lastDist1);
         }
     }else{
         if(avgDist2 !=0 && lockON2 == 1){
@@ -191,13 +191,21 @@ void Sensors::Dist_Avg2() {
     avgDist2 /=(sampleSize - missed);
 }
 
-int* Sensors::combineNumbers(int num1, int num2) {
-    static int Temp[2];
-    Temp[1] = num1;
-    Temp[0] = num2;
+int* combineNumbers1(int num1, int num2) {
+    static int Temp1[2];
+    Temp1[1] = num1;
+    Temp1[0] = num2;
 
-    return Temp;
-}   
+    return Temp1;
+}
+
+int* combineNumbers2(int num1, int num2) {
+    static int Temp2[2];
+    Temp2[1] = num1;
+    Temp2[0] = num2;
+
+    return Temp2;
+}
 
 void Sensors::IR_Sensor1() {
     int IRAddress = IRAddress1;
@@ -227,7 +235,7 @@ void Sensors::IR_Sensor1() {
     s1     = data_buf1[12];
     Ix1[3] += (s1 & 0x30) << 4;
     Iy1[3] += (s1 & 0xC0) << 2;
-    int* coordinates = combineNumbers(Ix1[0], Iy1[0]);
+    int* coordinates = combineNumbers1(Ix1[0], Iy1[0]);
     if(Ix1[0] == 0 && Iy1[0] == 0){
         printf("ERROR: IR 1 not found\n");
     }
@@ -337,7 +345,7 @@ void Sensors::IR_Sensor2() {
     s2     = data_buf2[12];
     Ix2[3] += (s2 & 0x30) << 4;
     Iy2[3] += (s2 & 0xC0) << 2;
-    int* coordinates = combineNumbers(Ix2[0], Iy2[0]);
+    int* coordinates = combineNumbers2(Ix2[0], Iy2[0]);
     if(Ix2[0] == 0 && Iy2[0] == 0){
         printf("ERROR: IR 2 not found\n");
     }
@@ -383,12 +391,10 @@ void Sensors::IR_Sensor2() {
         if(flashCount2[0]>3 && flashCount1[0] < 8){
             locate2 = 1;
             lost2 = 0;
-            printf("RST 1");
             //printf("Slow Buoy Found 1st     ");
         }else if(flashCount2[0] > 6 && flashCount1[0] < 12){
             locate2 = 2;
             lost2 = 0;
-            printf("RST 2");
             //printf("Fast Buoy Found 1st     ");
         }else{
             locate2 = 0;
@@ -396,12 +402,10 @@ void Sensors::IR_Sensor2() {
                 //printf("Slow Buoy Found 2nd\n");
                 locate2 = 1;
                 lost2 = 0;
-                printf("RST 3");
             }else if(flashCount2[1] > 6 && flashCount1[1] < 12){
                 //printf("Fast Buoy Found 2nd\n");
                 locate2 = 2;
                 lost2 = 0;
-                printf("RST 4");
             }else{
                 //printf("Reflection Found 2nd\n");
                 locate2 = 0;
@@ -452,7 +456,7 @@ void Sensors::Turret_Function1() {
             Track(X1,Y1,tolerance);
         }else{
             lost1++;
-            printf("%d\n", lost1);
+            //printf("%d\n", lost1);
         }
         if(lockON1 == 1){
             if(lost1<600){
@@ -510,7 +514,6 @@ void Sensors::Turret_Function2() {
                 lockON2 = 0;
                 locate2 = 0;
                 lost2 = 0;
-                printf("RST 6");
             }
         }
     }
