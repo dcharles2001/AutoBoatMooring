@@ -18,7 +18,7 @@ Servo servoY2(D10);
 int IRAddress1 = 0xB0;
 int IRAddress2 = 0xB0;
 
-int tolerance = 50;
+int tolerance = 5;
 //Servo servoX1(PA_5);
 //Servo servoY1(PA_6);
 //Servo servoX2(PD_14);
@@ -131,7 +131,7 @@ void Sensors::Track(int X, int Y, int tolerance) {
 void Sensors::ToF_Function(int BuoyID){
     if(turretID == 1){
         if(avgDist1 !=0 && lockON1 == 1){
-            lastDist1 = avgDist1;
+            lastDist1 = avgDist1 - 30; //30cm offset
             printf("Buoy %d is %d cm away from Turret 1\n",BuoyID, lastDist1);
         }else{
             printf("Last Buoy %d Distance was %d cm away from Turret 1\n",BuoyID,lastDist1);
