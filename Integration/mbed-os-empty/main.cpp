@@ -141,9 +141,9 @@ void sweep(void) {
         }
 
         if (turretID == 1) {
-            if (posX <= 0.4) {
+            if (posX <= 0.2) {
                 flip = 1;
-            } else if (posX >= 0.6) {
+            } else if (posX >= 0.8) {
                 flip = -1;
                 //printf("Turret 1 has no Buoy\n");
             }
