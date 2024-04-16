@@ -10,6 +10,12 @@
 #define LBUOY 1
 #define RBUOY 2
 
+//cmds and params
+#define OFF 0x00
+#define ON 0x01
+#define DUR20 0x10
+#define DUR30 0x20
+#define DUR40 0x30
 
 typedef struct  //template struct for SPI devices
 {
@@ -30,7 +36,11 @@ const SPIConfig_t l432spi1
     PA_7, PA_6, PA_5, PA_3
 };
 
-
+typedef struct
+{
+    char cmd;
+    char param;
+} Buoycmd_t;
 
 
 

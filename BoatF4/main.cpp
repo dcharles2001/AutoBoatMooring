@@ -28,12 +28,14 @@ int main()
     {
         printf("State: %x\n\r", state[i]);
     }
-
-    unsigned char TestMessage[9] = "UUUUUUUU";
+    Buoycmd_t newcmd = {ON, 30}; //turn on for 30 seconds
+    unsigned char TestMessage[RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH]; //new message
+    Boat.MessageConstructor(newcmd, TestMessage, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH);
     
+
     while(1)    
     {
-        Boat.SendMessage(TestMessage, 8);
+        Boat.SendMessage(TestMessage, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH);
         Boat.GetCurrentState(state);
         for(int i=0; i<2; i++)
         {

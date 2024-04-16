@@ -3,7 +3,7 @@
 
 //#include "mbed.h"
 #include "SPI.h"
-#include "L4config.h"
+#include "Deviceconfig.h"
 
 
 /* Structure for accessing parameters from config file */

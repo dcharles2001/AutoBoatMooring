@@ -40,7 +40,49 @@ void BuoyComms::ReceiveAndRead(unsigned char* response, unsigned char respsize)
 {
     //respsize must be set correctly to represent the number of elements in array that response points to
     Radio_StartRx(); //enter RX mode 
-    ThisThread::sleep_for(2s);
-    ReadRX(respsize, response);
+	//ThisThread::sleep_for(2s);
+    unsigned char cmd = SI4455_CMD_ID_READ_RX_FIFO; //read rx fifo cmd id 0x77
+    ReadRX(respsize, response); //read rx fifo
+}
+
+Buoycmd_t BuoyComms::Interpret(unsigned char* packet, unsigned char packetsize)
+{
+    Buoycmd_t buoyinstruct;
+    unsigned int onscore, offscore = 0;
+
+    //confidence testing to account for 
+    for(int i=0; i<(packetsize-1); i++) 
+    {
+        if(packet[i] == ON)
+        {
+            onscore++;
+        }else if(packet[i] == OFF)
+        {
+            offscore++;
+        }else {
+            //content corrupted
+        }
+    }
+
+    if(onscore > offscore) //must be confident to activate, less confidence required for duration
+    {
+        buoyinstruct.cmd = ON;
+        buoyinstruct.param = packet[packetsize-1]; //on duration
+    }else {
+        buoyinstruct.cmd = OFF;
+        buoyinstruct.param = 0; //turning off, on duration irrelevant
+    }
+    
+    return buoyinstruct; //return interpreted instructions
+
+}
+
+void BuoyComms::MessageConstructor(Buoycmd_t instructions, unsigned char* packet, unsigned char packetsize)
+{
+    for(int i = 0; i<(packetsize-1); i++)
+    {
+        packet[i] = instructions.cmd;
+    }
+    packet[packetsize-1] = instructions.param;
 }
 

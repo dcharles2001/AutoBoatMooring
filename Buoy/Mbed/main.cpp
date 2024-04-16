@@ -15,7 +15,7 @@ int main()
 
     Buoy.Init();
 
-    unsigned char response[8];
+    unsigned char response[RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH];
     Buoy.GetPartInfo(response);
     for(int i=0; i<8; i++)
     {
@@ -29,23 +29,28 @@ int main()
         printf("State: %x\n\r", state[i]);
     }
 
-    unsigned char TestMessage[9] = "UUUUUUUU";
-    
     while(1)    
     {
-        Buoy.ReceiveAndRead(response, 8);
-        for(int i=0; i<8; i++)
+        Buoy.ReceiveAndRead(response, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH);
+        for(int i=0; i<RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH; i++)
         {
-            printf("RX: %c\n\r", response[i]);
+            printf("RX: %x\n\r", response[i]);
+        }
+        Buoycmd_t newcmd = Buoy.Interpret(response, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH);
+        if(newcmd.cmd == ON)
+        {
+            printf("Instruction: ON\n\r");
+            printf("Duration: %d seconds\n\r", newcmd.param);
         }
         
+
         Buoy.GetCurrentState(state);
         for(int i=0; i<2; i++)
         {
             printf("State %d: %x\n\r", i, state[i]);
         }
 
-        //ThisThread::sleep_for(1s);
+        ThisThread::sleep_for(2s);
     }
 }
 
