@@ -8,7 +8,6 @@
 #include "Sensors.h"
 
 using namespace std;
-
 Launcher Launch;
 Sensors Turret1(1);
 Sensors Turret2(2);
@@ -43,8 +42,10 @@ Thread Thread_Launcher;
 EventQueue Queue_Launcher(1 * EVENTS_EVENT_SIZE);
 
 //Pin Setup Launcher Turret
-PwmIn Cha7(D3);
-
+//PwmIn Cha7(PC_8);
+DigitalIn ES(PF_15);
+DigitalIn Swt1(PE_12);
+DigitalIn Swt2(PE_10);
 //Setup for Sensor Turrets
 Timer tick;
 
@@ -77,6 +78,31 @@ void DistAvg2(){
 
 //Functions for Launcher Turret
 void LauncherMain(){
+    //while(true){
+        if(ES == 1){
+            if(Swt1 == 0){
+                Launch.stepperSControl(xAxisControl);
+                Launch.servoSControl(yAxisControl);
+                Launch.triggerSControl(readyToFire);
+                Launch.safetySControl(safteyControl);
+                printf("Swt1\n");
+            }else if(Swt2 == 0){
+                Launch.stepperRCControl();
+                Launch.servoRCControl();
+                Launch.triggerRCControl();
+                Launch.safetyRCControl();
+                printf("Swt2\n");
+            }else{
+                printf("Stopped\n");
+                Launch.servoSControl(yAxisControl);
+                Launch.triggerSControl(readyToFire);
+                Launch.safetySControl(safteyControl);
+                
+            }
+        }else{
+            printf("AH FUCK\n");
+        }
+    /*}
     Cha7Read = Cha7.pulsewidth();
     //printf("%f\n", Cha7Read);
     if((Cha7Read>1300)&&(Cha7Read<1800)){
@@ -94,11 +120,12 @@ void LauncherMain(){
         Launch.servoSControl(yAxisControl);
         Launch.triggerSControl(readyToFire);
         Launch.safetySControl(safteyControl);
-    }
+    }*/
 }
 
 //MAIN
 int main(){
+    printf("Hello\n");
     //Sensor Code
     Turret1.Setup();
     Turret2.Setup();
@@ -122,7 +149,7 @@ int main(){
     Queue_Dist2.call_every(10ms, DistAvg2);
     Thread_Dist2.start(callback(&Queue_Dist2, &EventQueue::dispatch_forever));
     //Launcher Code
-    //Queue_Launcher.call_every(10ms, LauncherMain);
-    //Thread_Launcher.start(callback(&Queue_Launcher, &EventQueue::dispatch_forever));
-    
+    Queue_Launcher.call_every(10ms, LauncherMain);
+    Thread_Launcher.start(callback(&Queue_Launcher, &EventQueue::dispatch_forever));
+    printf("Bye\n");
 }

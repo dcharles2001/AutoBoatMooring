@@ -1,6 +1,7 @@
 #include "mbed.h"
 #include "PwmIn.h"
 #include "Servo.h"
+#include <cstdio>
 
 using namespace std::chrono;
 
@@ -8,6 +9,9 @@ using namespace std::chrono;
 DigitalOut dirPin(D7);
 DigitalOut stepPin(D8);
 int x = 1;
+DigitalIn Swt1(PE_10);
+DigitalIn Swt2(PE_12);
+DigitalIn ES(D3);
 
 PwmIn Cha1(PE_6);
 PwmIn Cha2(PE_5);
@@ -168,7 +172,24 @@ int main()
 {
 
     while (true) {
-        Cha7Read = Cha7.pulsewidth();
+        int EMS = ES;
+        printf("%d\n",EMS);
+        if(ES == 1){
+            if(Swt1 == 0){
+                printf("Switch1\n");
+            }else if(Swt2 == 0){
+                printf("Switch2\n");
+            }else{
+                printf("nope\n");
+            }
+
+        }else{
+            //printf("AH FUCK ITS GONE WRONG");
+        }
+
+
+
+        /*Cha7Read = Cha7.pulsewidth();
         if(Cha7Read<1300){
             stepperSControl(xAxisControl);
             servoSControl(yAxisControl);
@@ -181,6 +202,6 @@ int main()
             safetyRCControl();
         }else{
             printf("Stopped\n");
-        }
+        }*/
     }
 }
