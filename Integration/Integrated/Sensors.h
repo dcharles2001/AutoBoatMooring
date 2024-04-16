@@ -59,7 +59,7 @@ class Sensors{
         char data_buf1[16],data_buf2[16];
         int* coordinates1;
         int* coordinates2;
-        float STEP = 0.0005;
+        float STEP = 0.00075;
 };
 
 #endif

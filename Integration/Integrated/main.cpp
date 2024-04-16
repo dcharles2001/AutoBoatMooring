@@ -77,31 +77,48 @@ void DistAvg2(){
 }
 
 //Functions for Launcher Turret
+int ESCount = 0;
+int Swt1Count = 0;
+int Swt2Count = 0;
+int stopCount = 0;
+
+int ESConf = 0;
+int Swt1Conf = 0;
+int Swt2Conf = 0;
+int stopConf = 0;
+
+int countCounter = 100;
+
+int flip = 1;
 void LauncherMain(){
     //while(true){
-        if(ES == 1){
-            if(Swt1 == 0){
-                Launch.stepperSControl(xAxisControl);
-                Launch.servoSControl(yAxisControl);
-                Launch.triggerSControl(readyToFire);
-                Launch.safetySControl(safteyControl);
-                printf("Swt1\n");
-            }else if(Swt2 == 0){
+        //printf("Swt1 %d     :Swt2 %d    :ES %d  :Stop %d\n",Swt1Count,Swt2Count,ESCount,stopCount);
+        if(ESConf == 0){
+            if(Swt1Conf == 1){
+               /* SUDO CODE FOR LAUNCHER X-SWEEP
+                if(limitOne = 1){
+                    flip = 1;
+                }else if(limitTwo = 1){
+                    flip = -1;
+                }
+            */
+                xAxisControl= xAxisControl + flip;
+                ThisThread::sleep_for(10ms);
+                //Launch.stepperSControl(xAxisControl);
+                //Launch.servoSControl(yAxisControl);
+                //Launch.triggerSControl(readyToFire);
+                //Launch.safetySControl(safteyControl);
+            }else if(Swt2Conf == 1){
                 Launch.stepperRCControl();
                 Launch.servoRCControl();
                 Launch.triggerRCControl();
                 Launch.safetyRCControl();
-                printf("Swt2\n");
-            }else{
-                printf("Stopped\n");
+            }else if(stopConf == 1){
                 Launch.servoSControl(yAxisControl);
                 Launch.triggerSControl(readyToFire);
                 Launch.safetySControl(safteyControl);
                 
             }
-        }else{
-            printf("AH FUCK\n");
-        }
     /*}
     Cha7Read = Cha7.pulsewidth();
     //printf("%f\n", Cha7Read);
@@ -121,11 +138,11 @@ void LauncherMain(){
         Launch.triggerSControl(readyToFire);
         Launch.safetySControl(safteyControl);
     }*/
+        }
 }
 
 //MAIN
 int main(){
-    printf("Hello\n");
     //Sensor Code
     Turret1.Setup();
     Turret2.Setup();
@@ -151,5 +168,78 @@ int main(){
     //Launcher Code
     Queue_Launcher.call_every(10ms, LauncherMain);
     Thread_Launcher.start(callback(&Queue_Launcher, &EventQueue::dispatch_forever));
-    printf("Bye\n");
+
+    while(1){
+        if(ES == 1){
+            ESCount++;
+            if(ESCount >= countCounter/20){
+                Thread_Launcher.terminate();
+                Thread_Turret1.terminate();
+                Thread_Turret2.terminate();
+                Thread_ToF1.terminate();
+                Thread_Dist1.terminate();
+                Thread_Cord1.terminate();
+                Thread_ToF2.terminate();
+                Thread_Dist2.terminate();
+                Thread_Cord2.terminate();
+
+                ESConf = 1;
+
+                Swt1Conf = 0;
+                Swt1Count = 0;
+
+                Swt2Conf = 0;
+                Swt2Count = 0;
+
+                stopConf = 0;
+                stopCount = 0;
+                //printf("EMERGENCY STOP\n");
+            }
+        } else if(Swt1 == 0){
+            Swt1Count++;
+            if(Swt1Count >= countCounter){
+                ESConf = 0;
+                ESCount = 0;
+
+                Swt1Conf = 1;
+
+                Swt2Conf = 0;
+                Swt2Count = 0;
+
+                stopConf = 0;
+                stopCount = 0;
+                //printf("Swt1\n");
+            }
+        }else if(Swt2 == 0){
+            Swt2Count++;
+            if(Swt2Count >= countCounter){
+                ESConf = 0;
+                ESCount = 0;
+
+                Swt1Conf = 0;
+                Swt1Count = 0;
+
+                Swt2Conf = 1;
+
+                stopConf = 0;
+                stopCount = 0;
+                //printf("Swt2\n");
+            }
+        }else{
+            stopCount++;
+            if(stopCount >= countCounter){
+                ESConf = 0;
+                ESCount = 0;
+
+                Swt1Conf = 0;
+                Swt1Count = 0;
+
+                Swt2Conf = 0;
+                Swt2Count = 0;
+
+                stopConf = 1;
+                //printf("Stopped\n");
+            }
+        }
+    }
 }
