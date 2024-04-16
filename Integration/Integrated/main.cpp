@@ -107,7 +107,7 @@ int main(){
     Queue_Turret1.call_every(2ms, Turret1Func);
     Thread_Turret1.start(callback(&Queue_Turret1, &EventQueue::dispatch_forever));
     //IR 1
-    Queue_Cord1.call_every(15ms, IRSensor1);
+    Queue_Cord1.call_every(10ms, IRSensor1);
     Thread_Cord1.start(callback(&Queue_Cord1, &EventQueue::dispatch_forever));
     //ToF 1
     Queue_Dist1.call_every(5ms, DistAvg1);
@@ -116,7 +116,7 @@ int main(){
     Queue_Turret2.call_every(2ms, Turret2Func);
     Thread_Turret2.start(callback(&Queue_Turret2, &EventQueue::dispatch_forever));
     //IR 2
-    Queue_Cord2.call_every(5ms, IRSensor2);
+    Queue_Cord2.call_every(10ms, IRSensor2);
     Thread_Cord2.start(callback(&Queue_Cord2, &EventQueue::dispatch_forever));
     //ToF 2
     Queue_Dist2.call_every(10ms, DistAvg2);
