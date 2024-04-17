@@ -36,11 +36,27 @@ void BuoyComms::SendMessage(unsigned char* message, unsigned char msgsize)
     
 }
 
+bool BuoyComms::IdleRXPolling(void)
+{
+    Radio_StartRx(); //enter RX mode
+
+    //poll fifo 
+    unsigned char cmd = SI4455_CMD_ID_FIFO_INFO; //read fifo info command 0x15
+    unsigned char resp[2];
+    SendCmdGetResp(0x01, &cmd, 2, resp); //send command and read response
+    if(resp[0] > 0) //fifo has content
+    {
+        return 0; //nothing
+    }else {
+        return 1; //content received
+    }
+      
+}
+
 void BuoyComms::ReceiveAndRead(unsigned char* response, unsigned char respsize)
 {
     //respsize must be set correctly to represent the number of elements in array that response points to
-    Radio_StartRx(); //enter RX mode 
-	//ThisThread::sleep_for(2s);
+    //Radio_StartRx(); //enter RX mode 
     unsigned char cmd = SI4455_CMD_ID_READ_RX_FIFO; //read rx fifo cmd id 0x77
     ReadRX(respsize, response); //read rx fifo
 }
@@ -48,9 +64,10 @@ void BuoyComms::ReceiveAndRead(unsigned char* response, unsigned char respsize)
 Buoycmd_t BuoyComms::Interpret(unsigned char* packet, unsigned char packetsize)
 {
     Buoycmd_t buoyinstruct;
-    unsigned int onscore, offscore = 0;
+    unsigned char onscore = 0;
+    unsigned char offscore = 0;
 
-    //confidence testing to account for 
+    //confidence testing 
     for(int i=0; i<(packetsize-1); i++) 
     {
         if(packet[i] == ON)
@@ -85,4 +102,8 @@ void BuoyComms::MessageConstructor(Buoycmd_t instructions, unsigned char* packet
     }
     packet[packetsize-1] = instructions.param;
 }
+
+
+
+
 

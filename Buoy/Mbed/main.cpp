@@ -6,6 +6,8 @@ BuoyComms Buoy(l432spi1, PB_6, PB_7, PA_2, LBUOY); //Left buoy test obj
 DigitalOut GreenLED(PB_0);
 DigitalOut TriggerLine(PB_1);
 
+Buoycmd_t ReceiveCMDs(unsigned char* message);
+
 int main()
 {
     SystemCoreClockUpdate();
@@ -29,28 +31,46 @@ int main()
         printf("State: %x\n\r", state[i]);
     }
 
+    unsigned char message[8] = "CMDGOOD"; //response message
+
     while(1)    
     {
-        Buoy.ReceiveAndRead(response, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH);
-        for(int i=0; i<RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH; i++)
+        //receive new cmd
+        if(!Buoy.IdleRXPolling()) //don't bother trying to parse cmds until anything arrives in receive fifo 
         {
-            printf("RX: %x\n\r", response[i]);
-        }
-        Buoycmd_t newcmd = Buoy.Interpret(response, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH);
-        if(newcmd.cmd == ON)
-        {
-            printf("Instruction: ON\n\r");
-            printf("Duration: %d seconds\n\r", newcmd.param);
-        }
-        
+            ThisThread::sleep_for(500ms);
+            printf("Receive!\n\r");
+            Buoycmd_t newcmd = ReceiveCMDs(response);
+            if(newcmd.cmd == ON)
+            {
+                printf("Instruction: ON\n\r");
+                printf("Duration: %d seconds\n\r", newcmd.param);
+                //send reply
+                //ThisThread::sleep_for(1s);
+                Buoy.SendMessage(message, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH); //send message
+            }
 
-        Buoy.GetCurrentState(state);
-        for(int i=0; i<2; i++)
+            ThisThread::sleep_for(2s);
+           
+        }else 
         {
-            printf("State %d: %x\n\r", i, state[i]);
+            printf("Nothing yet\n\r");
+            ThisThread::sleep_for(250ms);
         }
-
-        ThisThread::sleep_for(2s);
     }
 }
 
+
+Buoycmd_t ReceiveCMDs(unsigned char* message)
+{
+    Buoy.ReceiveAndRead(message, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH);
+
+    for(int i=0; i<RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH; i++)
+    {
+        printf("RX: %x\n\r", message[i]);
+    }
+
+    Buoycmd_t newcmd = Buoy.Interpret(message, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH);
+
+   return newcmd;     
+}

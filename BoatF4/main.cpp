@@ -32,17 +32,37 @@ int main()
     unsigned char TestMessage[RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH]; //new message
     Boat.MessageConstructor(newcmd, TestMessage, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH);
     
+    unsigned char buoyresponse[7];
 
     while(1)    
     {
+        printf("Sending\n\r");
         Boat.SendMessage(TestMessage, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH);
+        ThisThread::sleep_for(500ms);
+        /*
         Boat.GetCurrentState(state);
         for(int i=0; i<2; i++)
         {
             printf("State: %x\n\r", state[i]);
         }
+        */
+        for(int i=0; i<10; i++)
+        {
+            if(!Boat.IdleRXPolling())
+            {
+                Boat.ReceiveAndRead(buoyresponse, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH);
+                for(int i=0; i<RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH; i++)
+                {
+                    printf("Resp: %c\n\r", buoyresponse[i]);
+                }   
+                ThisThread::sleep_for(2s);
+                break;
+            }else {
+                printf("No resp\n\r");
+                ThisThread::sleep_for(150ms);
+            }
+        }
         
 
-        ThisThread::sleep_for(1s);
     }
 }
