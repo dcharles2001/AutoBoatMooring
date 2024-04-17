@@ -18,11 +18,13 @@ Servo servoY2(D9);
 int IRAddress1 = 0xB0;
 int IRAddress2 = 0xB0;
 
-int tolerance = 5;
+int tolerance = 15;
 int locate1 = 0;
 int locate2 = 0;
 int loc1 = 0;
 int loc2 = 0;
+int locCount1 = 0;
+int locCount2 = 0;
 //Servo servoX1(PA_5);
 //Servo servoY1(PA_6);
 //Servo servoX2(PD_14);
@@ -140,11 +142,12 @@ void Sensors::Track(int X, int Y, int tolerance) {
 }
 
 void Sensors::ToF_Function(int BuoyID){
+    //printf("lastDist1 %dcm\n",lastDist1);
+    //printf("avgDist1 %dcm\n",avgDist1);
     if(turretID == 1){
         //printf("Turret1 locked on to Buoy %d\n", BuoyID);
         loc1 = BuoyID;
         if(avgDist1 !=0 && lockON1 == 1){
-            lastDist1 = avgDist1 - 30; //30cm offset
             printf("Buoy %d is %d cm away from Turret 1\n",BuoyID, lastDist1);
         }else{
             printf("Last Buoy %d Distance was %d cm away from Turret 1\n",BuoyID,lastDist1);
@@ -192,7 +195,6 @@ int Sensors::Distance2(){
 void Sensors::Dist_Avg1() {
     int missed = 0;
     avgDist1 = 0;
-
     for(int i = 0; i<sampleSize; i++){
         dist1 = Distance1();
         if (dist1 != 0){
@@ -201,7 +203,10 @@ void Sensors::Dist_Avg1() {
            missed++;
         }
     }
-    avgDist1 /=(sampleSize - missed);
+    if(avgDist1 != 0){
+        avgDist1 /=(sampleSize - missed);
+        lastDist1 = avgDist1;
+    }
 }
 
 void Sensors::Dist_Avg2() {
@@ -216,7 +221,10 @@ void Sensors::Dist_Avg2() {
            missed++;
         }
     }
-    avgDist2 /=(sampleSize - missed);
+    if(avgDist2 != 0){
+        avgDist2 /=(sampleSize - missed);
+        lastDist2 = avgDist2;
+    }
 }
 
 int* combineNumbers1(int num1, int num2) {
@@ -536,21 +544,25 @@ void Sensors::Turret_Function1() {
     static int fail = 0;
     static int reading = 0;
     if(loc1 == loc2 && loc1 != 0){
-        posX = 0.5;
-        posY = 0.6;
-        STEP = 0.003;
-         while(loc1 == loc2 && loc1 != 0){
-             sweep();
-            if(reading == 200){
-                loc1 = locate1;
-                printf("loc1 %d:   loc2 %d\n",loc1,loc2);
-                reading = 0;
-            }else{
-                reading++;
-            }
-        ThisThread::sleep_for(1ms);
+        locCount1++;
+        if(locCount1 > 2){
+            posX = 0.5;
+            posY = 0.6;
+            STEP = 0.003;
+            while(loc1 == loc2 && loc1 != 0){
+                sweep();
+                if(reading == 200){
+                    loc1 = locate1;
+                    reading = 0;
+                }else{
+                    reading++;
+                }
+            ThisThread::sleep_for(1ms);
+            }  
         }
+
     }else{
+        locCount1 = 0;
         STEP = 0.00075;
         if (locate1 == 0 || lost1>300) {
             if (fail <= 199) {
@@ -579,11 +591,11 @@ void Sensors::Turret_Function1() {
                 if(lost1<300){
                     if(reading == 200){
                         ToF_Function(locate1);
-                        printf("loc1 %d:   loc2 %d\n",loc1,loc2);
                         reading = 0;
                     }else{
                         reading++;
                     }
+
                     ThisThread::sleep_for(1ms);
                 }else{
                     lockON1 = 0;
@@ -598,24 +610,28 @@ void Sensors::Turret_Function1() {
 
 void Sensors::Turret_Function2() {
     //ToF_Function(locate2);
-       static int fail = 0;
+    static int fail = 0;
     static int reading = 0;
     if(loc1 == loc2 && loc2 != 0){
-        posX = 0.5;
-        posY = 0.6;
-        STEP = 0.003;
-         while(loc1 == loc2 && loc2 != 0){
-             sweep();
-            if(reading == 200){
-                loc2 = locate2;
-                printf("loc1 %d:   loc2 %d\n",loc1,loc2);
-                reading = 0;
-            }else{
-                reading++;
-            }
-        ThisThread::sleep_for(1ms);
+        locCount2++;
+        if(locCount2 > 2){
+            posX = 0.5;
+            posY = 0.6;
+            STEP = 0.003;
+            while(loc1 == loc2 && loc2 != 0){
+                sweep();
+                if(reading == 200){
+                    loc2 = locate2;
+                    reading = 0;
+                }else{
+                    reading++;
+                }
+            ThisThread::sleep_for(1ms);
+            }  
         }
+
     }else{
+        locCount1 = 0;
         STEP = 0.00075;
         if (locate2 == 0 || lost2>600) {
             if (fail <= 199) {
@@ -644,7 +660,6 @@ void Sensors::Turret_Function2() {
                 if(lost2<300){
                     if(reading == 200){
                         ToF_Function(locate2);
-                        printf("loc1 %d:   loc2 %d\n",loc1,loc2);
                         reading = 0;
                     }else{
                         reading++;
