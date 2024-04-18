@@ -11,6 +11,9 @@ Launcher Launch;
 Sensors Turret1(1);
 Sensors Turret2(2);
 
+DigitalIn LimitRight(PD_1);
+DigitalIn LimitLeft(PG_0);
+
 //Thread Creation and Event queue for Sensor Turrets
 Thread Thread_ToF1;
 EventQueue Queue_ToF1(1 * EVENTS_EVENT_SIZE);
@@ -94,31 +97,35 @@ void LauncherMain(){
         //printf("Swt1 %d     :Swt2 %d    :ES %d  :Stop %d\n",Swt1Count,Swt2Count,ESCount,stopCount);
         if(ESConf == 0){
             if(Swt1Conf == 1){
-               /* SUDO CODE FOR LAUNCHER X-SWEEP
-                if(limitOne = 1){
-                    flip = 1;
-                }else if(limitTwo = 1){
-                    flip = -1;
+        
+                if(LimitLeft == 0){
+                    flip = 2;
+                }else if(LimitRight == 0){
+                    flip = 0;
                 }
-                turret1.posX
-            */
                 
-                if(0){
-                    float pi = 3.14159265;
+                if(flip == 1){
+                    xAxisControl = 1;
+                }else if(flip == 2){
+                    xAxisControl = 0;
+                }
+                //if(0){
+                  /*  float pi = 3.14159265;
 
-                    float X1 = Turret1.posX;    //Raw X Data 1 (0-1)
-                    int Y1 = Turret1.posY;      //Raw Y Data 1 (0-1)
+                    int X1 = Turret1.posX * 90 + 45;    //Raw X Data 1 (0-1)
+                    float Y1 = Turret1.posY;      //Raw Y Data 1 (0-1)
 
-                    int X2 = Turret2.posX;  //Raw X Data 2(0-1)
-                    int Y2 = Turret2.posY;  //Raw X Data 2 (0-1)
-
-                    X1 = 90*pi*X1/180; //Converts 0-1 range to 0-pi rads (0-90 deg)
+                    int X2 = Turret2.posX * 90 + 45;  //Raw X Data 2(0-1)
+                    float Y2 = Turret2.posY;  //Raw X Data 2 (0-1)
+                    
+                   // X1 = pi*X1/180; //Converts 0-1 range to 0-pi rads (0-90 deg)
                     Y1 = 90*pi*Y1/180;
-                    X2 = 90*pi*X2/180;
+                   // X2 = 90*pi*X2/180;
                     Y2 = 90*pi*Y2/180;
 
                     int Dist1 = Turret1.lastDist1;  //Total Distance 1
                     int Dist2 = Turret2.lastDist2;  //Total Distance 2
+                    //printf("X1 %d at %dcm  :   X2 %d at %dcm \n",X1,Dist1,X2,Dist2);
 
                     int Horz1 = Dist1*sin(Y1); // Horizontal Disance 1
                     int Horz2 = Dist2*sin(Y2); // Horizontal Disance 2
@@ -129,15 +136,15 @@ void LauncherMain(){
 
                     float avgHeight = ((Horz1*(sin(pi-X1))) + (Horz2*(sin(pi-X2))))/2; //Average height value for trapezium
                     float launchAngle = atan(avgHeight / Z) * (180/pi);        //Angle between two centres, converted to Degrees
-                    printf("Buoys are %d cm apart", Yc*2);
+                    //printf("Buoys are %d cm apart\n", Yc*2);
                     //printf("Launcher %f",launchAngle);
 
-                ThisThread::sleep_for(10ms);
-                //Launch.stepperSControl(xAxisControl);
+                ThisThread::sleep_for(100ms);*/
+                Launch.stepperSControl(xAxisControl);
                 //Launch.servoSControl(yAxisControl);
                 //Launch.triggerSControl(readyToFire);
                 //Launch.safetySControl(safteyControl);
-                }
+                //}
             }else if(Swt2Conf == 1){
                 Launch.stepperRCControl();
                 Launch.servoRCControl();

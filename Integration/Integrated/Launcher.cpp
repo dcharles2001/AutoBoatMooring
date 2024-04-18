@@ -37,10 +37,10 @@ void Launcher::stepperRCControl(){
     Cha1Read = Cha1.pulsewidth();
     //printf("%f\n", Cha1Read);
     if (Cha1Read >1600){
-        stepperx= 1;
+        stepperx= 0;
         delayTime = map(Cha1Read, 1500, 1990, 1000, 2000);
     }else if(Cha1Read<1400){
-        stepperx= 0;
+        stepperx= 1;
         delayTime = map(Cha1Read, 1000, 1500, 1000, 2000);
     }else{
         stepperx= 3;
@@ -76,9 +76,9 @@ void Launcher::servoRCControl(){
 void Launcher::triggerRCControl(){
     Cha8Read = Cha8.pulsewidth();
     if(Cha8Read>1800){
-        Trigger = 1;
-    }else if(Cha8Read<1100){
         Trigger = 0;
+    }else if(Cha8Read<1100){
+        Trigger = 1;
     }
 }
 
