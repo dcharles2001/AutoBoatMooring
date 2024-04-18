@@ -92,12 +92,13 @@ int stopConf = 0;
 int countCounter = 100;
 
 int flip = 1;
+int counting = 0;
 void LauncherMain(){
     //while(true){
         //printf("Swt1 %d     :Swt2 %d    :ES %d  :Stop %d\n",Swt1Count,Swt2Count,ESCount,stopCount);
         if(ESConf == 0){
             if(Swt1Conf == 1){
-        
+
                 if(LimitLeft == 0){
                     flip = 2;
                 }else if(LimitRight == 0){
@@ -108,6 +109,8 @@ void LauncherMain(){
                     xAxisControl = 1;
                 }else if(flip == 2){
                     xAxisControl = 0;
+                    counting++;
+                    printf("count = %d",counting);
                 }
                 //if(0){
                   /*  float pi = 3.14159265;

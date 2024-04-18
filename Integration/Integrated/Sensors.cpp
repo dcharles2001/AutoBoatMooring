@@ -551,6 +551,7 @@ void Sensors::Turret_Function1() {
             posX = 0.5;
             posY = 0.6;
             STEP = 0.003;
+            flip = 1;
             while(loc1 == loc2 && loc1 != 0){
                 sweep();
                 if(reading == 200){
@@ -624,6 +625,7 @@ void Sensors::Turret_Function2() {
             posX = 0.5;
             posY = 0.6;
             STEP = 0.003;
+            flip = 1;
             while(loc1 == loc2 && loc2 != 0){
                 sweep();
                 if(reading == 200){
