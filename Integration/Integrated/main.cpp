@@ -97,8 +97,54 @@ void LauncherMain(){
     //while(true){
         //printf("Swt1 %d     :Swt2 %d    :ES %d  :Stop %d\n",Swt1Count,Swt2Count,ESCount,stopCount);
         if(ESConf == 0){
-            if(Swt1Conf == 1){
+                                //if(0){
+                  /*  float pi = 3.14159265;
 
+                    int X1 = Turret1.posX * 90 + 45;    //Raw X Data 1 (0-1)
+                    float Y1 = Turret1.posY;      //Raw Y Data 1 (0-1)
+
+                    int X2 = Turret2.posX * 90 + 45;  //Raw X Data 2(0-1)
+                    float Y2 = Turret2.posY;  //Raw X Data 2 (0-1)
+                    
+                   // X1 = pi*X1/180; //Converts 0-1 range to 0-pi rads (0-90 deg)
+                    Y1 = 90*pi*Y1/180;
+                   // X2 = 90*pi*X2/180;
+                    Y2 = 90*pi*Y2/180;
+
+                    int Dist1 = Turret1.lastDist1;  //Total Distance 1
+                    int Dist2 = Turret2.lastDist2;  //Total Distance 2
+                    //printf("X1 %d at %dcm  :   X2 %d at %dcm \n",X1,Dist1,X2,Dist2);
+
+                    int Horz1 = Dist1*sin(Y1); // Horizontal Disance 1
+                    int Horz2 = Dist2*sin(Y2); // Horizontal Disance 2
+
+                    int Xc = 28;        //Distance between centre and a turret
+                    int Yc = (Xc + (Horz1*(cos((pi-X1)))) + (Horz2*(cos(pi-X2))))/2; //Middle of rope
+                    int Z = Xc - Yc;        //X distance between centre of launcher and centre of rope
+
+                    float avgHeight = ((Horz1*(sin(pi-X1))) + (Horz2*(sin(pi-X2))))/2; //Average height value for trapezium
+                    float launchAngle = atan(avgHeight / Z) * (180/pi);        //Angle between two centres, converted to Degrees
+                    //printf("Buoys are %d cm apart\n", Yc*2);
+                    //printf("Launcher %f",launchAngle);
+            }
+            */
+            if(Swt1Conf == 1){
+                if(Turret1.Target != 0 && Turret2.Target != 0 && Turret1.Target != Turret2.Target){
+                    int X1 = Turret1.posX * 90 + 45;    //Raw X Data 1 (0-1)
+                    int X2 = Turret2.posX * 90 + 45;  //Raw X Data 2(0-1)
+                    int Y1 = Turret1.posX * 90;    //Raw X Data 1 (0-1)
+                    int Y2 = Turret2.posX * 90;  //Raw X Data 2(0-1)
+                    int Dist1 = Turret1.lastDist1;  //Total Distance 1
+                    int Dist2 = Turret2.lastDist2;  //Total Distance 2
+                        //printf("X1 %d at %dcm  :   X2 %d at %dcm \n",X1,Dist1,X2,Dist2);
+                    int Horz1 = Dist1*sin(Y1); // Horizontal Disance 1
+                    int Horz2 = Dist2*sin(Y2); // Horizontal Disance 2
+
+                    int launchAngle = (X1 + X2)/2;
+                    int launchDist = (Horz1 + Horz2)/2;
+                    printf("Angle   :   Dist %d",launchAngle);
+
+              /*  
                 if(LimitLeft == 0){
                     flip = 2;
                 }else if(LimitRight == 0){
@@ -111,6 +157,7 @@ void LauncherMain(){
                     xAxisControl = 0;
                     counting++;
                     printf("count = %d",counting);
+                
                 }
                 //if(0){
                   /*  float pi = 3.14159265;
@@ -143,7 +190,7 @@ void LauncherMain(){
                     //printf("Launcher %f",launchAngle);
 
                 ThisThread::sleep_for(100ms);*/
-                Launch.stepperSControl(xAxisControl);
+                //Launch.stepperSControl(xAxisControl);
                 //Launch.servoSControl(yAxisControl);
                 //Launch.triggerSControl(readyToFire);
                 //Launch.safetySControl(safteyControl);
@@ -180,6 +227,7 @@ void LauncherMain(){
     }*/
         }
     }
+}
 
 
 //MAIN

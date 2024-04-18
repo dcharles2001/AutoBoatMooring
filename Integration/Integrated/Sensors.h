@@ -41,7 +41,7 @@ class Sensors{
         int locatedBuoy = 0;
         float posX = 0.5; 
         float posY = 0.5;
-        int lastDist1 = 0,lastDist2 = 0,lockON1 = 0,lockON2 = 0;
+        int lastDist1 = 0,lastDist2 = 0,lockON1 = 0,lockON2 = 0,Target = 0;
         // The I2C object is automatically deleted when i2c is deleted
         void Setup();
         void sweep(void);

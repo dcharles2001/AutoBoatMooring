@@ -18,7 +18,7 @@ Servo servoY2(D9);
 int IRAddress1 = 0xB0;
 int IRAddress2 = 0xB0;
 
-int tolerance = 15;
+int tolerance = 10;
 int locate1 = 0;
 int locate2 = 0;
 int loc1 = 0;
@@ -73,6 +73,7 @@ void Sensors::sweep(void) {
             flip = 1;
         } else if (posX >= 1) {
             flip = -1;
+            printf("Turret 1 has no Buoy\n");
         }
             servoX1 = posX;
             servoY1 = posY;
@@ -140,6 +141,7 @@ void Sensors::ToF_Function(int BuoyID){
         //printf("Turret1 locked on to Buoy %d\n", BuoyID);
         loc1 = BuoyID;
         if(avgDist1 !=0 && lockON1 == 1){
+            Target = loc1;
             printf("Buoy %d is %d cm away from Turret 1\n",BuoyID, lastDist1);
         }else{
             printf("Last Buoy %d Distance was %d cm away from Turret 1\n",BuoyID,lastDist1);
@@ -150,6 +152,7 @@ void Sensors::ToF_Function(int BuoyID){
         if(avgDist2 !=0 && lockON2 == 1){
 
             lastDist2 = avgDist2;
+            Target = loc2;
             printf("Buoy %d is %d cm away from Turret 2\n",BuoyID, lastDist2);
         }else{
             printf("Last Buoy %d Distance was %d cm away from Turret 2\n",BuoyID,lastDist2);
@@ -377,6 +380,7 @@ void Sensors::IR_Sensor1() {
                 if(lost1>300){
                     locate1 = 0;
                     loc1 = 0;
+                    Target = 0;
                     for(int i = 0; i < 3; i++){
                         flashCount1[i] = 0;
                     }      
@@ -528,6 +532,7 @@ void Sensors::IR_Sensor2() {
             if(lost2>300){
                 locate2 = 0;
                 loc2 = 0;
+                Target = 0;
                 for(int i = 0; i < 3; i++){
                     flashCount2[i] = 0;
                 }      
@@ -577,6 +582,7 @@ void Sensors::Turret_Function1() {
                 lockON1 = 0;
                 locate1 = 0;  
                 loc1 = 0; 
+                Target = 0;
                 sweep();
             }
         }else{
@@ -609,6 +615,7 @@ void Sensors::Turret_Function1() {
                     locate1 = 0;
                     lost1 = 0;
                     loc1 = 0;
+                    Target = 0;
                 }
             }
         }
