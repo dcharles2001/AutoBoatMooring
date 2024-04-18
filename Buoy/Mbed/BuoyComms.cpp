@@ -1,7 +1,7 @@
 #include "BuoyComms.h"
 
 
-BuoyComms::BuoyComms(SPIConfig_t Pins, DigitalOut sdn, DigitalIn gpio2, DigitalIn nirq, int type): zetaspi(Pins, sdn, gpio2, nirq), DeviceType(type) 
+BuoyComms::BuoyComms(SPIConfig_t Pins, ZetaConfig_t ZPins, int type): zetaspi(Pins, ZPins), GPIO2(ZPins.GPIO2), Preamble(ZPins.GPIO1), DeviceType(type) 
 {
     
 }
@@ -36,6 +36,29 @@ void BuoyComms::SendMessage(unsigned char* message, unsigned char msgsize)
     
 }
 
+void BuoyComms::SetRx(void)
+{
+    Radio_StartRx();
+}
+
+void BuoyComms::AttachInterruptRX(void)
+{
+    Radio_StartRx();
+    Preamble.rise(callback(this, &BuoyComms::SetFlag)); //Set interrupt on valid preamble
+    Preamble.enable_irq(); //enable
+}
+
+void BuoyComms::SetFlag(void)
+{
+    preambleflag = true;
+    //Preamble.disable_irq(); //disable
+}
+
+bool BuoyComms::GetFlag(void)
+{
+    return preambleflag;
+}
+
 bool BuoyComms::IdleRXPolling(void)
 {
     Radio_StartRx(); //enter RX mode
@@ -56,9 +79,8 @@ bool BuoyComms::IdleRXPolling(void)
 void BuoyComms::ReceiveAndRead(unsigned char* response, unsigned char respsize)
 {
     //respsize must be set correctly to represent the number of elements in array that response points to
-    //Radio_StartRx(); //enter RX mode 
-    unsigned char cmd = SI4455_CMD_ID_READ_RX_FIFO; //read rx fifo cmd id 0x77
     ReadRX(respsize, response); //read rx fifo
+    preambleflag = false;
 }
 
 Buoycmd_t BuoyComms::Interpret(unsigned char* packet, unsigned char packetsize)

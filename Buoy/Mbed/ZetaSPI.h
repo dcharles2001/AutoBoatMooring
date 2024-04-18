@@ -33,7 +33,7 @@ class zetaspi
 {
     public:
 
-        zetaspi(SPIConfig_t Pins, DigitalOut sdn, DigitalIn gpio1, DigitalIn nirq);
+        zetaspi(SPIConfig_t Pins, ZetaConfig_t ZPins);
        
         void Wait_POR();
         void SpiWriteBytes(unsigned char byteCount, const unsigned char* pData);
@@ -56,19 +56,16 @@ class zetaspi
         void SPI_SI4455_Init();
         void SPI_Init();
 
-
-
     private:
 
         void radioconfig(volatile const unsigned char *cmdPTR);
         void writemultiple(volatile const unsigned char *arrayPTR, unsigned int arraySize);
 
-       
         SPI spidevice;
         DigitalOut CS;
         DigitalOut SDN;
-        DigitalIn GPIO2;
-        DigitalIn nIRQ; 
+        
+       
 
         
 };

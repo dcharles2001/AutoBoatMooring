@@ -53,6 +53,8 @@ bool BuoyComms::IdleRXPolling(void)
       
 }
 
+
+
 void BuoyComms::ReceiveAndRead(unsigned char* response, unsigned char respsize)
 {
     //respsize must be set correctly to represent the number of elements in array that response points to

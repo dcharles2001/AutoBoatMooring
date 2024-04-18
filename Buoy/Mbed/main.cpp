@@ -2,11 +2,14 @@
 #include "BuoyComms.h"
 
 //BoatComms Boat(f429spi1, PC_7, PA_15, PB_15, BOAT);
-BuoyComms Buoy(l432spi1, PB_6, PB_7, PA_2, LBUOY); //Left buoy test obj
+BuoyComms Buoy(l432spi1, L4Zeta, LBUOY); //Left buoy test obj
 DigitalOut GreenLED(PB_0);
 DigitalOut TriggerLine(PB_1);
 
+InterruptIn TestIn(PA_8);
+
 Buoycmd_t ReceiveCMDs(unsigned char* message);
+void TestCallback(void);
 
 int main()
 {
@@ -36,9 +39,12 @@ int main()
     while(1)    
     {
         //receive new cmd
-        if(!Buoy.IdleRXPolling()) //don't bother trying to parse cmds until anything arrives in receive fifo 
+        //Buoy.AttachInterruptRX(); // set interrupt
+        Buoy.SetRx();
+        TestIn.rise(TestCallback);
+        ThisThread::sleep_for(5s); //sleep until interrupt activates
+        if(Buoy.GetFlag()) //preamble deteceted?
         {
-            ThisThread::sleep_for(500ms);
             printf("Receive!\n\r");
             Buoycmd_t newcmd = ReceiveCMDs(response);
             if(newcmd.cmd == ON)
@@ -47,6 +53,7 @@ int main()
                 printf("Duration: %d seconds\n\r", newcmd.param);
                 //send reply
                 //ThisThread::sleep_for(1s);
+                ThisThread::sleep_for(250ms);
                 Buoy.SendMessage(message, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH); //send message
             }
 
@@ -74,3 +81,11 @@ Buoycmd_t ReceiveCMDs(unsigned char* message)
 
    return newcmd;     
 }
+
+
+
+void TestCallback(void)
+{
+    Buoy.SetFlag();
+}
+
