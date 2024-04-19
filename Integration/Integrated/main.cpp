@@ -8,6 +8,7 @@
 #include "Sensors.h"
 using namespace std;
 Launcher Launch;
+
 Sensors Turret1(1);
 Sensors Turret2(2);
 
@@ -15,6 +16,7 @@ DigitalIn LimitRight(PD_1);
 DigitalIn LimitLeft(PG_0);
 
 //Thread Creation and Event queue for Sensor Turrets
+
 Thread Thread_ToF1;
 EventQueue Queue_ToF1(1 * EVENTS_EVENT_SIZE);
 
@@ -59,23 +61,24 @@ float yAxisControl = 0.5;
 /////////////////////////////////////////
 
 //Functions to Start Sensor Turrets
+
 void Turret1Func(){
-    Turret1.Turret_Function1();
+    Turret1.Turret_Function();
 }
 void Turret2Func(){
-    Turret2.Turret_Function2();
+    Turret2.Turret_Function();
 }
 void IRSensor1(){
-    Turret1.IR_Sensor1();
+    Turret1.IR_Sensor();
 }
 void IRSensor2(){
-    Turret2.IR_Sensor2();
+    Turret2.IR_Sensor();
 }
 void DistAvg1(){
-    Turret1.Dist_Avg1();
+    Turret1.Dist_Avg();
 }
 void DistAvg2(){
-    Turret2.Dist_Avg2();
+    Turret2.Dist_Avg();
 }
 
 //Functions for Launcher Turret
@@ -98,8 +101,8 @@ void LauncherMain(){
         //printf("Swt1 %d     :Swt2 %d    :ES %d  :Stop %d\n",Swt1Count,Swt2Count,ESCount,stopCount);
         if(ESConf == 0){
                                 //if(0){
-                  /*  float pi = 3.14159265;
-
+                  float pi = 3.14159265;
+                /*
                     int X1 = Turret1.posX * 90 + 45;    //Raw X Data 1 (0-1)
                     float Y1 = Turret1.posY;      //Raw Y Data 1 (0-1)
 
@@ -130,20 +133,32 @@ void LauncherMain(){
             */
             if(Swt1Conf == 1){
                 if(Turret1.Target != 0 && Turret2.Target != 0 && Turret1.Target != Turret2.Target){
-                    int X1 = Turret1.posX * 90 + 45;    //Raw X Data 1 (0-1)
-                    int X2 = Turret2.posX * 90 + 45;  //Raw X Data 2(0-1)
-                    int Y1 = Turret1.posX * 90;    //Raw X Data 1 (0-1)
-                    int Y2 = Turret2.posX * 90;  //Raw X Data 2(0-1)
-                    int Dist1 = Turret1.lastDist1;  //Total Distance 1
-                    int Dist2 = Turret2.lastDist2;  //Total Distance 2
+                    int X1 = Turret1.Angle * 90 + 45;    //Raw X Data 1 (0-1)
+                    int X2 = Turret2.Angle * 90 + 45;  //Raw X Data 2(0-1)
+                    int Y1 = Turret1.Angle * 90;    //Raw X Data 1 (0-1)
+                    int Y2 = Turret2.Angle * 90;  //Raw X Data 2(0-1)
+                    int Dist1 = Turret1.Dist;  //Total Distance 1
+                    int Dist2 = Turret2.Dist;  //Total Distance 2
                         //printf("X1 %d at %dcm  :   X2 %d at %dcm \n",X1,Dist1,X2,Dist2);
-                    int Horz1 = Dist1*sin(Y1); // Horizontal Disance 1
-                    int Horz2 = Dist2*sin(Y2); // Horizontal Disance 2
+                    int Horz1 = Dist1*sin(X1*pi/180); // Horizontal Disance 1
+                    int Vert1 = Dist1*cos(Y1*pi/180);
 
+                    int Horz2 = Dist2*sin(X2*pi/180); // Horizontal Disance 2
+                    int Vert2 = Dist2*cos(Y2*pi/180);
                     int launchAngle = (X1 + X2)/2;
                     int launchDist = (Horz1 + Horz2)/2;
-                    printf("Angle   :   Dist %d",launchAngle);
+                    
+                    int launchElevation = 0;
 
+                    //if(Vert1 - Vert2<5){
+                    launchElevation = (Vert1 + Vert2)/2;
+                    printf("Angle %d  :   Dist %d     :Elevation %d\n",launchAngle, launchDist, launchElevation);
+                    //}
+                    ThisThread::sleep_for(500ms);
+                    //printf("Angle %d  :   Dist %d     :Elevation %d",launchAngle, launchDist, launchElevation);
+                }
+                        
+                
               /*  
                 if(LimitLeft == 0){
                     flip = 2;
@@ -160,7 +175,7 @@ void LauncherMain(){
                 
                 }
                 //if(0){
-                  /*  float pi = 3.14159265;
+                    float pi = 3.14159265;
 
                     int X1 = Turret1.posX * 90 + 45;    //Raw X Data 1 (0-1)
                     float Y1 = Turret1.posY;      //Raw Y Data 1 (0-1)
@@ -227,33 +242,36 @@ void LauncherMain(){
     }*/
         }
     }
-}
 
 
 //MAIN
 int main(){
     //Sensor Code
+    
     Turret1.Setup();
     Turret2.Setup();
     ThisThread::sleep_for(200ms);
     //Turret 1
-    Queue_Turret1.call_every(2ms, Turret1Func);
+    Queue_Turret1.call_every(10ms, Turret1Func);
     Thread_Turret1.start(callback(&Queue_Turret1, &EventQueue::dispatch_forever));
     //IR 1
-    Queue_Cord1.call_every(15ms, IRSensor1);
+    Queue_Cord1.call_every(50ms, IRSensor1);
     Thread_Cord1.start(callback(&Queue_Cord1, &EventQueue::dispatch_forever));
     //ToF 1
     Queue_Dist1.call_every(5ms, DistAvg1);
     Thread_Dist1.start(callback(&Queue_Dist1, &EventQueue::dispatch_forever));
     //Turret 2
-    Queue_Turret2.call_every(2ms, Turret2Func);
+    //ThisThread::sleep_for(20ms);
+
+    Queue_Turret2.call_every(10ms, Turret2Func);
     Thread_Turret2.start(callback(&Queue_Turret2, &EventQueue::dispatch_forever));
     //IR 2
-    Queue_Cord2.call_every(5ms, IRSensor2);
+    Queue_Cord2.call_every(50ms, IRSensor2);
     Thread_Cord2.start(callback(&Queue_Cord2, &EventQueue::dispatch_forever));
     //ToF 2
     Queue_Dist2.call_every(10ms, DistAvg2);
     Thread_Dist2.start(callback(&Queue_Dist2, &EventQueue::dispatch_forever));
+    
     //Launcher Code
     Queue_Launcher.call_every(10ms, LauncherMain);
     Thread_Launcher.start(callback(&Queue_Launcher, &EventQueue::dispatch_forever));
@@ -271,7 +289,7 @@ int main(){
                 Thread_ToF2.terminate();
                 Thread_Dist2.terminate();
                 Thread_Cord2.terminate();
-
+                
                 ESConf = 1;
 
                 Swt1Conf = 0;
