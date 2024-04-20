@@ -6,14 +6,12 @@ BuoyComms Buoy(l432spi1, L4Zeta, LBUOY); //Left buoy test obj
 DigitalOut GreenLED(PB_0);
 DigitalOut TriggerLine(PB_1);
 
-InterruptIn TestIn(PA_8);
+//InterruptIn TestIn(PA_8);
 
-#define RadioFlag (1UL << 0)
-
-EventFlags RadioEvent;
+//EventFlags RadioEvent;
 //osThreadId_t ThreadID0;
 
-Buoycmd_t ReceiveCMDs(unsigned char* message);
+Buoycmd_t ReceiveCMDs(unsigned char* message, bool interpret);
 void TestCallback(void);
 
 int main()
@@ -28,6 +26,7 @@ int main()
     Buoy.Init();
 
     unsigned char response[RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH];
+  
     Buoy.GetPartInfo(response);
     for(int i=0; i<8; i++)
     {
@@ -43,41 +42,21 @@ int main()
 
     unsigned char message[8] = "CMDGOOD"; //response message
 
-    while(1)    
+    while(1)
     {
-        //receive new cmd
-        //Buoy.AttachInterruptRX(); // set interrupt
-        Buoy.SetRx();
-        TestIn.rise(TestCallback);
-        //ThisThread::sleep_for(5s); //sleep until interrupt activates
-        uint32_t newflag = RadioEvent.wait_all(RadioFlag); //wait indefinitely for RX event
-        if(newflag == RadioFlag) //RX event?
+        Buoy.WaitOnMessage(); //wait on RX event
+        Buoycmd_t newcmd = ReceiveCMDs(response, 1); //get packet from RX buffer and interpret
+        if(newcmd.cmd == ON)
         {
-            printf("Receive!\n\r");
-            Buoycmd_t newcmd = ReceiveCMDs(response);
-            if(newcmd.cmd == ON)
-            {
-                printf("Instruction: ON\n\r");
-                printf("Duration: %d seconds\n\r", newcmd.param);
-                //send reply
-                //ThisThread::sleep_for(1s);
-                ThisThread::sleep_for(250ms);
-                Buoy.SendMessage(message, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH); //send message
-            }
-
-            newflag = 0;
-            ThisThread::sleep_for(2s);
-           
-        }else 
-        {
-            printf("Nothing yet\n\r");
-            ThisThread::sleep_for(250ms);
+            Buoy.SendMessage(message, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH); //send message
+            printf("Instruction: ON\n\r");
+            printf("Duration: %d seconds\n\r", newcmd.param);
         }
     }
 }
 
 
-Buoycmd_t ReceiveCMDs(unsigned char* message)
+Buoycmd_t ReceiveCMDs(unsigned char* message, bool interpret)
 {
     Buoy.ReceiveAndRead(message, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH);
 
@@ -86,16 +65,19 @@ Buoycmd_t ReceiveCMDs(unsigned char* message)
         printf("RX: %x\n\r", message[i]);
     }
 
-    Buoycmd_t newcmd = Buoy.Interpret(message, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH);
+    if(interpret)
+    {
+        Buoycmd_t newcmd = Buoy.Interpret(message, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH);
+        return newcmd;
+    }
 
-   return newcmd;     
+   return {0, 0}; //interpretation not requested, return nothing     
 }
 
-
-
+/*
 void TestCallback(void)
 {
     RadioEvent.set(RadioFlag); //set flag for radio RX event
     //Buoy.SetFlag();
 }
-
+*/

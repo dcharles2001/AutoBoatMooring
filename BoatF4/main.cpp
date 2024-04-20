@@ -1,7 +1,7 @@
 #include "mbed.h"
 #include "BuoyComms.h"
 
-BuoyComms Boat(f429spi1, PC_7, PA_15, PB_15, BOAT);
+BuoyComms Boat(f429spi1, F4Zeta, BOAT);
 //BuoyComms Buoy(l432spi1, PB_6, PB_7, PA_2, LBUOY); //Left buoy test obj
 DigitalOut GreenLED(PB_0);
 DigitalOut TriggerLine(PB_1);
@@ -37,30 +37,10 @@ int main()
     while(1)    
     {
         printf("Sending\n\r");
-        Boat.SendMessage(TestMessage, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH);
-        ThisThread::sleep_for(500ms);
-        /*
-        Boat.GetCurrentState(state);
-        for(int i=0; i<2; i++)
-        {
-            printf("State: %x\n\r", state[i]);
-        }
-        */
         for(int i=0; i<10; i++)
         {
-            if(!Boat.IdleRXPolling())
-            {
-                Boat.ReceiveAndRead(buoyresponse, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH);
-                for(int i=0; i<RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH; i++)
-                {
-                    printf("Resp: %c\n\r", buoyresponse[i]);
-                }   
-                ThisThread::sleep_for(2s);
-                break;
-            }else {
-                printf("No resp\n\r");
-                ThisThread::sleep_for(150ms);
-            }
+            Boat.SendMessage(TestMessage, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH); 
+            ThisThread::sleep_for(160ms); //approximate time to send packet at default data rate
         }
         
 

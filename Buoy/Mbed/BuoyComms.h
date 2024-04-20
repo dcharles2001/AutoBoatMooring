@@ -3,7 +3,7 @@
 
 #include "ZetaSPI.h"
 
-
+//extern EventFlags RadioEvent;
 
 class BuoyComms: protected zetaspi //Buoy inherits public methods of zetaspi
 {
@@ -17,9 +17,11 @@ class BuoyComms: protected zetaspi //Buoy inherits public methods of zetaspi
     void GetCurrentState(unsigned char* response);
     void SendMessage(unsigned char* message, unsigned char msgsize);
     void SetRx(void);
+    void ChangeState(unsigned char newstate);
     void AttachInterruptRX(void);
     void SetFlag(void);
-    bool GetFlag(void);
+    void WaitOnMessage(void);
+    void MessageWaitResponse(unsigned char* message);
     bool IdleRXPolling(void);
     void ReceiveAndRead(unsigned char* response, unsigned char respsize);
     Buoycmd_t Interpret(unsigned char* packet, unsigned char packetsize);
@@ -31,7 +33,7 @@ class BuoyComms: protected zetaspi //Buoy inherits public methods of zetaspi
     int DeviceType; //type variable for distinguishing between boat and buoy hardware
     DigitalIn GPIO2;
     InterruptIn Preamble; //valid preamble interrupt
-    bool preambleflag;
+    EventFlags RadioEvent;
 
 
 };

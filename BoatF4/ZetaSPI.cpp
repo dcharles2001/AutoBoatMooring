@@ -22,7 +22,7 @@ static Si4455_T Ret_state;
 
 extern DigitalOut TriggerLine;
 
-zetaspi::zetaspi(SPIConfig_t Pins, DigitalOut sdn, DigitalIn gpio2, DigitalIn nirq): spidevice(Pins.MOSI, Pins.MISO, Pins.SCLK), CS(Pins.CS), SDN(sdn), GPIO2(gpio2), nIRQ(nirq)
+zetaspi::zetaspi(SPIConfig_t Pins, ZetaConfig_t Zpins): spidevice(Pins.MOSI, Pins.MISO, Pins.SCLK), CS(Pins.CS), SDN(Zpins.SDN)
 {
     
 }

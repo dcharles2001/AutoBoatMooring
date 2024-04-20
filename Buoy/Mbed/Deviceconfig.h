@@ -17,6 +17,10 @@
 #define DUR30 0x20
 #define DUR40 0x30
 
+#define RadioFlag (1UL << 0)
+
+#define WaitCycle 2000
+
 typedef struct  //template struct for SPI devices
 {
     PinName MOSI;
@@ -48,7 +52,7 @@ const ZetaConfig_t L4Zeta
 {
     PB_6,
     PB_7,
-    PB_1,
+    PA_8,
 };
 
 /*
