@@ -8,6 +8,11 @@ DigitalOut TriggerLine(PB_1);
 
 InterruptIn TestIn(PA_8);
 
+#define RadioFlag (1UL << 0)
+
+EventFlags RadioEvent;
+//osThreadId_t ThreadID0;
+
 Buoycmd_t ReceiveCMDs(unsigned char* message);
 void TestCallback(void);
 
@@ -17,6 +22,8 @@ int main()
     //GreenLED = 0;
     printf("Starting\n\r");
     printf("Clock: %d\n\r", SystemCoreClock);
+
+    //ThreadID0 = ThisThread::get_id();
 
     Buoy.Init();
 
@@ -42,8 +49,9 @@ int main()
         //Buoy.AttachInterruptRX(); // set interrupt
         Buoy.SetRx();
         TestIn.rise(TestCallback);
-        ThisThread::sleep_for(5s); //sleep until interrupt activates
-        if(Buoy.GetFlag()) //preamble deteceted?
+        //ThisThread::sleep_for(5s); //sleep until interrupt activates
+        uint32_t newflag = RadioEvent.wait_all(RadioFlag); //wait indefinitely for RX event
+        if(newflag == RadioFlag) //RX event?
         {
             printf("Receive!\n\r");
             Buoycmd_t newcmd = ReceiveCMDs(response);
@@ -57,6 +65,7 @@ int main()
                 Buoy.SendMessage(message, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH); //send message
             }
 
+            newflag = 0;
             ThisThread::sleep_for(2s);
            
         }else 
@@ -86,6 +95,7 @@ Buoycmd_t ReceiveCMDs(unsigned char* message)
 
 void TestCallback(void)
 {
-    Buoy.SetFlag();
+    RadioEvent.set(RadioFlag); //set flag for radio RX event
+    //Buoy.SetFlag();
 }
 
