@@ -101,62 +101,67 @@ void LauncherMain(){
         //printf("Swt1 %d     :Swt2 %d    :ES %d  :Stop %d\n",Swt1Count,Swt2Count,ESCount,stopCount);
         if(ESConf == 0){
                                 //if(0){
-                  float pi = 3.14159265;
-                /*
-                    int X1 = Turret1.posX * 90 + 45;    //Raw X Data 1 (0-1)
-                    float Y1 = Turret1.posY;      //Raw Y Data 1 (0-1)
-
-                    int X2 = Turret2.posX * 90 + 45;  //Raw X Data 2(0-1)
-                    float Y2 = Turret2.posY;  //Raw X Data 2 (0-1)
-                    
-                   // X1 = pi*X1/180; //Converts 0-1 range to 0-pi rads (0-90 deg)
-                    Y1 = 90*pi*Y1/180;
-                   // X2 = 90*pi*X2/180;
-                    Y2 = 90*pi*Y2/180;
-
-                    int Dist1 = Turret1.lastDist1;  //Total Distance 1
-                    int Dist2 = Turret2.lastDist2;  //Total Distance 2
-                    //printf("X1 %d at %dcm  :   X2 %d at %dcm \n",X1,Dist1,X2,Dist2);
-
-                    int Horz1 = Dist1*sin(Y1); // Horizontal Disance 1
-                    int Horz2 = Dist2*sin(Y2); // Horizontal Disance 2
-
-                    int Xc = 28;        //Distance between centre and a turret
-                    int Yc = (Xc + (Horz1*(cos((pi-X1)))) + (Horz2*(cos(pi-X2))))/2; //Middle of rope
-                    int Z = Xc - Yc;        //X distance between centre of launcher and centre of rope
-
-                    float avgHeight = ((Horz1*(sin(pi-X1))) + (Horz2*(sin(pi-X2))))/2; //Average height value for trapezium
-                    float launchAngle = atan(avgHeight / Z) * (180/pi);        //Angle between two centres, converted to Degrees
-                    //printf("Buoys are %d cm apart\n", Yc*2);
-                    //printf("Launcher %f",launchAngle);
-            }
-            */
-            if(Swt1Conf == 1){
-                if(Turret1.Target != 0 && Turret2.Target != 0 && Turret1.Target != Turret2.Target){
-                    int X1 = Turret1.Angle * 90 + 45;    //Raw X Data 1 (0-1)
-                    int X2 = Turret2.Angle * 90 + 45;  //Raw X Data 2(0-1)
-                    int Y1 = Turret1.Angle * 90;    //Raw X Data 1 (0-1)
-                    int Y2 = Turret2.Angle * 90;  //Raw X Data 2(0-1)
-                    int Dist1 = Turret1.Dist;  //Total Distance 1
-                    int Dist2 = Turret2.Dist;  //Total Distance 2
-                        //printf("X1 %d at %dcm  :   X2 %d at %dcm \n",X1,Dist1,X2,Dist2);
-                    int Horz1 = Dist1*sin(X1*pi/180); // Horizontal Disance 1
-                    int Vert1 = Dist1*cos(Y1*pi/180);
-
-                    int Horz2 = Dist2*sin(X2*pi/180); // Horizontal Disance 2
-                    int Vert2 = Dist2*cos(Y2*pi/180);
-                    int launchAngle = (X1 + X2)/2;
-                    int launchDist = (Horz1 + Horz2)/2;
-                    
-                    int launchElevation = 0;
-
+            float pi = 3.14159265;
+                
+                    //printf("LimitRight %d\n",LR);
                     //if(Vert1 - Vert2<5){
-                    launchElevation = (Vert1 + Vert2)/2;
-                    printf("Angle %d  :   Dist %d     :Elevation %d\n",launchAngle, launchDist, launchElevation);
+                    //launchElevation = (Vert1 + Vert2)/2;
+                    //printf("Angle %d  :   Dist %d     :Elevation %d\n",launchAngle, launchDist, launchElevation);
                     //}
-                    ThisThread::sleep_for(500ms);
+                    //ThisThread::sleep_for(500ms);
                     //printf("Angle %d  :   Dist %d     :Elevation %d",launchAngle, launchDist, launchElevation);
+            
+            
+            if(Swt1Conf == 1){
+                while(flip == 1){
+                    xAxisControl = 0;
+                    Launch.stepperSControl(xAxisControl);
+                    if(LimitRight == 0){
+                        flip = 2;
+                        counting = 0;
+                    }
                 }
+                while(counting<10){
+                    xAxisControl = 1;
+                    Launch.stepperSControl(xAxisControl);
+                    counting++;
+                }
+                while(Swt1Conf == 1){
+                    if(Turret1.Target != 0 && Turret2.Target!= 0  && Turret1.Target != Turret2.Target){//(Turret1.Target != 0 && Turret2.Target != 0 && Turret1.Target != Turret2.Target){
+                        int X1 = Turret1.Angle * 90;// + 45;    //Raw X Data 1 (0-1)
+                        int X2 = Turret2.Angle * 90;// + 45;  //Raw X Data 2(0-1)
+                        int Y1 = Turret1.Angle * 90;    //Raw X Data 1 (0-1)
+                        int Y2 = Turret2.Angle * 90;  //Raw X Data 2(0-1)
+                        int Dist1 = Turret1.Dist;  //Total Distance 1
+                        int Dist2 = Turret2.Dist;  //Total Distance 2
+                            //printf("X1 %d at %dcm  :   X2 %d at %dcm \n",X1,Dist1,X2,Dist2);
+                        int Horz1 = Dist1*sin(X1*pi/180); // Horizontal Disance 1
+                        int Vert1 = Dist1*cos(Y1*pi/180);
+
+                        int Horz2 = Dist2*sin(X2*pi/180); // Horizontal Disance 2
+                        int Vert2 = Dist2*cos(Y2*pi/180);
+                        int aimAngle = (X1 + X2)/2;
+                        int launchDist = (Horz1 + Horz2)/2;
+                        int launchElevation = 0;
+                        int LR = LimitRight;
+        
+                        int actualAngle = counting/3;
+
+                        if(actualAngle<aimAngle){
+                            xAxisControl = 1;
+                            Launch.stepperSControl(xAxisControl);
+                            counting++;
+                        }else if(actualAngle>aimAngle){
+                            xAxisControl = 0;
+                            Launch.stepperSControl(xAxisControl);
+                            counting--;
+                        }
+                            //printf("Aim %d :  Actual %d\n", actualAngle,aimAngle);
+                    }
+                }
+                
+            
+                
                         
                 
               /*  
@@ -255,18 +260,17 @@ int main(){
     Queue_Turret1.call_every(10ms, Turret1Func);
     Thread_Turret1.start(callback(&Queue_Turret1, &EventQueue::dispatch_forever));
     //IR 1
-    Queue_Cord1.call_every(50ms, IRSensor1);
+    Queue_Cord1.call_every(80ms, IRSensor1);
     Thread_Cord1.start(callback(&Queue_Cord1, &EventQueue::dispatch_forever));
     //ToF 1
     Queue_Dist1.call_every(5ms, DistAvg1);
     Thread_Dist1.start(callback(&Queue_Dist1, &EventQueue::dispatch_forever));
     //Turret 2
-    //ThisThread::sleep_for(20ms);
 
     Queue_Turret2.call_every(10ms, Turret2Func);
     Thread_Turret2.start(callback(&Queue_Turret2, &EventQueue::dispatch_forever));
     //IR 2
-    Queue_Cord2.call_every(50ms, IRSensor2);
+    Queue_Cord2.call_every(80ms, IRSensor2);
     Thread_Cord2.start(callback(&Queue_Cord2, &EventQueue::dispatch_forever));
     //ToF 2
     Queue_Dist2.call_every(10ms, DistAvg2);
@@ -300,7 +304,7 @@ int main(){
 
                 stopConf = 0;
                 stopCount = 0;
-                printf("EMERGENCY STOP\n");
+                //printf("EMERGENCY STOP\n");
             }
         } else if(Swt1 == 0){
             Swt1Count++;

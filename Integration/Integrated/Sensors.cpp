@@ -43,9 +43,11 @@ void Sensors::Setup(){
 
 void Sensors::Write_2bytes(char d1, char d2, int IRAddress) {
     char data[2] = {d1, d2};
+    if(turretID == 1){
         i2c1.write(0xB0, data, 2);
+    }else{
         i2c2.write(0xB0, data, 2);
-
+    }
 }
 
 void Sensors::sweep(void) {
@@ -84,6 +86,7 @@ void Sensors::sweep(void) {
             servoX2 = posX;
             servoY2 = posY;
     }
+    Angle = posX;
 }
 
 // Method to move the turret to a specific X-Y position
@@ -95,8 +98,8 @@ void Sensors::Track(int X, int Y) {
         centreX = 407;
         centreY = 452;
     }
-    float trackSpeedX = (((centreX - X)) / 100000);
-    float trackSpeedY = (((centreY - Y)) / 100000);
+    float trackSpeedX = (((centreX - X)) / 80000);
+    float trackSpeedY = (((centreY - Y)) / 80000);
     if (trackSpeedX > 0.004) {
         trackSpeedX = 0.01;
     } else if (trackSpeedX < -0.004) {
@@ -125,10 +128,11 @@ void Sensors::Track(int X, int Y) {
             }     
     }
     
-    if (abs(centreX - X) <= 7*tolerance && abs(centreY- Y) <= 7*tolerance){
+    if (abs(centreX - X) <= 20*tolerance && abs(centreY- Y) <= 20*tolerance){
             lockON = 1;
             lost = 0;
     }
+    Angle = posX;
 }
 
 void Sensors::ToF_Function(int BuoyID){
@@ -140,7 +144,6 @@ void Sensors::ToF_Function(int BuoyID){
         }else{
             loc2 = BuoyID;
         }
-        Angle = posX;
         printf("Buoy %d is %d cm away from Turret %d\n",BuoyID, Dist,turretID);
     }else{
         printf("Last Buoy %d Distance was %d cm away from Turret %d\n",BuoyID,lastDist,turretID);
@@ -190,7 +193,15 @@ void Sensors::Dist_Avg() {
 }
 
 
-int* Sensors::combineNumbers(int num1, int num2){
+int* Sensors::combineNumbers1(int num1, int num2){
+    static int Temp[2];
+    Temp[1] = num1;
+    Temp[0] = num2;
+    //printf("%d: Temp %d         %d\n",turretID,Temp[0],Temp[1]);
+    return Temp;
+}
+
+int* Sensors::combineNumbers2(int num1, int num2){
     static int Temp[2];
     Temp[1] = num1;
     Temp[0] = num2;
@@ -233,7 +244,11 @@ void Sensors::IR_Sensor() {
         s     = data_buf[12];
         Ix[3] += (s & 0x30) << 4;
         Iy[3] += (s & 0xC0) << 2;
-        coordinates = combineNumbers(Ix[0], Iy[0]);
+        if(turretID == 1){
+            coordinates = combineNumbers1(Ix[0], Iy[0]);
+        }else{
+            coordinates = combineNumbers2(Ix[0],Iy[0]);
+        }
         //printf("%d: X %d        Y %d\n",turretID,coordinates[0],coordinates[1]);
         if(Ix[0] == 0 && Iy[0] == 0){
             if(turretID == 1){
@@ -360,7 +375,6 @@ void Sensors::Turret_Function() {
                 flip = 1;
 
                 Target = 0;
-                Angle = 0;
                 Dist = 0;
                 while(loc1 == loc2 && loc1 != 0){
                     sweep();
@@ -398,14 +412,10 @@ void Sensors::Turret_Function() {
                         servoY2 = 0.3;
                     } 
                     Target = 0;
-                    Angle = 0;
                     Dist = 0;
                 }
                 if (X != 1023 && Y != 1023 && X < 1025 && Y < 1025){
                     lost = 0;
-                    if(turretID == 1){
-                        printf("X %d    :   Y %d\n",X,Y);
-                    }
                     Track(X,Y);
                 }else{
                     lost++;
@@ -425,7 +435,6 @@ void Sensors::Turret_Function() {
                         locate = 0;
                         lost = 0;
                         Target = 0;
-                        Angle = 0;
                         Dist = 0;
                         if(turretID == 1){
                             loc1 = 0;

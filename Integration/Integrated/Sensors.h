@@ -36,7 +36,8 @@ class Sensors{
         // Method to move the turret to a specific X-Y position
         void Track(int X, int Y);
         void ToF_Function(int BuoyID);
-        int* combineNumbers(int num1, int num2);
+        int* combineNumbers1(int num1, int num2);
+        int* combineNumbers2(int num1, int num2);
         int Distance();
         /*
         int dist1 = 0,dist2 = 0,avgDist1 = 0,avgDist2 = 0,lastDist1,lastDist2 = 0,lockON1 = 0,lockON2 = 0,sampleSize = 5,IRsensorAddress = 0xB0,tolerance = 5,flashHz = 20,Ix1[4],Iy1[4],Ix_prev1[4],Iy_prev1[4],flashCount1[4] = {0,0,0,0},s1,locate1 = 0,lost1 = 0,Ix2[4],Iy2[4],Ix_prev2[4],Iy_prev2[4],flashCount2[4] = {0,0,0,0},s2,locate2 = 0,lost2 = 0;
@@ -61,7 +62,7 @@ class Sensors{
 
         int Target = 0;
         int Dist = 0;
-        int Angle = 0;
+        float Angle = 0;
         // The I2C object is automatically deleted when i2c is deleted
         void Setup();
         void Dist_Avg();
