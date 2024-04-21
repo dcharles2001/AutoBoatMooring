@@ -51,7 +51,21 @@ int main()
             Buoy.SendMessage(message, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH); //send message
             printf("Instruction: ON\n\r");
             printf("Duration: %d seconds\n\r", newcmd.param);
+        }else{
+            continue; //restart loop
         }
+
+        // now go on to do LED control
+
+        for(int i=0; i<newcmd.param; i++)
+        {
+            //LED stuff
+
+
+        }
+
+        
+
     }
 }
 

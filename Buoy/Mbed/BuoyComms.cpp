@@ -48,12 +48,14 @@ void BuoyComms::ChangeState(unsigned char newstate)
     SendCmdArgs(cmd, 0x01, 1, &newstate); //force state change to desired newstate
 }
 
-void BuoyComms::AttachInterruptRX(void)
+void BuoyComms::ActiveInterruptRX(void)
 {
-    //Radio_StartRx();
+    Radio_StartRx();
+    Preamble.enable_irq();
     Preamble.rise(callback(this, &BuoyComms::SetFlag)); //Set interrupt on valid preamble
     //Preamble.enable_irq(); //enable
 }
+
 
 void BuoyComms::SetFlag(void)
 {

@@ -18,7 +18,7 @@ class BuoyComms: protected zetaspi //Buoy inherits public methods of zetaspi
     void SendMessage(unsigned char* message, unsigned char msgsize);
     void SetRx(void);
     void ChangeState(unsigned char newstate);
-    void AttachInterruptRX(void);
+    void ActiveInterruptRX(void);
     void SetFlag(void);
     void WaitOnMessage(void);
     void MessageWaitResponse(unsigned char* message);
