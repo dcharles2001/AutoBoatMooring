@@ -176,7 +176,7 @@
                             RADIO_CONFIGURATION_DATA_RADIO_DELAY_CNT_AFTER_RESET       \
                             }
 
-#endif
+#endif /* RADIO_CONFIG_H_ */
 
 
 

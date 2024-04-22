@@ -37,12 +37,19 @@ int main()
     while(1)    
     {
         printf("Sending\n\r");
-        for(int i=0; i<10; i++)
+        Boat.MessageWaitResponse(TestMessage);
+        //ThisThread::sleep_for(1000ms);
+        if(Boat.ReceiveAndRead(buoyresponse, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH))
         {
-            Boat.SendMessage(TestMessage, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH); 
-            ThisThread::sleep_for(160ms); //approximate time to send packet at default data rate
+            printf("No response\n\r");
+        }else{
+            for(int i=0; i<RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH; i++)
+            {
+                printf("RX: %c\n\r", buoyresponse[i]);
+            }
         }
-        
-
+        printf("Task complete\n\r");
+        ThisThread::sleep_for(5s);
+    
     }
 }

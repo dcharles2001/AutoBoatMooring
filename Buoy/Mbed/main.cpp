@@ -60,7 +60,7 @@ int main()
         for(int i=0; i<newcmd.param; i++)
         {
             //LED stuff
-
+            ThisThread::sleep_for(2s);
 
         }
 
@@ -72,7 +72,12 @@ int main()
 
 Buoycmd_t ReceiveCMDs(unsigned char* message, bool interpret)
 {
-    Buoy.ReceiveAndRead(message, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH);
+    if(Buoy.ReceiveAndRead(message, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH)) 
+    {
+        //fail, nothing in fifo
+        printf("RX FIFO empty\n\r");
+        return{0, 0};
+    }
 
     for(int i=0; i<RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH; i++)
     {
