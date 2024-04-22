@@ -16,6 +16,7 @@ class Launcher{
         void servoSControl(float YPos);
         void triggerSControl(int fire);
         void safetySControl(int safe);
+        float servoLocation();
 
     protected:
     int stepperx= 1, delayTime;

@@ -68,9 +68,16 @@ void Launcher::stepperRCControl(){
 
 void Launcher::servoRCControl(){
     Cha2Read = Cha2.pulsewidth();
-    servoMove = map(Cha2Read, 1000, 1990, 0.05, 0.5);
-    Yservo = servoMove;
-    wait_us(200);
+    servoMove = map(Cha2Read, 1000, 1990, 0.05, 0.4);
+    float difference = servoMove - Yservo;
+    Yservo = Yservo + (difference/80);
+    servoLocation();
+    ThisThread::sleep_for(2ms);
+}
+
+float Launcher::servoLocation(){
+    float location = servoMove;
+    return location;
 }
 
 void Launcher::triggerRCControl(){
@@ -123,7 +130,7 @@ void Launcher::stepperSControl(int XPos){
 
 void Launcher::servoSControl(float YPos){
     Yservo = YPos;
-    ThisThread::sleep_for(1);
+    //ThisThread::sleep_for(2ms);
 }
 
 void Launcher::triggerSControl(int fire){

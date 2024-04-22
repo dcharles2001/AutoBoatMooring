@@ -92,10 +92,16 @@ int Swt1Conf = 0;
 int Swt2Conf = 0;
 int stopConf = 0;
 
-int countCounter = 100;
+int countCounter = 150;
 
-int flip = 1;
+int callibrate = 0;
 int counting = 0;
+int limit = 0;
+
+float Yangle;
+float desiredYangle;
+
+
 void LauncherMain(){
     //while(true){
         //printf("Swt1 %d     :Swt2 %d    :ES %d  :Stop %d\n",Swt1Count,Swt2Count,ESCount,stopCount);
@@ -110,23 +116,82 @@ void LauncherMain(){
                     //}
                     //ThisThread::sleep_for(500ms);
                     //printf("Angle %d  :   Dist %d     :Elevation %d",launchAngle, launchDist, launchElevation);
-            
-            
+    
             if(Swt1Conf == 1){
-                while(flip == 1){
+                float location = Launch.servoLocation();
+                //printf("IM IN 1\n");
+                //printf("location %d\n",location);
+                if(callibrate == 0){
                     xAxisControl = 0;
                     Launch.stepperSControl(xAxisControl);
                     if(LimitRight == 0){
-                        flip = 2;
-                        counting = 0;
+                        callibrate = 1;
+                        limit = 0;
                     }
                 }
-                while(counting<10){
+
+                if(callibrate == 1){
                     xAxisControl = 1;
+                    limit++;
                     Launch.stepperSControl(xAxisControl);
-                    counting++;
+                    if(LimitLeft == 0){
+                        counting = limit;
+                        callibrate = 2;
+                    }
                 }
-                while(Swt1Conf == 1){
+
+                if(callibrate == 2 ){
+                    xAxisControl = 0;
+                    Launch.stepperSControl(xAxisControl);
+                    counting--;
+                    if(counting == limit/2){
+                        callibrate = 3;
+                    }
+                }   
+
+                if(callibrate == 3){
+                    Yangle = Launch.servoLocation() * 90;
+                    if(Yangle == 0){
+                        Yangle = 44;
+                    }
+                    desiredYangle = 4;
+                    callibrate = 4;
+                }
+                if(callibrate == 4){
+                    float min = 0.1;
+                    printf("%f  :   %f\n",Yangle,desiredYangle);
+                    if(Yangle>desiredYangle + 0.2){
+                        Yangle -= min;
+                        Launch.servoSControl(Yangle/44 * 0.495);
+                        //ThisThread::sleep_for(1ms);
+                    }else if(Yangle<desiredYangle - 0.2){
+                        Yangle += min;
+                        Launch.servoSControl(Yangle);
+                        //ThisThread::sleep_for(1ms);
+                    }else{
+                        callibrate = 5;
+                        printf("DONE CALIBRATING");
+                    }
+                    Launch.servoSControl(Yangle/44*0.495);
+                }
+                /*
+                if(callibrate == 4){
+                    float min = 0.0001;
+                    if(Yangle>desiredYangle){
+                        Yangle -= min;
+                        Launch.servoSControl(Yangle);
+                        ThisThread::sleep_for(100ms);
+                    }else if(Yangle<desiredYangle){
+                        Yangle += min;
+                        Launch.servoSControl(Yangle);
+                        ThisThread::sleep_for(100ms);
+                    }else{
+                        callibrate = 5;
+                    }
+                }
+                */
+                //printf("%d\n",Yangle);
+                if(callibrate == 5){
                     if(Turret1.Target != 0 && Turret2.Target!= 0  && Turret1.Target != Turret2.Target){//(Turret1.Target != 0 && Turret2.Target != 0 && Turret1.Target != Turret2.Target){
                         int X1 = Turret1.Angle * 90;// + 45;    //Raw X Data 1 (0-1)
                         int X2 = Turret2.Angle * 90;// + 45;  //Raw X Data 2(0-1)
@@ -145,20 +210,33 @@ void LauncherMain(){
                         int launchElevation = 0;
                         int LR = LimitRight;
         
-                        int actualAngle = counting/3;
+                        int actualAngle = counting/(limit/88); //step range divided by degree range
 
                         if(actualAngle<aimAngle){
-                            xAxisControl = 1;
+                            xAxisControl = 0;
                             Launch.stepperSControl(xAxisControl);
                             counting++;
                         }else if(actualAngle>aimAngle){
-                            xAxisControl = 0;
+                            xAxisControl = 1;
                             Launch.stepperSControl(xAxisControl);
                             counting--;
+                        }else{
+                            desiredYangle = 30;
+                            float min = 0.1;
+                            if(Yangle>desiredYangle){
+                                Yangle -= min;
+                                Launch.servoSControl(Yangle/44 * 0.495);
+                                //ThisThread::sleep_for(1ms);
+                            }else if(Yangle<desiredYangle){
+                                Yangle += min;
+                                Launch.servoSControl(Yangle/44*0.495);
+                                //ThisThread::sleep_for(1ms);
+                            }
                         }
                             //printf("Aim %d :  Actual %d\n", actualAngle,aimAngle);
                     }
                 }
+                
                 
             
                 
@@ -216,15 +294,17 @@ void LauncherMain(){
                 //Launch.safetySControl(safteyControl);
                 //}
             }else if(Swt2Conf == 1){
+                callibrate = 0;
                 Launch.stepperRCControl();
                 Launch.servoRCControl();
                 Launch.triggerRCControl();
                 Launch.safetyRCControl();
             }else if(stopConf == 1){
-                Launch.servoSControl(yAxisControl);
+                callibrate = 0;
+                //Launch.servoSControl(yAxisControl);
                 Launch.triggerSControl(readyToFire);
                 Launch.safetySControl(safteyControl);
-                
+                Launch.stepperSControl(3);
             }
     /*}
     Cha7Read = Cha7.pulsewidth();
@@ -281,6 +361,11 @@ int main(){
     Thread_Launcher.start(callback(&Queue_Launcher, &EventQueue::dispatch_forever));
 
     while(1){
+
+        int swt1 = Swt1;
+        int swt2 = Swt2;
+        //printf("swt1conf %d : swt2conf %d   :   stop %d\n",Swt1Conf,Swt2Conf,stopConf);
+        //printf("swt1 %d : swt2 %d\n",swt1,swt2);
         if(ES == 1){
             ESCount++;
             if(ESCount >= countCounter/20){
@@ -313,6 +398,7 @@ int main(){
                 ESCount = 0;
 
                 Swt1Conf = 1;
+                Swt1Count = 0;
 
                 Swt2Conf = 0;
                 Swt2Count = 0;
@@ -331,6 +417,7 @@ int main(){
                 Swt1Count = 0;
 
                 Swt2Conf = 1;
+                Swt2Count = 0;
 
                 stopConf = 0;
                 stopCount = 0;
@@ -349,6 +436,7 @@ int main(){
                 Swt2Count = 0;
 
                 stopConf = 1;
+                stopCount = 0;
                 //printf("Stopped\n");
             }
         }
