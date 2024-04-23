@@ -25,8 +25,10 @@ class BuoyComms: protected zetaspi //Buoy inherits public methods of zetaspi
     bool IdleRXPolling(void);
     bool ReceiveAndRead(unsigned char* response, unsigned char respsize);
     Buoycmd_t Interpret(unsigned char* packet, unsigned char packetsize);
+    bool InterpretResponse(unsigned char* packet);
     void ReceiveAndInterpret();
-    void MessageConstructor(Buoycmd_t instructons, unsigned char* packet, unsigned char packetsize);
+    void InstructionConfigurator(Buoycmd_t instructons, unsigned char* packet, unsigned char packetsize);
+    int GetDeviceType(void);
 
     private:
 

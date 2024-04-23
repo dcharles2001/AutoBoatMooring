@@ -30,26 +30,44 @@ int main()
     }
     Buoycmd_t newcmd = {ON, 30}; //turn on for 30 seconds
     unsigned char TestMessage[RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH]; //new message
-    Boat.MessageConstructor(newcmd, TestMessage, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH);
+    Boat.InstructionConfigurator(newcmd, TestMessage, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH);
     
     unsigned char buoyresponse[7];
+    bool packetresp = 0;
 
     while(1)    
     {
         printf("Sending\n\r");
         Boat.MessageWaitResponse(TestMessage);
-        //ThisThread::sleep_for(1000ms);
-        if(Boat.ReceiveAndRead(buoyresponse, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH))
+        //still in receive mode
+        ThisThread::sleep_for(100ms); 
+        for(int i=0; i<2; i++)
         {
-            printf("No response\n\r");
-        }else{
-            for(int i=0; i<RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH; i++)
+            if(Boat.ReceiveAndRead(buoyresponse, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH))
             {
-                printf("RX: %c\n\r", buoyresponse[i]);
+                printf("No response\n\r");
+                packetresp = 1;
+                break;
+                
+            }else
+            {
+                for(int j=0; j<RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH; j++)
+                {
+                    printf("RX: %c\n\r", buoyresponse[j]);
+                }
+                if(!Boat.InterpretResponse(buoyresponse)) //good packet check
+                {
+                    packetresp = 0;
+                }
             }
+            ThisThread::sleep_for(2s); //wait for second buoy delay
+        }
+        if(packetresp)
+        {
+            continue; //try again
         }
         printf("Task complete\n\r");
         ThisThread::sleep_for(5s);
-    
+        
     }
 }

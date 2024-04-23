@@ -112,6 +112,7 @@ void BuoyComms::MessageWaitResponse(unsigned char* message)
         newflag = RadioEvent.wait_all_for(RadioFlag, RXdur); //wait on interrupt event for specified time
         if(newflag == RadioFlag)
         {
+            printf("Flag set!\n\r");
             break;
         }
     }
@@ -186,13 +187,48 @@ Buoycmd_t BuoyComms::Interpret(unsigned char* packet, unsigned char packetsize)
 
 }
 
-void BuoyComms::MessageConstructor(Buoycmd_t instructions, unsigned char* packet, unsigned char packetsize)
+bool BuoyComms::InterpretResponse(unsigned char* packet)
+{
+    Buoycmd_t buoyinstruct;
+    unsigned char onscore = 0;
+    unsigned char offscore = 0;
+
+    //confidence testing 
+    for(int i=0; i<(RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH); i++) 
+    {
+        if(packet[i] == 1)
+        {
+            onscore++;
+        }else if(packet[i] == 0)
+        {
+            offscore++;
+        }else {
+            //content corrupted
+        }
+    }
+
+    if(onscore > offscore) //must be confident to activate, less confidence required for duration
+    {
+        return false; //success, good packet
+    }else {
+        return true; //failure, bad packet
+    }
+
+}
+
+
+void BuoyComms::InstructionConfigurator(Buoycmd_t instructions, unsigned char* packet, unsigned char packetsize)
 {
     for(int i = 0; i<(packetsize-1); i++)
     {
         packet[i] = instructions.cmd;
     }
     packet[packetsize-1] = instructions.param;
+}
+
+int BuoyComms::GetDeviceType(void)
+{
+    return DeviceType;
 }
 
 

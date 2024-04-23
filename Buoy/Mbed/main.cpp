@@ -1,7 +1,7 @@
 #include "mbed.h"
 #include "BuoyComms.h"
 
-//BoatComms Boat(f429spi1, PC_7, PA_15, PB_15, BOAT);
+//BuoyComms Buoy(f429spi1, F4Zeta, RBUOY);
 BuoyComms Buoy(l432spi1, L4Zeta, LBUOY); //Left buoy test obj
 DigitalOut GreenLED(PB_0);
 DigitalOut TriggerLine(PB_1);
@@ -40,19 +40,35 @@ int main()
         printf("State: %x\n\r", state[i]);
     }
 
-    unsigned char message[8] = "CMDGOOD"; //response message
-
+    unsigned char goodpacket[8] = "1111111"; //response message on successful instruction
+    unsigned char badpacket[8] = "0000000"; //bad message response
+    
     while(1)
     {
         Buoy.WaitOnMessage(); //wait on RX event
         Buoycmd_t newcmd = ReceiveCMDs(response, 1); //get packet from RX buffer and interpret
-        if(newcmd.cmd == ON)
+        if(Buoy.GetDeviceType() == RBUOY)
         {
-            Buoy.SendMessage(message, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH); //send message
+            printf("RBUOY\n\r");
+            ThisThread::sleep_for(2s); //delay to stage responses between buoys
+        }
+        if((newcmd.cmd == ON) && (newcmd.param >= MINTIME)) //check if the instruction makes sense
+        {
+            ThisThread::sleep_for(100ms);
+            for(int i=0; i<10; i++) //send response burst
+            {
+                Buoy.SendMessage(goodpacket, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH); //send success response message
+                //ThisThread::sleep_for(150ms);
+            }
             printf("Instruction: ON\n\r");
             printf("Duration: %d seconds\n\r", newcmd.param);
         }else{
-            continue; //restart loop
+
+            for(int i=0; i<5; i++) //send response burst
+            {
+                Buoy.SendMessage(badpacket, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH); //send failure response message message
+            }
+            continue; //restart loop - wait for another instruction
         }
 
         // now go on to do LED control
@@ -67,6 +83,7 @@ int main()
         
 
     }
+    
 }
 
 

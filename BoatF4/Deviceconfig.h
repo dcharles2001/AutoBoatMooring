@@ -13,9 +13,7 @@
 //cmds and params
 #define OFF 0x00
 #define ON 0x01
-#define DUR20 0x10
-#define DUR30 0x20
-#define DUR40 0x30
+
 
 #define RadioFlag (1UL << 0)
 
