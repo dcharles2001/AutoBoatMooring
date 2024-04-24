@@ -6,7 +6,7 @@
 #include "PwmIn.h"
 #include "Launcher.h"
 #include "Sensors.h"
-#include "../Comms/BuoyComms.h"
+#include "BuoyComms.h"
 using namespace std;
 Launcher Launch;
 BuoyComms Boat(f429spi1, F4Zeta, BOAT); //boat comms object
@@ -334,11 +334,19 @@ void LauncherMain(){
 //MAIN
 int main(){
     //Sensor Code
+    
+    //------COMMENT BELOW OUT FOR MANUAL USE
+    Boat.Init();
     bool packetresp = 1;
+
+    Buoycmd_t newcmd = {ON, 40}; //turn on for 30 seconds
+    unsigned char TestMessage[RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH]; //new message
+    Boat.InstructionConfigurator(newcmd, TestMessage, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH);
+    
     
     while(packetresp)
     {
-        unsigned char TestMessage[RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH];
+        
         unsigned char buoyresponse[RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH];
         
         Boat.MessageWaitResponse(TestMessage);
@@ -366,6 +374,7 @@ int main(){
             ThisThread::sleep_for(2s); //wait for second buoy delay
         }
     }
+    //----- COMMENT ABOVE OUT FOR MANUAL USE
     
     Turret1.Setup();
     Turret2.Setup();
