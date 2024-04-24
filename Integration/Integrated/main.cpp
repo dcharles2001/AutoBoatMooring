@@ -9,6 +9,7 @@
 #include "../Comms/BuoyComms.h"
 using namespace std;
 Launcher Launch;
+BuoyComms Boat(f429spi1, F4Zeta, BOAT); //boat comms object
 
 Sensors Turret1(1);
 Sensors Turret2(2);
@@ -333,6 +334,38 @@ void LauncherMain(){
 //MAIN
 int main(){
     //Sensor Code
+    bool packetresp = 1;
+    
+    while(packetresp)
+    {
+        unsigned char TestMessage[RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH];
+        unsigned char buoyresponse[RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH];
+        
+        Boat.MessageWaitResponse(TestMessage);
+        //still in receive mode
+        ThisThread::sleep_for(100ms); //essential delay
+        for(int i=0; i<2; i++)
+        {
+            if(Boat.ReceiveAndRead(buoyresponse, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH))
+            {
+                printf("No response\n\r");
+                packetresp = 1;
+                break;
+                
+            }else
+            {
+                for(int j=0; j<RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH; j++)
+                {
+                    printf("RX: %c\n\r", buoyresponse[j]);
+                }
+                if(!Boat.InterpretResponse(buoyresponse)) //good packet check
+                {
+                    packetresp = 0;
+                }
+            }
+            ThisThread::sleep_for(2s); //wait for second buoy delay
+        }
+    }
     
     Turret1.Setup();
     Turret2.Setup();
