@@ -233,6 +233,8 @@ void LauncherMain(){
                                 Yangle += min;
                                 Launch.servoSControl(Yangle/44*0.495);
                                 //ThisThread::sleep_for(1ms);
+                            }else{
+                                Launch.triggerRCControl();
                             }
                         }
                             //printf("Aim %d :  Actual %d\n", actualAngle,aimAngle);
@@ -336,6 +338,7 @@ int main(){
     //Sensor Code
     
     //------COMMENT BELOW OUT FOR MANUAL USE
+    /*
     Boat.Init();
     bool packetresp = 1;
 
@@ -374,6 +377,7 @@ int main(){
             ThisThread::sleep_for(2s); //wait for second buoy delay
         }
     }
+    */
     //----- COMMENT ABOVE OUT FOR MANUAL USE
     
     Turret1.Setup();
