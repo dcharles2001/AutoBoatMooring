@@ -40,7 +40,7 @@ int main()
         printf("Sending\n\r");
         Boat.MessageWaitResponse(TestMessage);
         //still in receive mode
-        ThisThread::sleep_for(100ms); 
+        ThisThread::sleep_for(100ms); //essential delay
         for(int i=0; i<2; i++)
         {
             if(Boat.ReceiveAndRead(buoyresponse, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH))
