@@ -65,7 +65,7 @@ int main()
         }
 
         LEDTimer.start();
-        while(LEDTimer.elapsed_time().count() < Ontime)
+        while((std::chrono::seconds)LEDTimer.elapsed_time().count() < 30s)
         {
             led = !led;
             ThisThread::sleep_for(BLINKING_RATE);
