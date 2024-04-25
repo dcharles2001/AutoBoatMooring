@@ -52,6 +52,7 @@ EventQueue Queue_Launcher(1 * EVENTS_EVENT_SIZE);
 DigitalIn ES(PF_15);
 DigitalIn Swt1(PE_12);
 DigitalIn Swt2(PE_10);
+DigitalIn GrnBtn(PE_13);
 //Setup for Sensor Turrets
 Timer tick;
 
@@ -93,13 +94,14 @@ int ESConf = 0;
 int Swt1Conf = 0;
 int Swt2Conf = 0;
 int stopConf = 0;
-
+int GrnBtnTog = 0;
+int GrnBtnCount = 0;
 int countCounter = 150;
-
+int GrnBtn_Prev = 0;
 int callibrate = 0;
 int counting = 0;
 int limit = 0;
-
+bool GrnBtnPress = 0;
 float Yangle;
 float desiredYangle;
 
@@ -118,8 +120,9 @@ void LauncherMain(){
                     //}
                     //ThisThread::sleep_for(500ms);
                     //printf("Angle %d  :   Dist %d     :Elevation %d",launchAngle, launchDist, launchElevation);
-    
+            
             if(Swt1Conf == 1){
+                
                 float location = Launch.servoLocation();
                 //printf("IM IN 1\n");
                 //printf("location %d\n",location);
@@ -176,7 +179,6 @@ void LauncherMain(){
                     }
                     Launch.servoSControl(Yangle/44*0.495);
                 }
-                /*
                 if(callibrate == 4){
                     float min = 0.0001;
                     if(Yangle>desiredYangle){
@@ -191,7 +193,6 @@ void LauncherMain(){
                         callibrate = 5;
                     }
                 }
-                */
                 //printf("%d\n",Yangle);
                 if(callibrate == 5){
                     if(Turret1.Target != 0 && Turret2.Target!= 0  && Turret1.Target != Turret2.Target){//(Turret1.Target != 0 && Turret2.Target != 0 && Turret1.Target != Turret2.Target){
@@ -234,6 +235,7 @@ void LauncherMain(){
                                 Launch.servoSControl(Yangle/44*0.495);
                                 //ThisThread::sleep_for(1ms);
                             }else{
+                                if(Launch.Cha1Read == 1800 && GrnBtnPress == 1)
                                 Launch.triggerRCControl();
                             }
                         }
@@ -246,57 +248,16 @@ void LauncherMain(){
                 
                         
                 
-              /*  
-                if(LimitLeft == 0){
-                    flip = 2;
-                }else if(LimitRight == 0){
-                    flip = 0;
-                }
                 
-                if(flip == 1){
-                    xAxisControl = 1;
-                }else if(flip == 2){
-                    xAxisControl = 0;
-                    counting++;
-                    printf("count = %d",counting);
-                
-                }
-                //if(0){
-                    float pi = 3.14159265;
-
-                    int X1 = Turret1.posX * 90 + 45;    //Raw X Data 1 (0-1)
-                    float Y1 = Turret1.posY;      //Raw Y Data 1 (0-1)
-
-                    int X2 = Turret2.posX * 90 + 45;  //Raw X Data 2(0-1)
-                    float Y2 = Turret2.posY;  //Raw X Data 2 (0-1)
-                    
-                   // X1 = pi*X1/180; //Converts 0-1 range to 0-pi rads (0-90 deg)
-                    Y1 = 90*pi*Y1/180;
-                   // X2 = 90*pi*X2/180;
-                    Y2 = 90*pi*Y2/180;
-
-                    int Dist1 = Turret1.lastDist1;  //Total Distance 1
-                    int Dist2 = Turret2.lastDist2;  //Total Distance 2
-                    //printf("X1 %d at %dcm  :   X2 %d at %dcm \n",X1,Dist1,X2,Dist2);
-
-                    int Horz1 = Dist1*sin(Y1); // Horizontal Disance 1
-                    int Horz2 = Dist2*sin(Y2); // Horizontal Disance 2
-
-                    int Xc = 28;        //Distance between centre and a turret
-                    int Yc = (Xc + (Horz1*(cos((pi-X1)))) + (Horz2*(cos(pi-X2))))/2; //Middle of rope
-                    int Z = Xc - Yc;        //X distance between centre of launcher and centre of rope
-
-                    float avgHeight = ((Horz1*(sin(pi-X1))) + (Horz2*(sin(pi-X2))))/2; //Average height value for trapezium
-                    float launchAngle = atan(avgHeight / Z) * (180/pi);        //Angle between two centres, converted to Degrees
-                    //printf("Buoys are %d cm apart\n", Yc*2);
-                    //printf("Launcher %f",launchAngle);
-
-                ThisThread::sleep_for(100ms);*/
+               
+                ThisThread::sleep_for(100ms);
                 //Launch.stepperSControl(xAxisControl);
                 //Launch.servoSControl(yAxisControl);
                 //Launch.triggerSControl(readyToFire);
                 //Launch.safetySControl(safteyControl);
                 //}
+                
+                
             }else if(Swt2Conf == 1){
                 callibrate = 0;
                 Launch.stepperRCControl();
@@ -411,8 +372,10 @@ int main(){
 
         int swt1 = Swt1;
         int swt2 = Swt2;
+        int grnbtn = GrnBtn;
         //printf("swt1conf %d : swt2conf %d   :   stop %d\n",Swt1Conf,Swt2Conf,stopConf);
         //printf("swt1 %d : swt2 %d\n",swt1,swt2);
+        printf("Green Button %d\n",GrnBtnPress);
         if(ES == 1){
             ESCount++;
             if(ESCount >= countCounter/20){
@@ -487,5 +450,22 @@ int main(){
                 //printf("Stopped\n");
             }
         }
+        
+        if(GrnBtn == 0 && GrnBtnTog == 0){
+            if(GrnBtn_Prev != GrnBtn){
+                GrnBtnCount = 0;
+            }
+            GrnBtn_Prev = GrnBtn;
+            GrnBtnCount ++;
+            if(GrnBtnCount >= countCounter/10){
+                GrnBtnPress = !GrnBtnPress;
+                GrnBtnTog = 1;  
+                GrnBtnCount = 0;
+            }
+        }else if (GrnBtn == 1){
+                GrnBtnTog = 0;
+                GrnBtnCount = 0;
+            }
+        }
+        
     }
-}

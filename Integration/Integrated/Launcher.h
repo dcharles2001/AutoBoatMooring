@@ -6,6 +6,7 @@
 #include "Servo.h"
 
 class Launcher{
+
     public:
         void stepperRCControl();
         void servoRCControl();
@@ -18,10 +19,11 @@ class Launcher{
         void safetySControl(int safe);
         float servoLocation();
 
+        int stepperx= 1, delayTime;
+        float Cha1Read,Cha2Read,Cha5Read,Cha8Read = 1500;
+        float servoMove;
+
     protected:
-    int stepperx= 1, delayTime;
-    float Cha1Read,Cha2Read,Cha5Read,Cha8Read = 1500;
-    float servoMove;
 };
 
 #endif
