@@ -28,7 +28,7 @@ int main()
     unsigned char goodpacket[8] = "1111111"; //response message on successful instruction
     unsigned char badpacket[8] = "0000000"; //bad message response
 
-    unsigned int Ontime = 30; //30s default
+    std::chrono::seconds Ontime = 30s; //30s default
 
     printf("Blinkrate: %llu\n\r", BLINKING_RATE);
     DigitalOut led(D3);
@@ -52,7 +52,7 @@ int main()
                 Buoy.SendMessage(goodpacket, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH); //send success response message
                 //ThisThread::sleep_for(150ms);
             }
-            Ontime = newcmd.param;
+            Ontime = (std::chrono::seconds)newcmd.param;
             printf("Instruction: ON\n\r");
             printf("Duration: %d seconds\n\r", newcmd.param);
         }else{
@@ -65,7 +65,7 @@ int main()
         }
 
         LEDTimer.start();
-        while((std::chrono::seconds)LEDTimer.elapsed_time().count() < 30s)
+        while((std::chrono::seconds)LEDTimer.elapsed_time().count() < Ontime)
         {
             led = !led;
             ThisThread::sleep_for(BLINKING_RATE);
