@@ -235,8 +235,9 @@ void LauncherMain(){
                                 Launch.servoSControl(Yangle/44*0.495);
                                 //ThisThread::sleep_for(1ms);
                             }else{
-                                if(Launch.Cha1Read == 1800 && GrnBtnPress == 1)
-                                Launch.triggerRCControl();
+                                if(Launch.Cha1Read <= 1100 && GrnBtnPress == 1){
+                                    printf("AUTO FIRE PEW PEW\n");
+                                }
                             }
                         }
                             //printf("Aim %d :  Actual %d\n", actualAngle,aimAngle);
@@ -299,7 +300,7 @@ int main(){
     //Sensor Code
     
     //------COMMENT BELOW OUT FOR MANUAL USE
-    /*
+    
     Boat.Init();
     bool packetresp = 1;
 
@@ -338,7 +339,7 @@ int main(){
             ThisThread::sleep_for(2s); //wait for second buoy delay
         }
     }
-    */
+    
     //----- COMMENT ABOVE OUT FOR MANUAL USE
     
     Turret1.Setup();
