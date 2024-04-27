@@ -3,17 +3,17 @@
 #include <chrono>
 
 
-#define buoytype LBUOY
-#define BLINKING_RATE 20ms // Blinking rate in milliseconds
+#define buoytype RBUOY
+#define BLINKING_RATE 20ms // Default Blinking rate in milliseconds
 
-
+/*
 #ifdef buoytype 
 #elif buoytype == LBUOY
     #define BLINKING_RATE 60ms
 #else
     #define buoytype RBUOY
 #endif
-
+*/
 
 BuoyComms Buoy(f429spi1, F4Zeta, buoytype); //boat comms object
 Buoycmd_t ReceiveCMDs(unsigned char* message, bool interpret);
@@ -41,6 +41,7 @@ int main()
         Buoycmd_t newcmd = ReceiveCMDs(response, 1); //get packet from RX buffer and interpret
         if(Buoy.GetDeviceType() == RBUOY)
         {
+            Buoy.ChangeState(1); //sleep while waiting
             printf("RBUOY\n\r");
             ThisThread::sleep_for(2s); //delay to stage responses between buoys
         }
@@ -57,6 +58,7 @@ int main()
             printf("Duration: %d seconds\n\r", newcmd.param);
         }else{
 
+            printf("Failure response\n\r");
             for(int i=0; i<5; i++) //send response burst
             {
                 Buoy.SendMessage(badpacket, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH); //send failure response message message

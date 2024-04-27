@@ -192,6 +192,41 @@ Buoycmd_t BuoyComms::Interpret(unsigned char* packet, unsigned char packetsize)
 
 }
 
+Buoycmd_t BuoyComms:: InterpretBoyerMoore(unsigned char* packet, unsigned char packetsize)
+{
+    Buoycmd_t buoyinstruct;
+    char c = 0; //Boyer-Moore counter, initial value must be 0
+    unsigned char m; //current Boyer-Moore element
+    //Boyer-Moore x will be represented by the current element of packet
+    //Using this algorithm, the majority element can be found
+    //If the majority element is 1, the packet has passed the confidence test 
+
+    for(int i=0; i<(packetsize-1); i++)
+    {
+        if(c == 0)
+        {
+            m = packet[i];
+        }else if(m == packet[i])
+        {
+            c++; //increment counter
+        }else {
+            c--; //decrement counter
+        }
+    }
+
+    if(m == 1)
+    {
+        buoyinstruct.cmd = ON;
+        buoyinstruct.param = packet[packetsize-1]; //on duration
+    }else 
+    {    
+        buoyinstruct.cmd = OFF;
+        buoyinstruct.param = 0; //turning off, on duration irrelevant
+    }
+
+    return buoyinstruct;
+}
+
 bool BuoyComms::InterpretResponse(unsigned char* packet)
 {
     Buoycmd_t buoyinstruct;
