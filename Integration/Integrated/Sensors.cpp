@@ -29,9 +29,9 @@ void Sensors::Setup(){
     servoY1 = 0.5;
     servoX2 = 0.5;
     servoY2 = 0.5;
-    pc.set_baud(115200); // Set baud rate for PC serial communication
-    lidarSerial1.set_baud(115200); // Set baud rate for Lidar serial communication
-    lidarSerial2.set_baud(115200);
+    pc.set_baud(9600); // Set baud rate for PC serial communication
+    lidarSerial1.set_baud(9600); // Set baud rate for Lidar serial communication
+    lidarSerial2.set_baud(9600);
     Write_2bytes(0x30, 0x01,  IRAddress); ThisThread::sleep_for(10ms);
     Write_2bytes(0x30, 0x08,  IRAddress); ThisThread::sleep_for(10ms);
     Write_2bytes(0x06, 0x90,  IRAddress); ThisThread::sleep_for(10ms);
@@ -52,14 +52,14 @@ void Sensors::Write_2bytes(char d1, char d2, int IRAddress) {
 
 void Sensors::sweep(void) {
     if (flip == 1) {
-        posY = 0.55;
+        posY = 0.65;
         if(turretID == 1){
             posX = posX - STEP; 
         }else{
             posX = posX + STEP;
         }
     }else {
-        posY = 0.45;
+        posY = 0.55;
         if(turretID == 1){
             posX = posX + STEP; 
         }else{

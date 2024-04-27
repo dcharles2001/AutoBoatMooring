@@ -196,13 +196,14 @@ bool BuoyComms::InterpretResponse(unsigned char* packet)
     //confidence testing 
     for(int i=0; i<(RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH); i++) 
     {
-        if(packet[i] == 1)
+        if(packet[i] == '1')
         {
             onscore++;
-        }else if(packet[i] == 0)
+        }else if(packet[i] == '0')
         {
             offscore++;
         }else {
+            offscore++;
             //content corrupted
         }
     }

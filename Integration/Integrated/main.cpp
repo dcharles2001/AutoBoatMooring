@@ -297,6 +297,7 @@ void LauncherMain(){
 
 //MAIN
 int main(){
+    
     //Sensor Code
     
     //------COMMENT BELOW OUT FOR MANUAL USE
@@ -304,7 +305,14 @@ int main(){
     Boat.Init();
     bool packetresp = 1;
 
-    Buoycmd_t newcmd = {ON, 40}; //turn on for 30 seconds
+    unsigned char partinfo[8];
+    Boat.GetPartInfo(partinfo);
+    for(int i=0; i<8; i++)
+    {
+        printf("Part: %x\n\r", partinfo[i]);
+    }
+
+    Buoycmd_t newcmd = {ON, 50}; //turn on for 50 seconds
     unsigned char TestMessage[RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH]; //new message
     Boat.InstructionConfigurator(newcmd, TestMessage, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH);
     
@@ -333,6 +341,7 @@ int main(){
                 }
                 if(!Boat.InterpretResponse(buoyresponse)) //good packet check
                 {
+                    printf("Resp success\n\r");
                     packetresp = 0;
                 }
             }
