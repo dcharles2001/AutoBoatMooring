@@ -15,9 +15,9 @@ class Sensors{
         int fail = 0;
         //float posX = 0.5; 
         //float posY = 0.5;
-        int dist = 0;
         int lockBuoy = 0;
         int lost = 0;
+        int lastCount = 0;
         float STEP = 0.003;
         int lockON = 0;
         int locate = 0;
@@ -25,7 +25,6 @@ class Sensors{
         int avgDist = 0,sampleSize = 5,IRAddress = 0xB0,tolerance = 1,flashHz = 20,/*sweep = 0,*/Ix[4],Iy[4],Ix_prev[4],Iy_prev[4],flashCount[4] = {0,0,0,0},s;
         char data_buf[16];
         int* coordinates;
-        int locCount = 0;
       
         float centreX;
         float centreY;

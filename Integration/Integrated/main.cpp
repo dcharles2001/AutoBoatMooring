@@ -251,7 +251,7 @@ void LauncherMain(){
                 
                 
                
-                ThisThread::sleep_for(100ms);
+                //ThisThread::sleep_for(100ms);
                 //Launch.stepperSControl(xAxisControl);
                 //Launch.servoSControl(yAxisControl);
                 //Launch.triggerSControl(readyToFire);
@@ -312,7 +312,7 @@ int main(){
         printf("Part: %x\n\r", partinfo[i]);
     }
 
-    Buoycmd_t newcmd = {ON, 50}; //turn on for 50 seconds
+    Buoycmd_t newcmd = {ON, 99}; //turn on for 50 seconds
     unsigned char TestMessage[RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH]; //new message
     Boat.InstructionConfigurator(newcmd, TestMessage, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH);
     
@@ -385,7 +385,6 @@ int main(){
         int grnbtn = GrnBtn;
         //printf("swt1conf %d : swt2conf %d   :   stop %d\n",Swt1Conf,Swt2Conf,stopConf);
         //printf("swt1 %d : swt2 %d\n",swt1,swt2);
-        printf("Green Button %d\n",GrnBtnPress);
         if(ES == 1){
             ESCount++;
             if(ESCount >= countCounter/20){
@@ -471,6 +470,7 @@ int main(){
                 GrnBtnPress = !GrnBtnPress;
                 GrnBtnTog = 1;  
                 GrnBtnCount = 0;
+                printf("Green Button %d\n",GrnBtnPress);
             }
         }else if (GrnBtn == 1){
                 GrnBtnTog = 0;

@@ -15,14 +15,14 @@ Servo servoY1(D12);
 Servo servoX2(D10);
 Servo servoY2(D9);
 
+int loc1 = 0;
+int loc2 = 0;     
 //Sensors Turret1(1);
 //Sensors Turret2(2);
 //Servo servoX1(PA_5);
 //Servo servoY1(PA_6);
 //Servo servoX2(PD_14);
 //Servo servoY2(PD_15);
-int loc1 = 0;
-int loc2 = 0;
 
 void Sensors::Setup(){
     servoX1 = 0.5;
@@ -30,8 +30,8 @@ void Sensors::Setup(){
     servoX2 = 0.5;
     servoY2 = 0.5;
     pc.set_baud(9600); // Set baud rate for PC serial communication
-    lidarSerial1.set_baud(9600); // Set baud rate for Lidar serial communication
-    lidarSerial2.set_baud(9600);
+    lidarSerial1.set_baud(115200); // Set baud rate for Lidar serial communication
+    lidarSerial2.set_baud(115200);
     Write_2bytes(0x30, 0x01,  IRAddress); ThisThread::sleep_for(10ms);
     Write_2bytes(0x30, 0x08,  IRAddress); ThisThread::sleep_for(10ms);
     Write_2bytes(0x06, 0x90,  IRAddress); ThisThread::sleep_for(10ms);
@@ -136,17 +136,18 @@ void Sensors::Track(int X, int Y) {
 }
 
 void Sensors::ToF_Function(int BuoyID){
-    if(lastDist !=0 && lockON == 1){
-        Target = BuoyID;
-        Dist = lastDist;
-        if(turretID == 1){
+    if(turretID == 1){
             loc1 = BuoyID;
         }else{
             loc2 = BuoyID;
-        }
+    }
+    if(lastDist !=0 && lockON == 1){
+        Target = BuoyID;
+        Dist = lastDist;
         printf("Buoy %d is %d cm away from Turret %d\n",BuoyID, Dist,turretID);
     }else{
         printf("Last Buoy %d Distance was %d cm away from Turret %d\n",BuoyID,lastDist,turretID);
+
     }
 }
 
@@ -175,9 +176,9 @@ int Sensors::Distance(){
 void Sensors::Dist_Avg() {
     int missed = 0;
     for(int i = 0; i<sampleSize; i++){
-        dist = Distance();
-        if (dist != 0){
-            avgDist += dist;
+        Dist = Distance();
+        if (Dist != 0){
+            avgDist += Dist;
         }else{
            missed++;
         }
@@ -367,15 +368,14 @@ void Sensors::IR_Sensor() {
 void Sensors::Turret_Function() {
     static int fail = 0;
     static int reading = 0;
-          if(loc1 == loc2 && loc1 != 0){
-            locCount++;
-            if(locCount > 20){
+        if(loc1 == loc2 && loc1 != 0){
                 posX = 0.5;
                 posY = 0.6;
                 flip = 1;
 
                 Target = 0;
                 Dist = 0;
+                
                 while(loc1 == loc2 && loc1 != 0){
                     sweep();
                     if(reading == 200){
@@ -390,9 +390,8 @@ void Sensors::Turret_Function() {
                     }
                 ThisThread::sleep_for(1ms);
                 }  
-            }
+            
         }else{
-            locCount = 0;
             if (locate == 0 || lost>300) {
                     lockON = 0;
                     locate = 0;  
