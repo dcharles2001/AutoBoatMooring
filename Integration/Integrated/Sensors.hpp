@@ -2,11 +2,14 @@
 #define SENSORS_H
 
 #include "mbed.h"
+#include "platform/mbed_thread.h"
 #include "stdio.h"
 #include <cstdio>
 #include <iostream>
 #include "Servo.h"
 using namespace std;
+
+extern EventQueue PrintQueue;
 
 class Sensors{
    private:

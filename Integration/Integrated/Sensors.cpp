@@ -1,4 +1,4 @@
-#include "Sensors.h"
+#include "Sensors.hpp"
 
 //Pin Setup Sensor Turrets
 I2C i2c1(PB_9, PB_8); //IR1
@@ -72,7 +72,7 @@ void Sensors::sweep(void) {
             flip = -1;
         } else if (posX >= 1) {
             flip = 1;
-            printf("Turret 1 has no Buoy\n");
+            PrintQueue.call(printf,"Turret 1 has no Buoy\n");
         }
             servoX1 = posX;
             servoY1 = posY;
@@ -81,7 +81,7 @@ void Sensors::sweep(void) {
             flip = -1;
         } else if (posX <= 0) {
             flip = 1;
-                printf("Turret 2 has no Buoy\n");
+            PrintQueue.call(printf,"Turret 2 has no Buoy\n");
         }
             servoX2 = posX;
             servoY2 = posY;
@@ -144,9 +144,9 @@ void Sensors::ToF_Function(int BuoyID){
     if(lastDist !=0 && lockON == 1){
         Target = BuoyID;
         Dist = lastDist;
-        printf("Buoy %d is %d cm away from Turret %d\n",BuoyID, Dist,turretID);
+        PrintQueue.call(printf,"Buoy %d is %d cm away from Turret %d\n",BuoyID, Dist,turretID);
     }else{
-        printf("Last Buoy %d Distance was %d cm away from Turret %d\n",BuoyID,lastDist,turretID);
+        PrintQueue.call(printf,"Last Buoy %d Distance was %d cm away from Turret %d\n",BuoyID,lastDist,turretID);
 
     }
 }
@@ -185,9 +185,6 @@ void Sensors::Dist_Avg() {
     }
     if(avgDist != 0 && sampleSize>missed){
         avgDist /=(sampleSize - missed);
-        if(turretID == 1){
-            avgDist -= 50;      //50cm offset
-        }
         lastDist = avgDist;
         avgDist = 0;
     }
@@ -252,10 +249,10 @@ void Sensors::IR_Sensor() {
         }
         //printf("%d: X %d        Y %d\n",turretID,coordinates[0],coordinates[1]);
         if(Ix[0] == 0 && Iy[0] == 0){
-            if(turretID == 1){
-                printf("ERROR: IR 1 not found\n");
+            if(turretID == 1){             
+                PrintQueue.call(printf,"ERROR: IR 1 not found\n");
             }else{
-                printf("ERROR: IR 2 not found\n");
+                PrintQueue.call(printf,"ERROR: IR 2 not found\n");;
             }
         }
         if(Ix[0]<1025 && Iy[0]<1025){

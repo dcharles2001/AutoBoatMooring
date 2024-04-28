@@ -112,7 +112,7 @@ void BuoyComms::MessageWaitResponse(unsigned char* message)
         newflag = RadioEvent.wait_all_for(RadioFlag, RXdur); //wait on interrupt event for specified time
         if(newflag == RadioFlag)
         {
-            printf("Flag set!\n\r");
+            //printf("Flag set!\n\r");
             break;
         }
     }

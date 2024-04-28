@@ -5,7 +5,7 @@
 #include <iostream>
 #include "PwmIn.h"
 #include "Launcher.h"
-#include "Sensors.h"
+#include "Sensors.hpp"
 #include "BuoyComms.h"
 using namespace std;
 Launcher Launch;
@@ -18,6 +18,9 @@ DigitalIn LimitRight(PD_1);
 DigitalIn LimitLeft(PG_0);
 
 //Thread Creation and Event queue for Sensor Turrets
+
+Thread PrintThread;
+EventQueue PrintQueue;
 
 Thread Thread_ToF1;
 EventQueue Queue_ToF1(1 * EVENTS_EVENT_SIZE);
@@ -164,7 +167,7 @@ void LauncherMain(){
                 }
                 if(callibrate == 4){
                     float min = 0.1;
-                    printf("%f  :   %f\n",Yangle,desiredYangle);
+                    //printf("%f  :   %f\n",Yangle,desiredYangle);
                     if(Yangle>desiredYangle + 0.2){
                         Yangle -= min;
                         Launch.servoSControl(Yangle/44 * 0.495);
@@ -175,9 +178,9 @@ void LauncherMain(){
                         //ThisThread::sleep_for(1ms);
                     }else{
                         callibrate = 5;
-                        printf("DONE CALIBRATING");
+                        PrintQueue.call(printf,"DONE CALIBRATING");
                     }
-                    Launch.servoSControl(Yangle/44*0.495);
+                    Launch.servoSControl(Yangle/34*0.495);
                 }
                 if(callibrate == 4){
                     float min = 0.0001;
@@ -236,7 +239,7 @@ void LauncherMain(){
                                 //ThisThread::sleep_for(1ms);
                             }else{
                                 if(Launch.Cha1Read <= 1100 && GrnBtnPress == 1){
-                                    printf("AUTO FIRE PEW PEW\n");
+                                    //printf("AUTO FIRE PEW PEW\n");
                                 }
                             }
                         }
@@ -294,6 +297,7 @@ void LauncherMain(){
         }
     }
 
+void Printer(void);
 
 //MAIN
 int main(){
@@ -301,7 +305,8 @@ int main(){
     //Sensor Code
     
     //------COMMENT BELOW OUT FOR MANUAL USE
-    
+    PrintThread.start(Printer);
+
     Boat.Init();
     bool packetresp = 1;
 
@@ -309,10 +314,10 @@ int main(){
     Boat.GetPartInfo(partinfo);
     for(int i=0; i<8; i++)
     {
-        printf("Part: %x\n\r", partinfo[i]);
+        PrintQueue.call(printf,"Part: %x\n\r", partinfo[i]);
     }
 
-    Buoycmd_t newcmd = {ON, 99}; //turn on for 50 seconds
+    Buoycmd_t newcmd = {ON, 255}; //turn on for 50 seconds
     unsigned char TestMessage[RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH]; //new message
     Boat.InstructionConfigurator(newcmd, TestMessage, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH);
     
@@ -329,7 +334,7 @@ int main(){
         {
             if(Boat.ReceiveAndRead(buoyresponse, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH))
             {
-                printf("No response\n\r");
+                PrintQueue.call(printf,"No response\n\r");
                 packetresp = 1;
                 break;
                 
@@ -337,11 +342,11 @@ int main(){
             {
                 for(int j=0; j<RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH; j++)
                 {
-                    printf("RX: %c\n\r", buoyresponse[j]);
+                    PrintQueue.call(printf,"RX: %c\n\r", buoyresponse[j]);
                 }
                 if(!Boat.InterpretResponse(buoyresponse)) //good packet check
                 {
-                    printf("Resp success\n\r");
+                    PrintQueue.call(printf,"Resp success\n\r");
                     packetresp = 0;
                 }
             }
@@ -470,7 +475,7 @@ int main(){
                 GrnBtnPress = !GrnBtnPress;
                 GrnBtnTog = 1;  
                 GrnBtnCount = 0;
-                printf("Green Button %d\n",GrnBtnPress);
+                //printf("Green Button %d\n",GrnBtnPress);
             }
         }else if (GrnBtn == 1){
                 GrnBtnTog = 0;
@@ -479,3 +484,8 @@ int main(){
         }
         
     }
+
+void Printer(void)
+{
+    PrintQueue.dispatch_forever(); //dispatches print calls
+}
