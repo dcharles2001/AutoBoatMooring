@@ -1,7 +1,7 @@
 #ifndef BUOYCOMMS_H_
 #define BUOYCOMMS_H_
 
-#include "ZetaSPI.h"
+#include "ZetaSPI.hpp"
 
 //extern EventFlags RadioEvent;
 

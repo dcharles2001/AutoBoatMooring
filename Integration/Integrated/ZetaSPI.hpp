@@ -5,6 +5,7 @@
 #include "SPI.h"
 #include "Deviceconfig.h"
 
+extern EventQueue PrintQueue;
 
 /* Structure for accessing parameters from config file */
 typedef struct

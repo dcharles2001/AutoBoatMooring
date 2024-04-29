@@ -192,6 +192,7 @@ void Launcher::commsCheck(Buoycmd_t newcmd)
     }
 
     Boat.ChangeState(SI4455_CMD_CHANGE_STATE_ARG_NEW_STATE_ENUM_SLEEP); //go back to sleep
+    BuoysTimer.reset();
     BuoysTimer.start(); //start tracking buoys on time
 }
 
@@ -205,7 +206,7 @@ bool Launcher::checkbuoysTime(void)
     if(getbuoysTime() >= newtime) //has the established LED on time frame passed?
     {
         BuoysTimer.stop();
-        BuoysTimer.reset();
+        //BuoysTimer.reset();
         return true; //yes, yes it has
     }else {
         return false; //nothing to see here

@@ -4,7 +4,7 @@
     Ported from arduino version: https://github.com/deeplyembeddedWP/EZRadio_SI4455-Library.git
 */
 
-#include "ZetaSPI.h"
+#include "ZetaSPI.hpp"
 #include <cstdio>
 
 #define ENABLE_POR
@@ -169,7 +169,7 @@ unsigned char zetaspi::GetResponse_CTS(unsigned char byteCount, unsigned char* p
 	if (errCnt == 0)
 	{
 		/* ERROR!!!!  CTS should never take this long. */
-		printf("CTS Time Out \r\n");
+		PrintQueue.call(printf,"CTS Time Out \r\n");
 		return 0x01;
 	}
 	if (ctsVal == 0xFF)
@@ -372,7 +372,7 @@ unsigned char zetaspi::Si4455_Configure(const unsigned char *pSetPropCmd)
 		/* Check response byte of EZCONFIG_CHECK command */
 		if (SI4455_CMD_ID_EZCONFIG_CHECK == radioCmd[0])
 		{
-            printf("Stepcount: %d\n\r", stepcount);
+            PrintQueue.call(printf, "Stepcount: %d\n\r", stepcount);
 			if (response)
 			{
 				/* Number of command bytes exceeds maximal allowable length */
@@ -504,11 +504,11 @@ void zetaspi::SPI_SI4455_Init()
 	Ret_state = Si4455_HWInitialize();
 	if(Ret_state == SI4455_SUCCESS)
     {
-		printf("Configuration Successful\n\r");
+		PrintQueue.call(printf,"Configuration Successful\n\r");
     }
 	if(Ret_state == SI4455_FAIL)
     {
-		printf("Configuration Failed\n\r");
+		PrintQueue.call(printf,"Configuration Failed\n\r");
     }
 }
 
