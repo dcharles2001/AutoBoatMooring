@@ -180,23 +180,23 @@ void LauncherMain(){
                         callibrate = 5;
                         PrintQueue.call(printf,"DONE CALIBRATING");
                     }
-                    Launch.servoSControl(Yangle/34*0.495);
+                    Launch.servoSControl(Yangle/44*0.495);
                 }
+                PrintQueue.call(printf,"Servo Angle: %d\n", Yangle);
                 if(callibrate == 4){
                     float min = 0.0001;
                     if(Yangle>desiredYangle){
-                        Yangle -= min;
-                        Launch.servoSControl(Yangle);
-                        ThisThread::sleep_for(100ms);
+                        //Yangle -= min;
+                        //Launch.servoSControl(Yangle);
+                        //ThisThread::sleep_for(100ms);
                     }else if(Yangle<desiredYangle){
-                        Yangle += min;
-                        Launch.servoSControl(Yangle);
-                        ThisThread::sleep_for(100ms);
+                        //Yangle += min;
+                        //Launch.servoSControl(Yangle);
+                        //ThisThread::sleep_for(100ms);
                     }else{
                         callibrate = 5;
                     }
                 }
-                //printf("%d\n",Yangle);
                 if(callibrate == 5){
                     if(Turret1.Target != 0 && Turret2.Target!= 0  && Turret1.Target != Turret2.Target){//(Turret1.Target != 0 && Turret2.Target != 0 && Turret1.Target != Turret2.Target){
                         int X1 = Turret1.Angle * 90;// + 45;    //Raw X Data 1 (0-1)
@@ -307,6 +307,7 @@ int main(){
     //------COMMENT BELOW OUT FOR MANUAL USE
     PrintThread.start(Printer);
 
+/*
     Boat.Init();
     bool packetresp = 1;
 
@@ -353,7 +354,7 @@ int main(){
             ThisThread::sleep_for(2s); //wait for second buoy delay
         }
     }
-    
+    */
     //----- COMMENT ABOVE OUT FOR MANUAL USE
     
     Turret1.Setup();
