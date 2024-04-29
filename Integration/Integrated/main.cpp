@@ -4,7 +4,7 @@
 #include <cstdio>
 #include <iostream>
 #include "PwmIn.h"
-#include "Launcher.h"
+#include "Launcher.hpp"
 #include "Sensors.hpp"
 #include "BuoyComms.h"
 using namespace std;
@@ -108,6 +108,8 @@ bool GrnBtnPress = 0;
 float Yangle;
 float desiredYangle;
 
+Buoycmd_t newcmd = {ON, 255};
+
 
 void LauncherMain(){
     //while(true){
@@ -126,6 +128,12 @@ void LauncherMain(){
             
             if(Swt1Conf == 1){
                 
+                //comms buoys check here
+                //start buoys timer
+                //duration variable = buoys on time
+                //Buoycmd_t newcmd = {ON, 255}; //on, 255 seconds
+                Launch.commsCheck(newcmd); //establish comms with buoys and set new ontime
+
                 float location = Launch.servoLocation();
                 //printf("IM IN 1\n");
                 //printf("location %d\n",location);
@@ -198,6 +206,13 @@ void LauncherMain(){
                     }
                 }
                 if(callibrate == 5){
+
+                    if(Launch.checkbuoysTime()) //do we need to turn buoys back on?
+                    {   
+                        //yes
+                        Launch.commsCheck(newcmd);
+                    } //no? business as usual 
+
                     if(Turret1.Target != 0 && Turret2.Target!= 0  && Turret1.Target != Turret2.Target){//(Turret1.Target != 0 && Turret2.Target != 0 && Turret1.Target != Turret2.Target){
                         int X1 = Turret1.Angle * 90;// + 45;    //Raw X Data 1 (0-1)
                         int X2 = Turret2.Angle * 90;// + 45;  //Raw X Data 2(0-1)
