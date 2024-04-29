@@ -91,6 +91,9 @@ void Sensors::sweep(void) {
 
 // Method to move the turret to a specific X-Y position
 void Sensors::Track(int X, int Y) {
+    centreX = 512;
+    centreY = 512;
+    /*
     if(turretID == 1){
         centreX = 352;
         centreY = 532;
@@ -98,6 +101,7 @@ void Sensors::Track(int X, int Y) {
         centreX = 407;
         centreY = 452;
     }
+    */
     float trackSpeedX = (((centreX - X)) / 80000);
     float trackSpeedY = (((centreY - Y)) / 80000);
     if (trackSpeedX > 0.004) {

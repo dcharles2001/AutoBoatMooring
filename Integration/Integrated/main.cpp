@@ -175,14 +175,15 @@ void LauncherMain(){
                 }
                 if(callibrate == 4){
                     float min = 0.1;
+                    PrintQueue.call(printf,"Yangle %d   :   Desired %d\n");
                     //printf("%f  :   %f\n",Yangle,desiredYangle);
                     if(Yangle>desiredYangle + 0.2){
-                        Yangle -= min;
-                        Launch.servoSControl(Yangle/44 * 0.495);
+                        //Yangle -= min;
+                        //Launch.servoSControl(Yangle/44 * 0.495);
                         //ThisThread::sleep_for(1ms);
                     }else if(Yangle<desiredYangle - 0.2){
-                        Yangle += min;
-                        Launch.servoSControl(Yangle);
+                        //Yangle += min;
+                        //Launch.servoSControl(Yangle);
                         //ThisThread::sleep_for(1ms);
                     }else{
                         callibrate = 5;
