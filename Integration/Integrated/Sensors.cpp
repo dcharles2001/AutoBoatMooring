@@ -256,7 +256,7 @@ void Sensors::IR_Sensor() {
             if(turretID == 1){             
                 PrintQueue.call(printf,"ERROR: IR 1 not found\n");
             }else{
-                PrintQueue.call(printf,"ERROR: IR 2 not found\n");;
+                PrintQueue.call(printf,"ERROR: IR 2 not found\n");
             }
         }
         if(Ix[0]<1025 && Iy[0]<1025){

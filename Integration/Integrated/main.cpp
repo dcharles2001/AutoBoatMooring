@@ -189,7 +189,7 @@ void LauncherMain(){
                         callibrate = 5;
                         PrintQueue.call(printf,"DONE CALIBRATING");
                     }
-                    Launch.servoSControl(Yangle/44*0.495);
+                    //Launch.servoSControl(Yangle/44*0.495);
                 }
                 PrintQueue.call(printf,"Servo Angle: %d\n", Yangle);
                 if(callibrate == 4){
@@ -322,6 +322,7 @@ int main(){
     
     //------COMMENT BELOW OUT FOR MANUAL USE
     PrintThread.start(Printer);
+    Boat.Init();
 
 /*
     Boat.Init();
