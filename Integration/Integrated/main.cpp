@@ -256,6 +256,7 @@ void LauncherMain(){
                             }else{
                                 if(Launch.Cha1Read <= 1100 && GrnBtnPress == 1){
                                     //printf("AUTO FIRE PEW PEW\n");
+                                    Launch.triggerSControl(readyToFire);
                                 }
                             }
                         }
