@@ -14,8 +14,8 @@ BuoyComms Boat(f429spi1, F4Zeta, BOAT); //boat comms object
 Sensors Turret1(1);
 Sensors Turret2(2);
 
-DigitalIn LimitRight(PD_1);
-DigitalIn LimitLeft(PG_0);
+DigitalIn LimitLeft(PD_1);
+DigitalIn LimitRight(PG_0);
 
 //Thread Creation and Event queue for Sensor Turrets
 
