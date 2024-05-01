@@ -4,6 +4,10 @@
 #include "mbed.h"
 #include "PwmIn.h"
 #include "Servo.h"
+#include "BuoyComms.h"
+
+extern BuoyComms Boat;
+extern EventQueue PrintQueue;
 
 class Launcher{
 
@@ -19,11 +23,24 @@ class Launcher{
         void safetySControl(int safe);
         float servoLocation();
 
+        //---comms integration stuff
+        void commsCheck(Buoycmd_t newcmd);
+        bool checkbuoysTime(void);
+        std::chrono::seconds getbuoysTime(void);
+        //---
+
         int stepperx= 1, delayTime;
         float Cha1Read,Cha2Read,Cha5Read,Cha8Read = 1500;
         float servoMove;
 
     protected:
+
+        
+        
+        
+
+        Timer BuoysTimer; //timer for tracking Buoys on time
+        std::chrono::seconds newtime; //time we have told the buoys to turn on for
 };
 
 #endif

@@ -6,14 +6,14 @@
 #define buoytype LBUOY
 #define BLINKING_RATE 20ms // Blinking rate in milliseconds
 
-
+/*
 #ifdef buoytype 
 #elif buoytype == LBUOY
     #define BLINKING_RATE 60ms
 #else
     #define buoytype RBUOY
 #endif
-
+*/
 
 BuoyComms Buoy(f429spi1, F4Zeta, buoytype); //boat comms object
 Buoycmd_t ReceiveCMDs(unsigned char* message, bool interpret);

@@ -4,7 +4,7 @@
 #include <cstdio>
 #include <iostream>
 #include "PwmIn.h"
-#include "Launcher.h"
+#include "Launcher.hpp"
 #include "Sensors.hpp"
 #include "BuoyComms.h"
 using namespace std;
@@ -108,6 +108,8 @@ bool GrnBtnPress = 0;
 float Yangle;
 float desiredYangle;
 
+Buoycmd_t newcmd = {ON, 35};
+
 
 void LauncherMain(){
     //while(true){
@@ -125,6 +127,19 @@ void LauncherMain(){
                     //printf("Angle %d  :   Dist %d     :Elevation %d",launchAngle, launchDist, launchElevation);
             
             if(Swt1Conf == 1){
+
+                PrintQueue.call(printf,"Autonomous mode start\n\r");
+                //comms buoys check here
+                //start buoys timer
+                //duration variable = buoys on time
+                //Buoycmd_t newcmd = {ON, 255}; //on, 255 seconds
+                if(Launch.getbuoysTime() == 0s)
+                {  
+                    PrintQueue.call(printf, "Pinging buoys\n\r");
+                    Launch.commsCheck(newcmd); //establish comms with buoys and set new ontime
+                }else {
+                    PrintQueue.call(printf, "BuoysTimer started\n\r");
+                }
                 
                 float location = Launch.servoLocation();
                 //printf("IM IN 1\n");
@@ -198,6 +213,15 @@ void LauncherMain(){
                 }
                 //printf("%d\n",Yangle);
                 if(callibrate == 5){
+
+                    PrintQueue.call(printf, "Autonomous mode\n\r");
+                    if(Launch.checkbuoysTime()) //do we need to turn buoys back on?
+                    {   
+                        //yes
+                        Launch.commsCheck(newcmd);
+                    } //no? business as usual 
+
+
                     if(Turret1.Target != 0 && Turret2.Target!= 0  && Turret1.Target != Turret2.Target){//(Turret1.Target != 0 && Turret2.Target != 0 && Turret1.Target != Turret2.Target){
                         int X1 = Turret1.Angle * 90;// + 45;    //Raw X Data 1 (0-1)
                         int X2 = Turret2.Angle * 90;// + 45;  //Raw X Data 2(0-1)
@@ -263,6 +287,7 @@ void LauncherMain(){
                 
                 
             }else if(Swt2Conf == 1){
+                PrintQueue.call(printf, "Manual mode\n\r");
                 callibrate = 0;
                 Launch.stepperRCControl();
                 Launch.servoRCControl();
@@ -308,6 +333,8 @@ int main(){
     PrintThread.start(Printer);
 
     Boat.Init();
+
+    /*
     bool packetresp = 1;
 
     unsigned char partinfo[8];
@@ -353,6 +380,7 @@ int main(){
             ThisThread::sleep_for(2s); //wait for second buoy delay
         }
     }
+    */
     
     //----- COMMENT ABOVE OUT FOR MANUAL USE
     
