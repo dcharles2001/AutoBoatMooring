@@ -105,8 +105,8 @@ int callibrate = 0;
 int counting = 0;
 int limit = 0;
 bool GrnBtnPress = 0;
-float Yangle;
-float desiredYangle;
+int Yangle;
+int desiredYangle;
 
 Buoycmd_t newcmd = {ON, 35};
 
@@ -139,8 +139,6 @@ void LauncherMain(){
                     Launch.commsCheck(newcmd); //establish comms with buoys and set new ontime
                 }
 
-                
-                float location = Launch.servoLocation();
                 //printf("IM IN 1\n");
                 //printf("location %d\n",location);
                 if(callibrate == 0){
@@ -171,49 +169,39 @@ void LauncherMain(){
                     }
                 }   
 
+                float location = Launch.servoLocation();
                 if(callibrate == 3){
                     Yangle = Launch.servoLocation() * 90;
+                    //PrintQueue.call(printf,"Yangle %d\n",Yangle);
                     if(Yangle == 0){
-                        Yangle = 44;
+                        Yangle = 36;
                     }
                     desiredYangle = 4;
                     callibrate = 4;
                 }
                 if(callibrate == 4){
-                    float min = 0.1;
+                    float min = 0.0005;
                     //printf("%f  :   %f\n",Yangle,desiredYangle);
                     if(Yangle>desiredYangle + 0.2){
-                        Yangle -= min;
-                        Launch.servoSControl(Yangle/44 * 0.495);
-                        //ThisThread::sleep_for(1ms);
+                        location -= min;
+                        Launch.servoSControl(location/36 * 0.5);
+                        Yangle = Launch.servoLocation() * 90;
+                        ThisThread::sleep_for(1ms);
                     }else if(Yangle<desiredYangle - 0.2){
-                        Yangle += min;
-                        Launch.servoSControl(Yangle);
-                        //ThisThread::sleep_for(1ms);
+                        location += min;
+                        Launch.servoSControl(location/36 * 0.495);
+                        Yangle = Launch.servoLocation() * 90;
+                        ThisThread::sleep_for(1ms);
                     }else{
                         callibrate = 5;
-                        PrintQueue.call(printf,"DONE CALIBRATING");
+                        PrintQueue.call(printf,"DONE CALIBRATING\n");
                     }
-                    Launch.servoSControl(Yangle/34*0.495);
+                    //Launch.servoSControl(Yangle/34*0.495);
                 }
-                if(callibrate == 4){
-                    float min = 0.0001;
-                    if(Yangle>desiredYangle){
-                        Yangle -= min;
-                        Launch.servoSControl(Yangle);
-                        ThisThread::sleep_for(100ms);
-                    }else if(Yangle<desiredYangle){
-                        Yangle += min;
-                        Launch.servoSControl(Yangle);
-                        ThisThread::sleep_for(100ms);
-                    }else{
-                        callibrate = 5;
-                    }
-                }
-                //printf("%d\n",Yangle);
+
                 if(callibrate == 5){
 
-                    PrintQueue.call(printf, "Autonomous mode\n\r");
+                    //PrintQueue.call(printf, "Autonomous mode\n\r");
                     if(Launch.checkbuoysTime()) //do we need to turn buoys back on?
                     {   
                         //yes
@@ -254,11 +242,11 @@ void LauncherMain(){
                             float min = 0.1;
                             if(Yangle>desiredYangle){
                                 Yangle -= min;
-                                Launch.servoSControl(Yangle/44 * 0.495);
+                                //Launch.servoSControl(location/36 * 0.495);
                                 //ThisThread::sleep_for(1ms);
                             }else if(Yangle<desiredYangle){
                                 Yangle += min;
-                                Launch.servoSControl(Yangle/44*0.495);
+                                //Launch.servoSControl(location/36*0.495);
                                 //ThisThread::sleep_for(1ms);
                             }else{
                                 if(Launch.Cha1Read <= 1100 && GrnBtnPress == 1){
@@ -286,7 +274,7 @@ void LauncherMain(){
                 
                 
             }else if(Swt2Conf == 1){
-                PrintQueue.call(printf, "Manual mode\n\r");
+                //PrintQueue.call(printf, "Manual mode\n\r");
                 callibrate = 0;
                 Launch.stepperRCControl();
                 Launch.servoRCControl();
@@ -409,6 +397,8 @@ int main(){
     //Launcher Code
     Queue_Launcher.call_every(10ms, LauncherMain);
     Thread_Launcher.start(callback(&Queue_Launcher, &EventQueue::dispatch_forever));
+
+
 
     while(1){
 
