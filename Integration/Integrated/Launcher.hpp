@@ -27,6 +27,7 @@ class Launcher{
         void commsCheck(Buoycmd_t newcmd);
         bool checkbuoysTime(void);
         std::chrono::seconds getbuoysTime(void);
+        bool getTimerStatus(void);
         //---
 
         int stepperx= 1, delayTime;
@@ -35,7 +36,7 @@ class Launcher{
 
     protected:
 
-        
+        bool TimerActive = 0;
         
         
 

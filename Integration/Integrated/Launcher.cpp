@@ -167,8 +167,7 @@ void Launcher::commsCheck(Buoycmd_t newcmd)
         Boat.MessageWaitResponse(TestMessage);
         //still in receive mode
         ThisThread::sleep_for(100ms); //essential delay
-        for(int i=0; i<2; i++)
-        {
+        
             if(Boat.ReceiveAndRead(buoyresponse, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH))
             {
                 PrintQueue.call(printf,"No response\n\r");
@@ -187,13 +186,15 @@ void Launcher::commsCheck(Buoycmd_t newcmd)
                     packetresp = 0;
                 }
             }
-            ThisThread::sleep_for(2s); //wait for second buoy delay
-        }
+            //ThisThread::sleep_for(2s); //wait for second buoy delay
+        
     }
-
+    PrintQueue.call(printf, "Comms check success\n\r");
     Boat.ChangeState(SI4455_CMD_CHANGE_STATE_ARG_NEW_STATE_ENUM_SLEEP); //go back to sleep
+    newtime = std::chrono::seconds(newcmd.param); //set new time to track
     BuoysTimer.reset();
     BuoysTimer.start(); //start tracking buoys on time
+    TimerActive = true;
 }
 
 std::chrono::seconds Launcher::getbuoysTime(void) //get elapsed time in chrono::seconds
@@ -206,6 +207,7 @@ bool Launcher::checkbuoysTime(void)
     if(getbuoysTime() >= newtime) //has the established LED on time frame passed?
     {
         BuoysTimer.stop();
+        TimerActive = false;
         //BuoysTimer.reset();
         return true; //yes, yes it has
     }else {
@@ -213,4 +215,8 @@ bool Launcher::checkbuoysTime(void)
     }
 }
 
+bool Launcher::getTimerStatus(void)
+{
+    return TimerActive;
+}
 

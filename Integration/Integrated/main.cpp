@@ -128,18 +128,17 @@ void LauncherMain(){
             
             if(Swt1Conf == 1){
 
-                PrintQueue.call(printf,"Autonomous mode start\n\r");
+                //PrintQueue.call(printf,"Autonomous mode start\n\r");
                 //comms buoys check here
                 //start buoys timer
                 //duration variable = buoys on time
                 //Buoycmd_t newcmd = {ON, 255}; //on, 255 seconds
-                if(Launch.getbuoysTime() == 0s)
+                if(!Launch.getTimerStatus())
                 {  
                     PrintQueue.call(printf, "Pinging buoys\n\r");
                     Launch.commsCheck(newcmd); //establish comms with buoys and set new ontime
-                }else {
-                    PrintQueue.call(printf, "BuoysTimer started\n\r");
                 }
+
                 
                 float location = Launch.servoLocation();
                 //printf("IM IN 1\n");
