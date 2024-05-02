@@ -108,7 +108,7 @@ bool GrnBtnPress = 0;
 int Yangle;
 int desiredYangle;
 
-Buoycmd_t newcmd = {ON, 35};
+Buoycmd_t newcmd = {ON, 255};
 
 
 void LauncherMain(){
@@ -127,7 +127,11 @@ void LauncherMain(){
                     //printf("Angle %d  :   Dist %d     :Elevation %d",launchAngle, launchDist, launchElevation);
             
             if(Swt1Conf == 1){
-
+                int Left = LimitLeft;
+                int Right = LimitRight;
+                //PrintQueue.call(printf,"%d  :   %d\n",Left,Right);
+                //printf("%f  :   %f\n",Yangle,desiredYangle);
+                //printf("LimitRight %d\n",LR);
                 //PrintQueue.call(printf,"Autonomous mode start\n\r");
                 //comms buoys check here
                 //start buoys timer
@@ -164,22 +168,25 @@ void LauncherMain(){
                     xAxisControl = 0;
                     Launch.stepperSControl(xAxisControl);
                     counting--;
-                    if(counting == limit/2){
+                    if(counting == limit - 10){
                         callibrate = 3;
                     }
                 }   
 
                 float location = Launch.servoLocation();
                 if(callibrate == 3){
+                    /*
                     Yangle = Launch.servoLocation() * 90;
                     //PrintQueue.call(printf,"Yangle %d\n",Yangle);
                     if(Yangle == 0){
                         Yangle = 36;
                     }
                     desiredYangle = 4;
+                    */
                     callibrate = 4;
                 }
                 if(callibrate == 4){
+                    /*
                     float min = 0.0005;
                     //printf("%f  :   %f\n",Yangle,desiredYangle);
                     if(Yangle>desiredYangle + 0.2){
@@ -193,11 +200,12 @@ void LauncherMain(){
                         Yangle = Launch.servoLocation() * 90;
                         ThisThread::sleep_for(1ms);
                     }else{
+                        */
                         callibrate = 5;
                         PrintQueue.call(printf,"DONE CALIBRATING\n");
                     }
                     //Launch.servoSControl(Yangle/34*0.495);
-                }
+                
 
                 if(callibrate == 5){
 
@@ -230,11 +238,11 @@ void LauncherMain(){
                         int actualAngle = counting/(limit/88); //step range divided by degree range
 
                         if(actualAngle<aimAngle){
-                            xAxisControl = 0;
+                            xAxisControl = 1;
                             Launch.stepperSControl(xAxisControl);
                             counting++;
                         }else if(actualAngle>aimAngle){
-                            xAxisControl = 1;
+                            xAxisControl = 0;
                             Launch.stepperSControl(xAxisControl);
                             counting--;
                         }else{
