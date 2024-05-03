@@ -30,19 +30,19 @@ typedef struct  //template struct for SPI devices
 
 } SPIConfig_t;
 
-
+/*
 const SPIConfig_t f429spi1
 {
     PB_5, PB_4, PB_3, PA_4
 };
+*/
 
 
-/*
 const SPIConfig_t l432spi1
 {
     PA_7, PA_6, PA_5, PA_3
 };
-*/
+
 
 typedef struct
 {
@@ -52,23 +52,23 @@ typedef struct
 
 }ZetaConfig_t;
 
-/*
+
 const ZetaConfig_t L4Zeta
 {
     PB_6,
     PB_7,
     PA_8,
 };
-*/
 
 
+/*
 const ZetaConfig_t F4Zeta
 {
     PC_7,
     PA_15,
     PB_15
 };
-
+*/
 
 typedef struct
 {

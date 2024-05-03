@@ -44,23 +44,29 @@ zetaspi::zetaspi(SPIConfig_t Pins, ZetaConfig_t Zpins): spidevice(Pins.MOSI, Pin
 void zetaspi::Wait_POR() //PORTED FUNCTION
 {
     spidevice.format(8, 0); //8 bits, cpol, cpha 0, MSB first default
-    spidevice.frequency(5000000); //10 MHz
+    spidevice.frequency(2000000); //10 MHz
 //#ifdef	ENABLE_POR
 	/* Pull the SDN pin high for 10 us */
 	SDN = 1; //SDN HIGH
-	for(int i=0; i<125; i++) //approx 10us delay
+    /*
+	for(int i=0; i<6; i++) //approx 10us delay (mbed methods do not provide us precision)
     {
         __NOP(); //do nothing
     }
+    */
+    wait_us(10);
+    
     
 
 	/* Pull the SDN pin low for 10 ms */
     SDN = 0; //SDN LOW
-    //ThisThread::sleep_for(5ms);
+    ThisThread::sleep_for(5ms);
+    /*
     for(int i=0; i<15000; i++)
     {
         __NOP();
     }
+    */
     //TriggerLine = 1;
 /*
 #endif 

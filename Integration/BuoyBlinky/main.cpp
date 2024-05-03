@@ -15,13 +15,15 @@
 #endif
 */
 
-BuoyComms Buoy(f429spi1, F4Zeta, buoytype); //boat comms object
+BuoyComms Buoy(l432spi1, L4Zeta, buoytype); //boat comms object
 Buoycmd_t ReceiveCMDs(unsigned char* message, bool interpret);
 
 Timer LEDTimer;
 
 int main()
 {
+    SystemCoreClockUpdate();
+    printf("System clock: %d\n\r", SystemCoreClock);
     Buoy.Init();
 
     unsigned char response[RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH];

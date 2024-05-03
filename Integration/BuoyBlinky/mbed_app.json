@@ -1,0 +1,7 @@
+{
+"target_overrides": { 
+        "NUCLEO_L432KC": {
+               "target.clock_source": "USE_PLL_HSI"
+               }
+        }
+}
