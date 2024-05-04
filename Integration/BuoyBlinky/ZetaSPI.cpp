@@ -7,8 +7,6 @@
 #include "ZetaSPI.h"
 #include <cstdio>
 
-#define ENABLE_POR
-
 #define RADIO_CTS_TIMEOUT			10000
 #define RESP_BYTES_SIZE				16
 

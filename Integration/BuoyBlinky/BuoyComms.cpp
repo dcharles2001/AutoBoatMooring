@@ -42,10 +42,15 @@ void BuoyComms::SetRx(void)
     Radio_StartRx();
 }
 
-void BuoyComms::ChangeState(unsigned char newstate)
+int BuoyComms::ChangeState(unsigned char newstate)
 {
+    if(newstate > 8) //check if the requested state change is invalid
+    {
+        return 1;
+    }
     constexpr unsigned char cmd = SI4455_CMD_ID_CHANGE_STATE; //0x34 change state command
     SendCmdArgs(cmd, 0x01, 1, &newstate); //force state change to desired newstate
+    return 0;
 }
 
 void BuoyComms::ActiveInterruptRX(void)
@@ -187,6 +192,41 @@ Buoycmd_t BuoyComms::Interpret(unsigned char* packet, unsigned char packetsize)
 
 }
 
+Buoycmd_t BuoyComms:: InterpretBoyerMoore(unsigned char* packet, unsigned char packetsize)
+{
+    Buoycmd_t buoyinstruct;
+    char c = 0; //Boyer-Moore counter, initial value must be 0
+    unsigned char m; //current Boyer-Moore element
+    //Boyer-Moore x will be represented by the current element of packet
+    //Using this algorithm, the majority element can be found
+    //If the majority element is 1, the packet has passed the confidence test 
+
+    for(int i=0; i<(packetsize-1); i++)
+    {
+        if(c == 0)
+        {
+            m = packet[i];
+        }else if(m == packet[i])
+        {
+            c++; //increment counter
+        }else {
+            c--; //decrement counter
+        }
+    }
+
+    if(m == 1)
+    {
+        buoyinstruct.cmd = ON;
+        buoyinstruct.param = packet[packetsize-1]; //on duration
+    }else 
+    {    
+        buoyinstruct.cmd = OFF;
+        buoyinstruct.param = 0; //turning off, on duration irrelevant
+    }
+
+    return buoyinstruct;
+}
+
 bool BuoyComms::InterpretResponse(unsigned char* packet)
 {
     Buoycmd_t buoyinstruct;
@@ -216,14 +256,20 @@ bool BuoyComms::InterpretResponse(unsigned char* packet)
 
 }
 
-
-void BuoyComms::InstructionConfigurator(Buoycmd_t instructions, unsigned char* packet, unsigned char packetsize)
+int BuoyComms::InstructionConfigurator(Buoycmd_t instructions, unsigned char* packet, unsigned char packetsize)
 {
+    if(sizeof(packet)/(sizeof(packet[0])) != packetsize) //check if packetsize aligns with size of packet array
+    {
+        return 1;
+    }
+
     for(int i = 0; i<(packetsize-1); i++)
     {
         packet[i] = instructions.cmd;
     }
     packet[packetsize-1] = instructions.param;
+
+    return 0;
 }
 
 int BuoyComms::GetDeviceType(void)

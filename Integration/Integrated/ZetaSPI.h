@@ -58,12 +58,9 @@ class zetaspi
 
     private:
 
-        void radioconfig(volatile const unsigned char *cmdPTR);
-        void writemultiple(volatile const unsigned char *arrayPTR, unsigned int arraySize);
-
-        SPI spidevice;
-        DigitalOut CS;
-        DigitalOut SDN;
+        SPI spidevice; //SPI object for Mbed specific methods
+        DigitalOut CS; //software chip select
+        DigitalOut SDN; //SDN line for POR
         
        
 
