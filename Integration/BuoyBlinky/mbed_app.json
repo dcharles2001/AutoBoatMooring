@@ -1,7 +1,8 @@
 {
 "target_overrides": { 
         "NUCLEO_L432KC": {
-               "target.clock_source": "USE_PLL_HSI"
+                "target.macros_add": ["MBED_TICKLESS"],
+                "target.clock_source": "USE_PLL_HSI"
                }
         }
 }

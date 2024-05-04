@@ -1,6 +1,6 @@
 /*
-    Ported by Guy Ringshaw 2024
-    Class for interfacing with a Si4455 (rev B1) RF transceiver chip (Zeta 433) with an STM32 device with Arm Mbed
+    Ported and modified by Guy Ringshaw 2024
+    Class for interfacing with a Si4455 (rev C2) RF transceiver chip (Zeta 433) with an STM32 device with Arm Mbed
     Ported from arduino version: https://github.com/deeplyembeddedWP/EZRadio_SI4455-Library.git
 */
 
@@ -41,40 +41,18 @@ zetaspi::zetaspi(SPIConfig_t Pins, ZetaConfig_t Zpins): spidevice(Pins.MOSI, Pin
                     to wait for 14 ms to account for max POR + SPI timeout but let's
                     see where this goes I guess
  ********************************************************************************************/
-void zetaspi::Wait_POR() //PORTED FUNCTION
+void zetaspi::Wait_POR() 
 {
-    spidevice.format(8, 0); //8 bits, cpol, cpha 0, MSB first default
-    spidevice.frequency(2000000); //10 MHz
-//#ifdef	ENABLE_POR
-	/* Pull the SDN pin high for 10 us */
 	SDN = 1; //SDN HIGH
-    /*
-	for(int i=0; i<6; i++) //approx 10us delay (mbed methods do not provide us precision)
-    {
-        __NOP(); //do nothing
-    }
-    */
+   
     wait_us(10);
     
-    
-
-	/* Pull the SDN pin low for 10 ms */
+	/* Pull the SDN pin low for 5-10 ms */
     SDN = 0; //SDN LOW
     ThisThread::sleep_for(5ms);
-    /*
-    for(int i=0; i<15000; i++)
-    {
-        __NOP();
-    }
-    */
-    //TriggerLine = 1;
-/*
-#endif 
-	ThisThread::sleep_for(10ms); //sleep for 10ms
-    
-	// Initilaize the cts_flag to false 
-	cts_flag = false;       
-    */
+   
+    //TriggerLine = 1; //triggerline for testing
+
 }
 
 /********************************************************************************************
@@ -83,11 +61,6 @@ void zetaspi::Wait_POR() //PORTED FUNCTION
  * Returns		        :	None
  * Params			:	1. byteCount 	- No. of bytes to write
 					2. pData	- Points to the bytes in the array 
-                    ********************************************************
-                    (GUY's NOTE): The for-loop was ported directly over, Mbed
-                    has a function that can handle pointers to arrays for you,
-                    I could clean this up later, but other functions use it 
-                    and it works so meh for now
  * *****************************************************************************************/
 void zetaspi::SpiWriteBytes(unsigned char byteCount, const unsigned char* pData)
 {
@@ -106,9 +79,6 @@ void zetaspi::SpiWriteBytes(unsigned char byteCount, const unsigned char* pData)
  * Params			:	1. byteCount 	- No. of bytes to read
 					2. pData	- Points to the array/var to be 
 							  filled
-                    ********************************************************
-                    (GUY's NOTE): Same comment as the prior function, this 
-                    will work for now I suppose
  * ******************************************************************************************/
 void zetaspi::SpiReadBytes(unsigned char byteCount, unsigned char* pData)
 {
@@ -119,6 +89,17 @@ void zetaspi::SpiReadBytes(unsigned char byteCount, unsigned char* pData)
 		*ptr++ = spidevice.write(0xFF);
 	}
 }
+/*********************************************************************************************
+ * Function Name		:	ReadRX
+ * Description			:	Reads directly from RX buffer
+ * 					Si4455
+ * Returns		        :	Nothing
+ * Params			:	1. byteCount 	- No. of bytes to read and filled
+					2. pData	- Points to the array/var to be 
+							  filled 
+                    ********************************************************
+                    (GUY's NOTE): Read buffer doesn't work with CTS check, this skips that
+ * *******************************************************************************************/
 
 void zetaspi::ReadRX(unsigned char bytecount, unsigned char*pData)
 {
@@ -143,9 +124,6 @@ void zetaspi::ReadRX(unsigned char bytecount, unsigned char*pData)
  * Params			:	1. byteCount 	- No. of bytes to read and filled
 					2. pData	- Points to the array/var to be 
 							  filled 
-                    ********************************************************
-                    (GUY's NOTE): second SPI write has me uneasy, check 
-                    again later if this isn't working 
  * *******************************************************************************************/
 unsigned char zetaspi::GetResponse_CTS(unsigned char byteCount, unsigned char* pData)
 {
@@ -309,10 +287,6 @@ void zetaspi::GetIntStatus(unsigned char PH_CLR_PEND, unsigned char MODEM_CLR_PE
  * Returns		        :	1. SI4455_SUCCESS on success
 					2. SI4455_CTS_TIMEOUT on CTS Timeout
 					3. SI4455_COMMAND_ERROR on error
-                    ********************************************************
-                    (GUY's NOTE): I have a suspicion that some of the functionality
-                    of this accounts for patch files and is therefore redundant for now,
-                    since the si4455 rev B1 does not require a patch  
  * **********************************************************************************************/
 unsigned char zetaspi::Si4455_Configure(const unsigned char *pSetPropCmd)
 {
@@ -522,21 +496,15 @@ void zetaspi::SPI_SI4455_Init()
  * Function Name		:	SPI_Init
  * Description			:	Initialize the SPI module in the MCU
  * Returns		        :	None
- ********************************************************
-    (GUY's NOTE): The 100ms delay is interesting, I do not
-    know what "WDT" is, the programming manual does not seem to make
-    any reference to such a term, we'll roll with it for now
-
  * *****************************************************************************/
 void zetaspi::SPI_Init()
 {
-	
+	//SPI setup
+	spidevice.format(8, 0); //8 bits, cpol, cpha 0, MSB first default
+    spidevice.frequency(1000000); //1 MHz
 	/* POR */
  	Radio_PowerUp();   
 	
-	/* This delay is required to prevent the WDT from triggering */     
-	//ThisThread::sleep_for(100ms); //delays cause timeouts, leave commented for now      
-
 	/*
   	Configure the SPI bus as follows
     	1. SPI bus speed 	= 1 MHz
