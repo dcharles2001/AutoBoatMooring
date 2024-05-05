@@ -17,7 +17,7 @@ class BuoyComms: protected zetaspi //Buoy inherits public methods of zetaspi
     void GetCurrentState(unsigned char* response);
     void SendMessage(unsigned char* message, unsigned char msgsize);
     void SetRx(void);
-    void ChangeState(unsigned char newstate);
+    int ChangeState(unsigned char newstate);
     void ActiveInterruptRX(void);
     void SetFlag(void);
     void WaitOnMessage(void);
@@ -26,8 +26,9 @@ class BuoyComms: protected zetaspi //Buoy inherits public methods of zetaspi
     bool ReceiveAndRead(unsigned char* response, unsigned char respsize);
     Buoycmd_t Interpret(unsigned char* packet, unsigned char packetsize);
     bool InterpretResponse(unsigned char* packet);
+    Buoycmd_t InterpretBoyerMoore(unsigned char* packet, unsigned char packetsize);
     void ReceiveAndInterpret();
-    void InstructionConfigurator(Buoycmd_t instructons, unsigned char* packet, unsigned char packetsize);
+    int InstructionConfigurator(Buoycmd_t instructons, unsigned char* packet, unsigned char packetsize);
     int GetDeviceType(void);
 
     private:
