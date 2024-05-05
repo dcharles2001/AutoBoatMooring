@@ -7,28 +7,28 @@ BuoyComms::BuoyComms(SPIConfig_t Pins, ZetaConfig_t ZPins, int type): zetaspi(Pi
     
 }
 
-void BuoyComms::Init()
+void BuoyComms::Init() //initialise
 {
     SPI_Init(); //init SPI peripheral
     SPI_SI4455_Init(); //init si4455 configuration
 
 }
 
-void BuoyComms::GetPartInfo(unsigned char* response)
+void BuoyComms::GetPartInfo(unsigned char* response) //provides basic Si4455 info
 {
     //response must point to an array of at least 8 bytes to store the full response
     unsigned char cmd = SI4455_CMD_ID_PART_INFO; //part info cmd id 0x01
     SendCmdGetResp(1, &cmd, 8, response);
 }
 
-void BuoyComms::GetCurrentState(unsigned char* response)
+void BuoyComms::GetCurrentState(unsigned char* response) //provides current Si4455 device state 
 {
     //response must point to an array of at least 2 bytes to store the full response
     unsigned char cmd = SI4455_CMD_ID_REQUEST_DEVICE_STATE; //device state cmd id 0x33
     SendCmdGetResp(1, &cmd, 2, response);
 }
 
-void BuoyComms::SendMessage(unsigned char* message, unsigned char msgsize)
+void BuoyComms::SendMessage(unsigned char* message, unsigned char msgsize) //load message into Si4455 TX buffer
 {
     //msgsize must be set correctly to represent the number of elements in array that message points to
     constexpr unsigned char cmd = SI4455_CMD_ID_WRITE_TX_FIFO; //write tx fifo cmd id 0x66
@@ -37,12 +37,12 @@ void BuoyComms::SendMessage(unsigned char* message, unsigned char msgsize)
     
 }
 
-void BuoyComms::SetRx(void)
+void BuoyComms::SetRx(void) //provides access to protected ZETA method
 {
-    Radio_StartRx();
+    Radio_StartRx(); //switch to RX state
 }
 
-int BuoyComms::ChangeState(unsigned char newstate)
+int BuoyComms::ChangeState(unsigned char newstate) //change Si4455 device state
 {
     if(newstate > 8) //check if the requested state change is invalid
     {
@@ -53,14 +53,13 @@ int BuoyComms::ChangeState(unsigned char newstate)
     return 0;
 }
 
-void BuoyComms::ActiveInterruptRX(void)
+void BuoyComms::ActiveInterruptRX(void) //switch to RX state and enable interrupt on valid preamble
 {
     Radio_StartRx();
     Preamble.enable_irq();
     Preamble.rise(callback(this, &BuoyComms::SetFlag)); //Set interrupt on valid preamble
     //Preamble.enable_irq(); //enable
 }
-
 
 void BuoyComms::SetFlag(void)
 {
@@ -126,11 +125,11 @@ void BuoyComms::MessageWaitResponse(unsigned char* message)
     Preamble.disable_irq(); //task done, disable IRQ
 }
 
-bool BuoyComms::IdleRXPolling(void)
+bool BuoyComms::IdleRXPolling(void) //basic polling method for receiving packets
 {
     Radio_StartRx(); //enter RX mode
 
-    //poll fifo 
+    //poll fifo for content
     unsigned char cmd = SI4455_CMD_ID_FIFO_INFO; //read fifo info command 0x15
     unsigned char resp[2];
     SendCmdGetResp(0x01, &cmd, 2, resp); //send command and read response
