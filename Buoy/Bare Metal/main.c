@@ -30,19 +30,19 @@ int main(void)
 	SPI_SI4455_Init();
 	
 	unsigned char parambytescnt = 0x01; //1 param byte
-  unsigned char cmd = 0x01; //part info command
-  unsigned char respByteCount = 0x0C;
-  unsigned char response[16];
+	unsigned char cmd = 0x01; //part info command
+	unsigned char respByteCount = 0x0C;
+	unsigned char response[16];
     
 	char respstring[40];
 	
-  SendCmdGetResp(parambytescnt, &cmd, respByteCount, response);
+	SendCmdGetResp(parambytescnt, &cmd, respByteCount, response);
 	
-  for(int i=0; i<respByteCount; i++)
-  {
+	for(int i=0; i<respByteCount; i++)
+	{
 		sprintf(respstring, "Zeta response: %x\n\r", response[i]);
 		send_array_USART(respstring);
-  }
+	}
 	
 	unsigned char readystate[2] = {0x34, 0x03};
 	//SendCmds(0x02, readystate); //set ready state
@@ -54,9 +54,9 @@ int main(void)
 	
 	
 	unsigned char devstate = 0x33;
-  unsigned char state[6];
+	unsigned char state[6];
 	/*
-  SendCmdGetResp(0x01, &devstate, 0x02, state);
+	SendCmdGetResp(0x01, &devstate, 0x02, state);
 	send_array_USART("State pre RX:\n\r");
 	for(int i=0; i<2; i++)
 	{
@@ -66,7 +66,7 @@ int main(void)
 	*/
 	//Radio_StartRx(); //begin RX mode
 	/*
-  SendCmdGetResp(0x01, &devstate, 0x02, state);
+	SendCmdGetResp(0x01, &devstate, 0x02, state);
 	send_array_USART("State post RX:\n\r");
 	for(int i=0; i<2; i++)
 	{
@@ -145,7 +145,7 @@ void HSIClockConfig()
 	while((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_HSI); //wait until system clock switch statys reads HSI
 }
 
-void PLLHSIConfig()
+void PLLHSIConfig() //function for configuring PLL with HSI clock source
 {
 		RCC->CR |= RCC_CR_HSION; //High speed internal clock (16MHz)
 		while(!(RCC->CR & RCC_CR_HSIRDY)); //wait for HSI clock ready flag
@@ -175,7 +175,7 @@ void PLLHSIConfig()
 										(0u << 25); //PLLR /2 
 										
 																
-	  RCC->CFGR |= (0u << 4)| //AHB div /1
+		RCC->CFGR |= (0u << 4)| //AHB div /1
 								 (5u << 8)| //APB1 div /1
 		             (5u << 11); //APB2 div /1
 		

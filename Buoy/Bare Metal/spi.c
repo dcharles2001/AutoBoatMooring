@@ -8,40 +8,24 @@ void init_SPI(void)
 	
 	//clear and set alternate function mode for GPIO SPI pins
 	
-	SPI_PORT->MODER   &=~( ( 3u << ( SPI_MOSI * 2 ) ) |  //clear pin 7
-                         ( 3u << ( SPI_MISO * 2 ) ) |  //clear pin 6
-											   ( 3u << ( SPI_SCK * 2 ) ) );  //clear pin 5
+	SPI_PORT->MODER   &=~(  ( 3u << ( SPI_MOSI * 2 ) ) |  //clear pin 7
+							( 3u << ( SPI_MISO * 2 ) ) |  //clear pin 6
+							( 3u << ( SPI_SCK * 2 ) ) );  //clear pin 5
 											   
 	
-  SPI_PORT->MODER   |=(  ( 2u << ( SPI_MOSI * 2 ) ) |  //alt func mode pin 7
+	SPI_PORT->MODER   |=(  ( 2u << ( SPI_MOSI * 2 ) ) |  //alt func mode pin 7
                          ( 2u << ( SPI_MISO * 2 ) ) |  //alt func mode pin 6
 											   ( 2u << ( SPI_SCK * 2 ) ) );  //alt func mode pin 5
-											   
+	
+	SPI_PORT->MODER &=~ (  3u << ( SPI_NSS * 2 ) ); //clear pin 4
+	GPIOB->MODER &=~ ( ( 3u << ( SDN * 2 ) ) | //clear SDN
+					   ( 3u << ( TriggerLine * 2 ) ) ); //clear triggerine
+	
+	SPI_PORT->MODER |= ( 1u << ( SPI_NSS * 2 ) );	//output mode pin 4
+	GPIOB->MODER |= ( (1u << (SDN * 2 ) ) | //SDN output
+				      (1u << (TriggerLine * 2 ) ) ); //triggerline output
 								 
-	//SPI_PORT->OTYPER  |=(  ( 1u << ( SPI_MISO ) ) );  //open drain pin 7
-                         
 	
-	//SPI_PORT->PUPDR   &=~ ( 3u << ( SPI_MISO * 2 ) );  //clear pin 6
-	//SPI_PORT->PUPDR   |= ( (3u << ( SPI_MISO * 2 ) ) ); //Pull-down on pin 6
-	
-	/*
-	SPI_PORT->OSPEEDR |=(  ( 2u << ( SPI_MOSI * 2 ) ) | //high speed pin 7
-												 ( 2u << ( SPI_MISO * 2 ) ) | //high speed pin 6
-												 ( 2u << ( SPI_SCK * 2 ) ) | //high speed pin 5
-												 ( 2u << ( SPI_NSS * 2 ) ) ); //high speed pin 4
-	*/
-	//SPI_PORT->ODR |= (1u << SPI_NSS); //CS sits high initially
-	/*
-	GPIOB->MODER &=~ ( ( 3u << ( SDN * 2 ) ) | //clear pin 3
-										 ( 3u << ( ZetaGPIO1 * 2 ) ) ); //clear pin 1
-	*/						 
-	//GPIOA->PUPDR &=~ ( 3u << (ZetaGPIO1 * 2 ) ); //clear pin 1 pupdr
-	//GPIOA->PUPDR |=  ( 2u << (ZetaGPIO1 * 2 ) ); //pull down on pin 1
-	/*									 
-	GPIOB->MODER |= ( ( 1u << ( SDN * 2 ) ) | //output mode pin 3
-										( 0u << ( ZetaGPIO1 * 2 ) ) ); //input mode pin 1
-		*/								 
-	//GPIOB->ODR &=~ (1u << SDN); //default low
 	
 	//configure AFR register for SPI pins
 	

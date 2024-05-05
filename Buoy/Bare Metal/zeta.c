@@ -8,11 +8,6 @@
 
 #include "zeta.h"
 
-/*
-#define false 0
-#define true 1
-*/
-
 #define RADIO_CTS_TIMEOUT			10000
 #define RESP_BYTES_SIZE				16
 
@@ -60,7 +55,7 @@ void Wait_POR(void)
 	
 	for(int i=0; i<15000; i++) //approx ?ms delay
 	{
-				__NOP(); //do nothing
+		__NOP(); //do nothing
 	}
 	
 	
@@ -130,9 +125,9 @@ void SpiReadBytesHack(unsigned char byteCount, unsigned char* pData)
 	unsigned char* ptr = pData;
 	
 	
-	for(int i= 0; i<4; i++) //hackiest fix of my life
+	for(int i= 0; i<4; i++) //hacky fix for bulk reads
 	{
-		read_SPI_noCS();
+		read_SPI_noCS(); //'dummy' reads, SPI RX buffer isn't clearing when it should
 	}
 	
 	for (int i = 0; i <byteCount; i++)
@@ -338,10 +333,6 @@ void GetIntStatus(unsigned char PH_CLR_PEND, unsigned char MODEM_CLR_PEND,
  * Returns		        :	1. SI4455_SUCCESS on success
 					2. SI4455_CTS_TIMEOUT on CTS Timeout
 					3. SI4455_COMMAND_ERROR on error
-                    ********************************************************
-                    (GUY's NOTE): I have a suspicion that some of the functionality
-                    of this accounts for patch files and is therefore redundant for now,
-                    since the si4455 rev B1 does not require a patch  
  * **********************************************************************************************/
 unsigned char Si4455_Configure(const unsigned char *pSetPropCmd)
 {
@@ -562,25 +553,12 @@ void SPI_SI4455_Init()
  * Function Name		:	SPI_Init
  * Description			:	Initialize the SPI module in the MCU
  * Returns		        :	None
- ********************************************************
-    (GUY's NOTE): The 100ms delay is interesting, I do not
-    know what "WDT" is, the programming manual does not seem to make
-    any reference to such a term, we'll roll with it for now
-
  * *****************************************************************************/
 void SPI_Init()
 {
-	SPI_PORT->MODER &=~ (  3u << ( SPI_NSS * 2 ) ); //clear pin 4
-	GPIOB->MODER &=~ ( ( 3u << ( SDN * 2 ) ) | //clear SDN
-										 ( 3u << ( TriggerLine * 2 ) ) ); //clear triggerine
-	
-	SPI_PORT->MODER |= ( 1u << ( SPI_NSS * 2 ) );	//output mode pin 4
-  GPIOB->MODER |= ( (1u << (SDN * 2 ) ) | //SDN output
-										(1u << (TriggerLine * 2 ) ) ); //triggerline output
-	
 	SPI_PORT->ODR &= ~(1u << SPI_NSS); //Bring CS low
 	GPIOB->ODR &= ~(1u << SDN); //SDN low
-	GPIOB->ODR &= ~(1u << TriggerLine); //triggerline default low
+	//GPIOB->ODR &= ~(1u << TriggerLine); //triggerline default low
 	/*
   	Configure the SPI bus as follows
     	1. SPI bus speed 	= 1 MHz
