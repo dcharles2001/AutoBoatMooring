@@ -99,9 +99,11 @@ void BuoyComms::MessageWaitResponse(unsigned char* message)
 {
     uint32_t newflag = 0; //new flag
     Kernel::Clock::duration_u32 RXdur = 350ms; //active RX listening duration - should give the recipient time to produce and send a response
-    constexpr unsigned int burstcount = (WaitCycle/150) + 1; // total loop duration/approximate time to send 1 packet = required burst count + 1 to account for imprecision
+	
+	// total loop duration/approximate time to send 1 packet = required burst count + 1 to account for imprecision
+    constexpr unsigned int burstcount = (WaitCycle/150) + 1; //constexpr because parameters of equation are known at compile time, this could go in header 
    
-    Preamble.enable_irq(); //reenable
+    Preamble.enable_irq(); //enable interrupt
     Preamble.rise(callback(this, &BuoyComms::SetFlag));
 
     //unsigned char state[2]; //array for holding current state and channel number for debug
@@ -165,7 +167,7 @@ Buoycmd_t BuoyComms::Interpret(unsigned char* packet, unsigned char packetsize) 
     unsigned char offscore = 0;
 
     //confidence testing 
-    for(int i=0; i<(packetsize-1); i++) 
+    for(int i=0; i<(packetsize-1); i++) //check first 7 bytes, last byte is reserved for duration, less concerned about this getting corrupted
     {
         if(packet[i] == ON)
         {
@@ -194,22 +196,26 @@ Buoycmd_t BuoyComms::Interpret(unsigned char* packet, unsigned char packetsize) 
 Buoycmd_t BuoyComms:: InterpretBoyerMoore(unsigned char* packet, unsigned char packetsize) //Boyer-Moore majority vote algorithm implementation 
 {
     Buoycmd_t buoyinstruct;
-    char c = 0; //Boyer-Moore counter, initial value must be 0
-    unsigned char m; //current Boyer-Moore element
+    char c = 1; //Boyer-Moore counter, initial value 1
+    unsigned char m = packet[0]; //current Boyer-Moore majority element
     //Boyer-Moore x will be represented by the current element of packet
     //Using this algorithm, the majority element can be found
     //If the majority element is 1, the packet has passed the confidence test 
-
+	
     for(int i=0; i<(packetsize-1); i++)
     {
-        if(c == 0)
+        if(m == packet[i]) //same element?
         {
-            m = packet[i];
-        }else if(m == packet[i])
-        {
-            c++; //increment counter
-        }else {
-            c--; //decrement counter
+            c++; //yes, increment counter
+        }else { 
+            c--; //no, decrement counter
+			
+			if(c == 0)
+			{
+				//vote dropped to 0, update majority element
+				m = packet[i]; 
+				c = 1;
+			}
         }
     }
 
