@@ -7,28 +7,28 @@ BuoyComms::BuoyComms(SPIConfig_t Pins, ZetaConfig_t ZPins, int type): zetaspi(Pi
     
 }
 
-void BuoyComms::Init()
+void BuoyComms::Init() //initialise
 {
     SPI_Init(); //init SPI peripheral
     SPI_SI4455_Init(); //init si4455 configuration
 
 }
 
-void BuoyComms::GetPartInfo(unsigned char* response)
+void BuoyComms::GetPartInfo(unsigned char* response) //provides basic Si4455 info
 {
     //response must point to an array of at least 8 bytes to store the full response
     unsigned char cmd = SI4455_CMD_ID_PART_INFO; //part info cmd id 0x01
     SendCmdGetResp(1, &cmd, 8, response);
 }
 
-void BuoyComms::GetCurrentState(unsigned char* response)
+void BuoyComms::GetCurrentState(unsigned char* response) //provides current Si4455 device state 
 {
     //response must point to an array of at least 2 bytes to store the full response
     unsigned char cmd = SI4455_CMD_ID_REQUEST_DEVICE_STATE; //device state cmd id 0x33
     SendCmdGetResp(1, &cmd, 2, response);
 }
 
-void BuoyComms::SendMessage(unsigned char* message, unsigned char msgsize)
+void BuoyComms::SendMessage(unsigned char* message, unsigned char msgsize) //load message into Si4455 TX buffer
 {
     //msgsize must be set correctly to represent the number of elements in array that message points to
     constexpr unsigned char cmd = SI4455_CMD_ID_WRITE_TX_FIFO; //write tx fifo cmd id 0x66
@@ -37,25 +37,29 @@ void BuoyComms::SendMessage(unsigned char* message, unsigned char msgsize)
     
 }
 
-void BuoyComms::SetRx(void)
+void BuoyComms::SetRx(void) //provides access to protected ZETA method
 {
-    Radio_StartRx();
+    Radio_StartRx(); //switch to RX state
 }
 
-void BuoyComms::ChangeState(unsigned char newstate)
+int BuoyComms::ChangeState(unsigned char newstate) //change Si4455 device state
 {
+    if(newstate > 8) //check if the requested state change is invalid
+    {
+        return 1;
+    }
     constexpr unsigned char cmd = SI4455_CMD_ID_CHANGE_STATE; //0x34 change state command
     SendCmdArgs(cmd, 0x01, 1, &newstate); //force state change to desired newstate
+    return 0;
 }
 
-void BuoyComms::ActiveInterruptRX(void)
+void BuoyComms::ActiveInterruptRX(void) //switch to RX state and enable interrupt on valid preamble
 {
     Radio_StartRx();
     Preamble.enable_irq();
     Preamble.rise(callback(this, &BuoyComms::SetFlag)); //Set interrupt on valid preamble
     //Preamble.enable_irq(); //enable
 }
-
 
 void BuoyComms::SetFlag(void)
 {
@@ -69,10 +73,10 @@ void BuoyComms::WaitOnMessage(void) //this function locks its thread into a loop
     std::chrono::milliseconds Sleepdur = 1500ms; //idle sleep duration waitcycle - RXdur
     Kernel::Clock::duration_u32 RXdur = 500ms; //active RX listening duration -  accounts for 150ms send window + 200ms listen window cycle with generous leeway
    
-    unsigned char state[2];
+    //unsigned char state[2]; //array for holding current state and channel number for debug
 
-    Preamble.enable_irq(); //reenable
-    Preamble.rise(callback(this, &BuoyComms::SetFlag));
+    Preamble.enable_irq(); //enable interrupt
+    Preamble.rise(callback(this, &BuoyComms::SetFlag)); //set interrupt on valid preamble
 
     while(newflag != RadioFlag) //loop until event occurs
     {
@@ -95,12 +99,14 @@ void BuoyComms::MessageWaitResponse(unsigned char* message)
 {
     uint32_t newflag = 0; //new flag
     Kernel::Clock::duration_u32 RXdur = 350ms; //active RX listening duration - should give the recipient time to produce and send a response
-    constexpr unsigned int burstcount = (WaitCycle/150) + 1; // total loop duration/approximate time to send 1 packet = required burst count + 1 to account for imprecision
+	
+	// total loop duration/approximate time to send 1 packet = required burst count + 1 to account for imprecision
+    constexpr unsigned int burstcount = (WaitCycle/150) + 1; //constexpr because parameters of equation are known at compile time, this could go in header 
    
-    Preamble.enable_irq(); //reenable
+    Preamble.enable_irq(); //enable interrupt
     Preamble.rise(callback(this, &BuoyComms::SetFlag));
 
-    unsigned char state[2];
+    //unsigned char state[2]; //array for holding current state and channel number for debug
 
     for(int i=0; i<burstcount; i++)
     {
@@ -112,7 +118,7 @@ void BuoyComms::MessageWaitResponse(unsigned char* message)
         newflag = RadioEvent.wait_all_for(RadioFlag, RXdur); //wait on interrupt event for specified time
         if(newflag == RadioFlag)
         {
-            //printf("Flag set!\n\r");
+            //printf("Flag set!\n\r"); //only here if needed for debugging
             break;
         }
     }
@@ -121,11 +127,11 @@ void BuoyComms::MessageWaitResponse(unsigned char* message)
     Preamble.disable_irq(); //task done, disable IRQ
 }
 
-bool BuoyComms::IdleRXPolling(void)
+bool BuoyComms::IdleRXPolling(void) //basic polling method for receiving packets
 {
     Radio_StartRx(); //enter RX mode
 
-    //poll fifo 
+    //poll fifo for content
     unsigned char cmd = SI4455_CMD_ID_FIFO_INFO; //read fifo info command 0x15
     unsigned char resp[2];
     SendCmdGetResp(0x01, &cmd, 2, resp); //send command and read response
@@ -154,14 +160,14 @@ bool BuoyComms::ReceiveAndRead(unsigned char* response, unsigned char respsize)
     //preambleflag = false;
 }
 
-Buoycmd_t BuoyComms::Interpret(unsigned char* packet, unsigned char packetsize)
+Buoycmd_t BuoyComms::Interpret(unsigned char* packet, unsigned char packetsize) //interpret validity of packet contents
 {
     Buoycmd_t buoyinstruct;
     unsigned char onscore = 0;
     unsigned char offscore = 0;
 
     //confidence testing 
-    for(int i=0; i<(packetsize-1); i++) 
+    for(int i=0; i<(packetsize-1); i++) //check first 7 bytes, last byte is reserved for duration, less concerned about this getting corrupted
     {
         if(packet[i] == ON)
         {
@@ -187,6 +193,45 @@ Buoycmd_t BuoyComms::Interpret(unsigned char* packet, unsigned char packetsize)
 
 }
 
+Buoycmd_t BuoyComms:: InterpretBoyerMoore(unsigned char* packet, unsigned char packetsize) //Boyer-Moore majority vote algorithm implementation 
+{
+    Buoycmd_t buoyinstruct;
+    char c = 1; //Boyer-Moore counter, initial value 1
+    unsigned char m = packet[0]; //current Boyer-Moore majority element
+    //Boyer-Moore x will be represented by the current element of packet
+    //Using this algorithm, the majority element can be found
+    //If the majority element is 1, the packet has passed the confidence test 
+	
+    for(int i=0; i<(packetsize-1); i++)
+    {
+        if(m == packet[i]) //same element?
+        {
+            c++; //yes, increment counter
+        }else { 
+            c--; //no, decrement counter
+			
+			if(c == 0)
+			{
+				//vote dropped to 0, update majority element
+				m = packet[i]; 
+				c = 1;
+			}
+        }
+    }
+
+    if(m == 1)
+    {
+        buoyinstruct.cmd = ON;
+        buoyinstruct.param = packet[packetsize-1]; //on duration
+    }else 
+    {    
+        buoyinstruct.cmd = OFF;
+        buoyinstruct.param = 0; //turning off, on duration irrelevant
+    }
+
+    return buoyinstruct;
+}
+
 bool BuoyComms::InterpretResponse(unsigned char* packet)
 {
     Buoycmd_t buoyinstruct;
@@ -196,14 +241,13 @@ bool BuoyComms::InterpretResponse(unsigned char* packet)
     //confidence testing 
     for(int i=0; i<(RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH); i++) 
     {
-        if(packet[i] == '1')
+        if(packet[i] == 1)
         {
             onscore++;
-        }else if(packet[i] == '0')
+        }else if(packet[i] == 0)
         {
             offscore++;
         }else {
-            offscore++;
             //content corrupted
         }
     }
@@ -217,14 +261,20 @@ bool BuoyComms::InterpretResponse(unsigned char* packet)
 
 }
 
-
-void BuoyComms::InstructionConfigurator(Buoycmd_t instructions, unsigned char* packet, unsigned char packetsize)
+int BuoyComms::InstructionConfigurator(Buoycmd_t instructions, unsigned char* packet, unsigned char packetsize)
 {
+    if(sizeof(packet)/(sizeof(packet[0])) != packetsize) //check if packetsize aligns with size of packet array
+    {
+        return 1;
+    }
+
     for(int i = 0; i<(packetsize-1); i++)
     {
         packet[i] = instructions.cmd;
     }
     packet[packetsize-1] = instructions.param;
+
+    return 0;
 }
 
 int BuoyComms::GetDeviceType(void)
