@@ -36,12 +36,11 @@ class Launcher{
 
     protected:
 
-        bool TimerActive = 0;
-        
-        
-
+		//---comms integration stuff
+        bool TimerActive = 0; //indicates timer status
         Timer BuoysTimer; //timer for tracking Buoys on time
         std::chrono::seconds newtime; //time we have told the buoys to turn on for
+		//---
 };
 
 #endif
