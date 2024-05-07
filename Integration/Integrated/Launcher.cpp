@@ -167,7 +167,9 @@ void Launcher::commsCheck(Buoycmd_t newcmd) //establish or reestablish comms wit
         Boat.MessageWaitResponse(TestMessage);
         //still in receive mode
         ThisThread::sleep_for(100ms); //essential delay
-        
+		
+		for(int i=0; i<2; i++) //do it twice, once for each buoy
+		{
             if(Boat.ReceiveAndRead(buoyresponse, RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH))
             {
                 PrintQueue.call(printf,"No response\n\r");
@@ -176,23 +178,24 @@ void Launcher::commsCheck(Buoycmd_t newcmd) //establish or reestablish comms wit
                 
             }else
             {
-                for(int j=0; j<RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH; j++)
+                for(int j=0; j<RADIO_CONFIGURATION_DATA_RADIO_PACKET_LENGTH; j++) //loop for maximum packet size
                 {
-                    PrintQueue.call(printf,"RX: %c\n\r", buoyresponse[j]);
+                    PrintQueue.call(printf,"RX: %c\n\r", buoyresponse[j]); //display received characters
                 }
                 if(!Boat.InterpretResponse(buoyresponse)) //good packet check
                 {
-                    PrintQueue.call(printf,"Resp success\n\r");
-                    packetresp = 0;
+                    PrintQueue.call(printf,"Resp success\n\r"); //indicate success
+                    packetresp = 0; //break out of loop
                 }
             }
             ThisThread::sleep_for(2s); //wait for second buoy delay
+		}
         
     }
     PrintQueue.call(printf, "Comms check success\n\r"); //debug info
     Boat.ChangeState(SI4455_CMD_CHANGE_STATE_ARG_NEW_STATE_ENUM_SLEEP); //go back to sleep
     newtime = std::chrono::seconds(newcmd.param); //set new time to track
-    BuoysTimer.reset();
+    BuoysTimer.reset(); //reset timer 
     BuoysTimer.start(); //start tracking buoys on time
     TimerActive = true;
 }
@@ -202,11 +205,11 @@ std::chrono::seconds Launcher::getbuoysTime(void) //get elapsed time in chrono::
    return std::chrono::duration_cast<std::chrono::seconds>(BuoysTimer.elapsed_time()); //bit of a mouthful but necessary for comparison
 }
 
-bool Launcher::checkbuoysTime(void)
+bool Launcher::checkbuoysTime(void) 
 {
     if(getbuoysTime() >= newtime) //has the established LED on time frame passed?
     {
-        BuoysTimer.stop();
+        BuoysTimer.stop(); //stop timer
         TimerActive = false; //disable timer indicator
         //BuoysTimer.reset();
         return true; //yes, yes it has
@@ -215,8 +218,8 @@ bool Launcher::checkbuoysTime(void)
     }
 }
 
-bool Launcher::getTimerStatus(void)
+bool Launcher::getTimerStatus(void) //controlled access to private member
 {
-    return TimerActive;
+    return TimerActive; //return status of timer 
 }
 
